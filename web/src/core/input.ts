@@ -2,20 +2,28 @@ export type KeyboardState = {
   thrust: boolean;
   fire: boolean;
   rotate: -1 | 0 | 1;
+  nextLevel: boolean;
+  prevLevel: boolean;
 };
 
-const KEY_BINDINGS: Record<string, keyof InputState | 'rotate-left' | 'rotate-right'> = {
+const KEY_BINDINGS: Record<string, keyof InputState | 'rotate-left' | 'rotate-right' | 'next-level' | 'prev-level'> = {
   ArrowUp: 'thrust',
   ArrowLeft: 'rotate-left',
   ArrowRight: 'rotate-right',
-  Space: 'fire'
+  Space: 'fire',
+  Equal: 'next-level',
+  '+': 'next-level',
+  Minus: 'prev-level',
+  '-': 'prev-level'
 };
 
 export function createKeyboardInput() {
   const state: KeyboardState = {
     thrust: false,
     fire: false,
-    rotate: 0
+    rotate: 0,
+    nextLevel: false,
+    prevLevel: false
   };
 
   const downHandler = (event: KeyboardEvent) => {
@@ -33,6 +41,12 @@ export function createKeyboardInput() {
         break;
       case 'rotate-right':
         state.rotate = 1;
+        break;
+      case 'next-level':
+        state.nextLevel = true;
+        break;
+      case 'prev-level':
+        state.prevLevel = true;
         break;
     }
     event.preventDefault();
@@ -53,6 +67,12 @@ export function createKeyboardInput() {
         break;
       case 'rotate-right':
         if (state.rotate === 1) state.rotate = 0;
+        break;
+      case 'next-level':
+        state.nextLevel = false;
+        break;
+      case 'prev-level':
+        state.prevLevel = false;
         break;
     }
     event.preventDefault();

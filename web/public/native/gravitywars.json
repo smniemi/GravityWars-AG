@@ -1,4 +1,4 @@
 {
-  "exports": [  "_init_gw",  "_main_init",  "_main_end",  "_control",  "_animate",  "_get_ship_state",  "_get_global_state",  "_get_level_buffer",  "_get_objects_buffer",  "_get_block_buffer",  "_get_palette_buffer",  "_get_ship_buffer",  "_get_bullets_buffer",  "_get_scans_buffer",  "_wasm_set_thrust",  "_wasm_set_fire",  "_wasm_adjust_sa",  "_wasm_clear_dynamic_blocks",  "_wasm_advance_level"],
-  "generatedAt": "2025-11-15T17:25:17+01:00"
+  "exports": [  "_init_gw",  "_main_init",  "_main_end",  "_control",  "_animate",  "_get_ship_state",  "_get_global_state",  "_get_level_buffer",  "_get_objects_buffer",  "_get_block_buffer",  "_get_palette_buffer",  "_get_ship_buffer",  "_get_bullets_buffer",  "_get_action_buffer",  "_get_scans_buffer",  "_wasm_set_thrust",  "_wasm_set_fire",  "_wasm_adjust_sa",  "_wasm_clear_dynamic_blocks",  "_wasm_advance_level",  "_wasm_next_level",  "_wasm_prev_level"],
+  "generatedAt": "2025-11-15T18:12:44+01:00"
 }

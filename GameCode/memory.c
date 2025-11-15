@@ -176,6 +176,7 @@ struct animtype {
 
 struct actiontype {
 	short x,y,start,stop,frame,state,speed,delay;
+	short type;
 } action[N_ACTION+1];
 
 uchar pal[768],palB[768],realpal[768],realpal2[768];

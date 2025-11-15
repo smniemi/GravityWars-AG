@@ -76,6 +76,8 @@
 #define  EXPL_STOP    24
 #define  SPLASH_START 25
 #define  SPLASH_STOP  27
+#define  ACTION_SPARK 1
+#define  ACTION_SPLASH 2
 
 #define SMALLDELAY 30000 /* Beam Adjustment (?) */
 

@@ -4,6 +4,7 @@ import { createShipStateReader, type ShipState } from './core/shipState.js';
 import { createGlobalStateReader, type GlobalState } from './core/globalState.js';
 import { createLevelMap, type LevelMap } from './core/levelMap.js';
 import { createBulletReader, type BulletSnapshot } from './core/bullets.js';
+import { createActionReader, type ActionState } from './core/actions.js';
 import { loadGravityWarsModule } from './core/wasmBridge.js';
 import type { GravityWarsRuntime } from './core/wasmBridge.js';
 import { sendDebugSnapshot } from './debugger.js';
@@ -47,9 +48,8 @@ let clearDynamicBlocks: (() => void) | null = null;
 let advanceLevel: (() => void) | null = null;
 let bulletReader: ReturnType<typeof createBulletReader> | null = null;
 let currentBullets: BulletSnapshot[] = [];
-type BulletBurst = { x: number; y: number; life: number };
-let previousBullets: Map<number, BulletSnapshot> = new Map();
-let bulletBursts: BulletBurst[] = [];
+let actionReader: ReturnType<typeof createActionReader> | null = null;
+let actionStates: ActionState[] = [];
 let levelAdvancePending = false;
 const keyboard = createKeyboardInput();
 let controls: ControlFns | null = null;
@@ -76,7 +76,7 @@ const BACKGROUND_TILE_COLOR = '#07090d';
 const MINIMAP_TILE_SIZE = 6;
 const GRID_LINE_COLOR = 'rgba(255, 255, 255, 0.06)';
 const TILE_PALETTE: Record<number, string> = {};
-const ANGLE_ADJUST_SPEED = 64;
+const ANGLE_ADJUST_SPEED = 128; // 2x faster rotation
 const SHIP_IMAGE = {
   NO_THRUST: 0,
   THRUST: 1,
@@ -119,7 +119,9 @@ const SHIP_STATE = {
   DISAPPEARING: 4
 } as const;
 
-const BULLET_BURST_LIFETIME = 220;
+// Action frame ranges:
+// SPARK (bullet explosion): frames 48-51 (4 frames)
+// SPLASH (water): frames 113-117 (5 frames)
 
 function getExport(name: ExportName): () => void {
   if (!runtime) {
@@ -242,21 +244,30 @@ function drawBullets(
   });
 }
 
-function drawBulletBursts(
+function drawActionEffects(
   context: CanvasRenderingContext2D,
-  bursts: BulletBurst[],
+  actions: ActionState[],
   viewport: ViewportInfo
 ) {
-  bursts.forEach((burst) => {
-    const alpha = Math.max(0, burst.life / BULLET_BURST_LIFETIME);
-    const radius = SHIP_SPRITE_SIZE * viewport.zoom * 0.4 * (2 - alpha);
-    context.strokeStyle = `rgba(255,200,120,${alpha})`;
-    context.lineWidth = 2;
-    const screenX = (burst.x - viewport.cameraX) * viewport.zoom;
-    const screenY = (burst.y - viewport.cameraY) * viewport.zoom;
-    context.beginPath();
-    context.arc(screenX, screenY, radius, 0, Math.PI * 2);
-    context.stroke();
+  const atlas = tileAtlas;
+  if (!atlas) {
+    return;
+  }
+  actions.forEach((action) => {
+    // action.frame is already the block ID (48-51 for spark, 113-117 for splash)
+    // Clamp to [start, stop-1] to skip the last frame
+    const maxFrame = action.stop - 1;
+    const blockId = Math.max(action.start, Math.min(maxFrame, action.frame));
+    const pos = atlas.positions[blockId];
+    if (!pos) {
+      return;
+    }
+    const worldX = action.x - 16;
+    const worldY = action.y - 16;
+    const screenX = (worldX - viewport.cameraX) * viewport.zoom;
+    const screenY = (worldY - viewport.cameraY) * viewport.zoom;
+    const size = SHIP_SPRITE_SIZE * viewport.zoom;
+    context.drawImage(atlas.canvas, pos.sx, pos.sy, SHIP_SPRITE_SIZE, SHIP_SPRITE_SIZE, screenX, screenY, size, size);
   });
 }
 
@@ -453,13 +464,17 @@ type ControlFns = {
   setThrust: (value: number) => void;
   setFire: (value: number) => void;
   adjustAngle: (delta: number) => void;
+  nextLevel: () => void;
+  prevLevel: () => void;
 };
 
 function createControls(runtime: GravityWarsRuntime): ControlFns {
   return {
     setThrust: resolveVoidFunction(runtime, 'wasm_set_thrust'),
     setFire: resolveVoidFunction(runtime, 'wasm_set_fire'),
-    adjustAngle: resolveVoidFunction(runtime, 'wasm_adjust_sa')
+    adjustAngle: resolveVoidFunction(runtime, 'wasm_adjust_sa'),
+    nextLevel: resolveZeroArgFunction(runtime, 'wasm_next_level'),
+    prevLevel: resolveZeroArgFunction(runtime, 'wasm_prev_level')
   };
 }
 
@@ -516,8 +531,6 @@ function handleLevelTransition() {
       }
     }
     currentBullets = [];
-    previousBullets.clear();
-    bulletBursts = [];
     levelAdvancePending = false;
   }
 }
@@ -568,37 +581,46 @@ const loop = new GameLoop(({ deltaMs }) => {
       }
     }
     if (bulletReader) {
-      const raw = bulletReader.read();
-      const nextMap = new Map<number, BulletSnapshot>();
-      const active: BulletSnapshot[] = [];
-      raw.forEach((bullet) => {
-        nextMap.set(bullet.id, bullet);
-        if (bullet.active) {
-          active.push(bullet);
-        }
-        const prev = previousBullets.get(bullet.id);
-        if (prev?.active && !bullet.active) {
-          bulletBursts.push({ x: prev.x, y: prev.y, life: BULLET_BURST_LIFETIME });
-        }
-      });
-      previousBullets.forEach((prev, id) => {
-        if (prev.active && !nextMap.get(id)?.active) {
-          bulletBursts.push({ x: prev.x, y: prev.y, life: BULLET_BURST_LIFETIME });
-        }
-      });
-      previousBullets = nextMap;
-      currentBullets = active;
+      currentBullets = bulletReader.read().filter((bullet) => bullet.active);
     }
-
-    bulletBursts = bulletBursts
-      .map((burst) => ({ ...burst, life: burst.life - deltaMs }))
-      .filter((burst) => burst.life > 0);
+    if (actionReader) {
+      actionStates = actionReader.read();
+    }
     if (controls) {
-      const { thrust, fire, rotate } = keyboard.state;
+      const { thrust, fire, rotate, nextLevel, prevLevel } = keyboard.state;
       controls.setThrust(thrust ? 32 : 0);
       controls.setFire(fire ? 1 : 0);
       if (rotate !== 0) {
         controls.adjustAngle(-rotate * ANGLE_ADJUST_SPEED);
+      }
+      
+      // Handle level changes
+      if (nextLevel) {
+        controls.nextLevel();
+        keyboard.state.nextLevel = false;
+        if (runtime?.runtime) {
+          levelMap = createLevelMap(runtime.runtime);
+          tileAtlas = createTileAtlas(runtime.runtime);
+          shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
+          if (levelMap && tileAtlas) {
+            levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
+          }
+        }
+        currentBullets = [];
+      }
+      
+      if (prevLevel) {
+        controls.prevLevel();
+        keyboard.state.prevLevel = false;
+        if (runtime?.runtime) {
+          levelMap = createLevelMap(runtime.runtime);
+          tileAtlas = createTileAtlas(runtime.runtime);
+          shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
+          if (levelMap && tileAtlas) {
+            levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
+          }
+        }
+        currentBullets = [];
       }
     }
 
@@ -618,8 +640,8 @@ const loop = new GameLoop(({ deltaMs }) => {
     if (lastViewport && currentBullets.length) {
       drawBullets(ctx, currentBullets, lastViewport);
     }
-    if (lastViewport && bulletBursts.length) {
-      drawBulletBursts(ctx, bulletBursts, lastViewport);
+    if (lastViewport && actionStates.length) {
+      drawActionEffects(ctx, actionStates, lastViewport);
     }
 
     if (levelMap) {
@@ -659,6 +681,7 @@ loadGravityWarsModule()
     clearDynamicBlocks = resolveZeroArgFunction(module.runtime, 'wasm_clear_dynamic_blocks');
     advanceLevel = resolveZeroArgFunction(module.runtime, 'wasm_advance_level');
     bulletReader = createBulletReader(module.runtime);
+    actionReader = createActionReader(module.runtime);
     getExport('init_gw')();
     getExport('main_init')();
     tileAtlas = createTileAtlas(module.runtime);

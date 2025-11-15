@@ -12,11 +12,14 @@
   "_get_palette_buffer",
   "_get_ship_buffer",
   "_get_bullets_buffer",
+  "_get_action_buffer",
   "_get_scans_buffer",
   "_wasm_set_thrust",
   "_wasm_set_fire",
   "_wasm_adjust_sa",
   "_wasm_clear_dynamic_blocks",
-  "_wasm_advance_level"
+  "_wasm_advance_level",
+  "_wasm_next_level",
+  "_wasm_prev_level"
 ]
 

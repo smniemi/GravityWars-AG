@@ -69,6 +69,10 @@ struct bullettype* get_bullets_buffer(void) {
   return bullet;
 }
 
+struct actiontype* get_action_buffer(void) {
+  return action;
+}
+
 typedef struct {
   int32_t shipState;
   int32_t shipActive;
@@ -133,6 +137,36 @@ void wasm_advance_level(void) {
   levelnum++;
   if (levelnum >= TOTAL_NUMBER_OF_LEVELS) {
     levelnum = 0;
+  }
+  gameOver = FALSE;
+  shipThrust = 0;
+  shipIsFiring = 0;
+  main_init();
+  shipState.state = SHIP_STATE_APPEARING;
+  shipState.animationPhase = 5 << 2;
+  dynamicBlocksChanged = 1;
+}
+
+void wasm_next_level(void) {
+  main_end();
+  levelnum++;
+  if (levelnum >= TOTAL_NUMBER_OF_LEVELS) {
+    levelnum = 0;
+  }
+  gameOver = FALSE;
+  shipThrust = 0;
+  shipIsFiring = 0;
+  main_init();
+  shipState.state = SHIP_STATE_APPEARING;
+  shipState.animationPhase = 5 << 2;
+  dynamicBlocksChanged = 1;
+}
+
+void wasm_prev_level(void) {
+  main_end();
+  levelnum--;
+  if (levelnum < 0) {
+    levelnum = TOTAL_NUMBER_OF_LEVELS - 1;
   }
   gameOver = FALSE;
   shipThrust = 0;

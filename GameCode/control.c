@@ -167,37 +167,39 @@ void control() {
 							}
 							break;
 							
-						case E_TOP_WATER:
-							play_sound(kSound_Splash);
-							for(m=0; m<=N_ACTION; m++) {
-								if (!action[m].state) {
-									action[m].state=TRUE;
-									action[m].x=x;
-									action[m].y=y;
-									action[m].start=113; // 112 -> 113
-									action[m].stop=117;
-									action[m].frame=113;
-									action[m].speed=2;
-									action[m].delay=2;
-									goto nomoreloop;
-								}
-							}
-							break;
+			case E_TOP_WATER:
+				play_sound(kSound_Splash);
+				for(m=0; m<=N_ACTION; m++) {
+					if (!action[m].state) {
+						action[m].state=TRUE;
+						action[m].x=x;
+						action[m].y=y;
+						action[m].start=113; // 112 -> 113
+						action[m].stop=117;
+						action[m].frame=113;
+						action[m].speed=2;
+						action[m].delay=2;
+						action[m].type = ACTION_SPLASH;
+						goto nomoreloop;
+					}
+				}
+				break;
 							
 						default:
-							for(m=0; m<=N_ACTION; m++) {
-								if (!action[m].state) {
-									action[m].state=TRUE;
-									action[m].x=x;
-									action[m].y=y;
-									action[m].start=48;
-									action[m].stop=51;
-									action[m].frame=48;
-									action[m].speed=4;
-									action[m].delay=4;
-									goto nomoreloop;
-								}
-							}
+				for(m=0; m<=N_ACTION; m++) {
+					if (!action[m].state) {
+						action[m].state=TRUE;
+						action[m].x=x;
+						action[m].y=y;
+						action[m].start=48;
+						action[m].stop=51;
+						action[m].frame=48;
+						action[m].speed=4;
+						action[m].delay=4;
+						action[m].type = ACTION_SPARK;
+						goto nomoreloop;
+					}
+				}
 							break;
 					};
 					
@@ -223,6 +225,7 @@ void control() {
 								action[m].frame=49;
 								action[m].speed=6;
 								action[m].delay=6;
+								action[m].type = ACTION_SPARK;
 								goto nomoreloop2;
 							}
 						}

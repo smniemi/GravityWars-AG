@@ -63,6 +63,7 @@ extern struct animtype {
 
 extern struct actiontype {
   short x,y,start,stop,frame,state,speed,delay;
+  short type;
 } action[N_ACTION+1];
 
 extern uchar pal[768],palB[768],realpal[768],realpal2[768];
