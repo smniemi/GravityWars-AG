@@ -39,6 +39,7 @@ void makehole(int x, int y, int type) {
 	}
 	
 	changeblocks(x,y,tmpmix+33);
+	dynamicBlocksChanged = 1;
 	
 }
 

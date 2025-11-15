@@ -52,6 +52,22 @@ unsigned char* get_objects_buffer(void) {
   return objects;
 }
 
+unsigned char* get_block_buffer(void) {
+  return &block[0][0];
+}
+
+unsigned char* get_palette_buffer(void) {
+  return pal;
+}
+
+unsigned char* get_ship_buffer(void) {
+  return &ship[0][0][0];
+}
+
+struct bullettype* get_bullets_buffer(void) {
+  return bullet;
+}
+
 typedef struct {
   int32_t shipState;
   int32_t shipActive;
@@ -65,6 +81,7 @@ typedef struct {
   int32_t numKeys;
   int32_t levelnum;
   int32_t sa;
+  int32_t dynamicBlocksChangedFlag;
 } WasmGlobalState;
 
 static WasmGlobalState wasmGlobals;
@@ -82,6 +99,7 @@ void* get_global_state(void) {
   wasmGlobals.numKeys = NumKeys;
   wasmGlobals.levelnum = levelnum;
   wasmGlobals.sa = sa;
+  wasmGlobals.dynamicBlocksChangedFlag = dynamicBlocksChanged;
   return &wasmGlobals;
 }
 
@@ -100,5 +118,9 @@ void wasm_adjust_sa(int delta) {
   } else if (sa < 0) {
     sa += 16383;
   }
+}
+
+void wasm_clear_dynamic_blocks(void) {
+  dynamicBlocksChanged = 0;
 }
 

@@ -30,7 +30,7 @@ export function createLevelMap(runtime: GravityWarsRuntime): LevelMap {
 type PtrFn = () => number;
 
 function resolveFunction(runtime: GravityWarsRuntime, name: string): PtrFn {
-  const module = runtime as Record<string, unknown>;
+  const module = runtime as unknown as Record<string, unknown>;
   const variants = [name, `_${name}`];
 
   for (const variant of variants) {

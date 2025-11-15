@@ -1,11 +1,15 @@
-import { GameLoop } from '@core/index';
-import { createKeyboardInput, type KeyboardState } from '@core/input';
-import { createShipStateReader, type ShipState } from '@core/shipState';
-import { createGlobalStateReader, type GlobalState } from '@core/globalState';
-import { createLevelMap, type LevelMap } from '@core/levelMap';
-import { loadGravityWarsModule } from '@core/wasmBridge';
-import type { GravityWarsRuntime } from '@core/wasmBridge';
-import { sendDebugSnapshot } from './debugger';
+import { GameLoop } from './core/index.js';
+import { createKeyboardInput, type KeyboardState } from './core/input.js';
+import { createShipStateReader, type ShipState } from './core/shipState.js';
+import { createGlobalStateReader, type GlobalState } from './core/globalState.js';
+import { createLevelMap, type LevelMap } from './core/levelMap.js';
+import { createBulletReader, type BulletState } from './core/bullets.js';
+import { loadGravityWarsModule } from './core/wasmBridge.js';
+import type { GravityWarsRuntime } from './core/wasmBridge.js';
+import { sendDebugSnapshot } from './debugger.js';
+import { createTileAtlas, type TileAtlas } from './render/tileAtlas.js';
+import { buildLevelCanvas, drawWorldView, type ViewportInfo } from './render/worldCanvas.js';
+import { createShipSprites, type ShipSprites, SHIP_SPRITE_SIZE } from './render/shipSprites.js';
 
 const root = document.getElementById('app') ?? createRoot();
 
@@ -35,6 +39,13 @@ let lastShipState: ShipState | null = null;
 let globalsReader: ReturnType<typeof createGlobalStateReader> | null = null;
 let lastGlobals: GlobalState | null = null;
 let levelMap: LevelMap | null = null;
+let tileAtlas: TileAtlas | null = null;
+let levelCanvas: HTMLCanvasElement | null = null;
+let lastViewport: ViewportInfo | null = null;
+let shipSprites: ShipSprites | null = null;
+let clearDynamicBlocks: (() => void) | null = null;
+let bulletReader: ReturnType<typeof createBulletReader> | null = null;
+let currentBullets: BulletState[] = [];
 const keyboard = createKeyboardInput();
 let controls: ControlFns | null = null;
 type ExportName = 'init_gw' | 'main_init' | 'control' | 'animate';
@@ -56,12 +67,44 @@ const OBJECT_COLORS: Record<string, string> = {
   'T': '#f6f',
   'L': '#f6f'
 };
-const DEFAULT_TILE_COLOR = '#111';
-const SOLID_TILE_COLOR = '#2f364d';
 const BACKGROUND_TILE_COLOR = '#07090d';
 const MINIMAP_TILE_SIZE = 6;
 const GRID_LINE_COLOR = 'rgba(255, 255, 255, 0.06)';
 const TILE_PALETTE: Record<number, string> = {};
+const ANGLE_ADJUST_SPEED = 64;
+const SHIP_IMAGE = {
+  NO_THRUST: 0,
+  THRUST: 1,
+  EXPLODE_1: 2,
+  EXPLODE_2: 3,
+  EXPLODE_3: 4,
+  EXPLODE_4: 5,
+  EXPLODE_5: 6,
+  APPEAR_1: 7,
+  APPEAR_2: 8,
+  APPEAR_3: 9,
+  APPEAR_4: 10,
+  APPEAR_5: 11
+} as const;
+
+const SHIP_BLOCK_MAP: Partial<Record<number, number>> = {
+  [SHIP_IMAGE.EXPLODE_1]: 45,
+  [SHIP_IMAGE.EXPLODE_2]: 46,
+  [SHIP_IMAGE.EXPLODE_3]: 47,
+  [SHIP_IMAGE.EXPLODE_4]: 48,
+  [SHIP_IMAGE.EXPLODE_5]: 49,
+  [SHIP_IMAGE.APPEAR_1]: 157,
+  [SHIP_IMAGE.APPEAR_2]: 158,
+  [SHIP_IMAGE.APPEAR_3]: 159,
+  [SHIP_IMAGE.APPEAR_4]: 160,
+  [SHIP_IMAGE.APPEAR_5]: 161
+};
+
+const SHIP_SPECIAL_BLOCK_IDS = Array.from(
+  new Set(
+    Object.values(SHIP_BLOCK_MAP).filter((value): value is number => typeof value === 'number')
+  )
+);
 
 function getExport(name: ExportName): () => void {
   if (!runtime) {
@@ -72,7 +115,7 @@ function getExport(name: ExportName): () => void {
     return cachedExports[name]!;
   }
 
-  const module = runtime.runtime as Record<string, unknown>;
+  const module = runtime.runtime as unknown as Record<string, unknown>;
   const variants = [name, `_${name}`];
 
   for (const variant of variants) {
@@ -92,7 +135,82 @@ function getExport(name: ExportName): () => void {
   throw new Error(`Export ${name} not found on wasm runtime.`);
 }
 
-function drawShip(context: CanvasRenderingContext2D, ship: ShipState) {
+function drawShipSprite(
+  context: CanvasRenderingContext2D,
+  globals: GlobalState,
+  ship: ShipState,
+  viewport: ViewportInfo
+) {
+  const screenX = (globals.sx - viewport.cameraX) * viewport.zoom;
+  const screenY = (globals.sy - viewport.cameraY) * viewport.zoom;
+  const drawSize = SHIP_SPRITE_SIZE * viewport.zoom;
+
+  const image = ship.image ?? SHIP_IMAGE.NO_THRUST;
+  if (
+    shipSprites &&
+    (image === SHIP_IMAGE.NO_THRUST || image === SHIP_IMAGE.THRUST)
+  ) {
+    const orientation = ((globals.sa ?? 0) >>> 9) & 31;
+    const variant = image === SHIP_IMAGE.THRUST ? shipSprites.thrust : shipSprites.noThrust;
+    const sprite = variant[orientation];
+    if (sprite) {
+      context.drawImage(sprite, screenX, screenY, drawSize, drawSize);
+      return true;
+    }
+  }
+
+  const blockId = SHIP_BLOCK_MAP[image];
+  if (blockId !== undefined && shipSprites?.specials[blockId]) {
+    const sprite = shipSprites.specials[blockId]!;
+    context.drawImage(sprite, screenX, screenY, drawSize, drawSize);
+    return true;
+  }
+
+  drawShipMarker(context, globals, viewport);
+  return false;
+}
+
+function drawShipMarker(
+  context: CanvasRenderingContext2D,
+  globals: GlobalState,
+  viewport: ViewportInfo
+) {
+  const shipX = (globals.sx - viewport.cameraX) * viewport.zoom;
+  const shipY = (globals.sy - viewport.cameraY) * viewport.zoom;
+
+  context.save();
+  context.translate(shipX + SHIP_SPRITE_SIZE * viewport.zoom * 0.5, shipY + SHIP_SPRITE_SIZE * viewport.zoom * 0.5);
+  const angle = ((globals.sa % 16384) / 16384) * Math.PI * 2;
+  context.rotate(-angle + Math.PI / 2);
+  context.fillStyle = '#fff';
+  context.beginPath();
+  context.moveTo(0, -16);
+  context.lineTo(10, 10);
+  context.lineTo(-10, 10);
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
+function drawBullets(
+  context: CanvasRenderingContext2D,
+  bullets: BulletState[],
+  viewport: ViewportInfo
+) {
+  context.fillStyle = '#0ff';
+  bullets.forEach((bullet) => {
+    const screenX = (bullet.x - viewport.cameraX) * viewport.zoom;
+    const screenY = (bullet.y - viewport.cameraY) * viewport.zoom;
+    context.fillRect(
+      screenX + (SHIP_SPRITE_SIZE * viewport.zoom) / 2 - 2,
+      screenY + (SHIP_SPRITE_SIZE * viewport.zoom) / 2 - 2,
+      4,
+      4
+    );
+  });
+}
+
+function drawShipFallback(context: CanvasRenderingContext2D, ship: ShipState) {
   const scale = 1 / 64;
   const px = canvas.width / 2 + ship.x * scale;
   const py = canvas.height / 2 - ship.y * scale;
@@ -107,7 +225,7 @@ function drawShip(context: CanvasRenderingContext2D, ship: ShipState) {
   context.fillText(`(${ship.x}, ${ship.y})`, px + 10, py - 10);
 }
 
-function drawLevelMap(
+function drawMiniMap(
   context: CanvasRenderingContext2D,
   map: LevelMap,
   globals: GlobalState | null
@@ -296,7 +414,7 @@ function createControls(runtime: GravityWarsRuntime): ControlFns {
 }
 
 function resolveVoidFunction(runtime: GravityWarsRuntime, name: string) {
-  const module = runtime as Record<string, unknown>;
+  const module = runtime as unknown as Record<string, unknown>;
   const candidates = [name, `_${name}`];
 
   for (const candidate of candidates) {
@@ -314,14 +432,48 @@ function resolveVoidFunction(runtime: GravityWarsRuntime, name: string) {
   throw new Error(`Unable to resolve wasm export ${name}`);
 }
 
+function resolveZeroArgFunction(runtime: GravityWarsRuntime, name: string) {
+  const module = runtime as unknown as Record<string, unknown>;
+  const candidates = [name, `_${name}`];
+
+  for (const candidate of candidates) {
+    const fn = module[candidate];
+    if (typeof fn === 'function') {
+      return (fn as () => void).bind(module);
+    }
+  }
+
+  if (runtime.cwrap) {
+    return runtime.cwrap(name, 'void', []);
+  }
+
+  throw new Error(`Unable to resolve wasm export ${name}`);
+}
+
 const loop = new GameLoop(({ deltaMs }) => {
+  lastViewport = null;
+
+  if (!levelCanvas && levelMap && tileAtlas) {
+    try {
+      levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
+      console.log('[gravitywars] level canvas ready', levelCanvas.width, levelCanvas.height);
+    } catch (error) {
+      console.error('Failed to build level canvas', error);
+    }
+  }
+
+  if (!shipSprites && runtime?.runtime) {
+    try {
+      shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
+    } catch (error) {
+      console.error('Failed to build ship sprites', error);
+    }
+  }
+
   if (ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#0ff';
-    ctx.font = '16px monospace';
-    ctx.fillText(`GravityWars Web bootstrap - Δ=${deltaMs.toFixed(2)}ms`, 20, 30);
-    ctx.fillStyle = '#0f9';
-    ctx.fillText(wasmStatus, 20, 60);
+    ctx.fillStyle = '#05060a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
   if (runtime) {
@@ -332,25 +484,51 @@ const loop = new GameLoop(({ deltaMs }) => {
     }
     if (globalsReader) {
       lastGlobals = globalsReader.read();
+      if (lastGlobals.dynamicBlocksChanged && levelMap && tileAtlas) {
+        levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
+        clearDynamicBlocks?.();
+      }
+    }
+    if (bulletReader) {
+      currentBullets = bulletReader.read();
     }
     if (controls) {
       const { thrust, fire, rotate } = keyboard.state;
       controls.setThrust(thrust ? 32 : 0);
       controls.setFire(fire ? 1 : 0);
       if (rotate !== 0) {
-        controls.adjustAngle(rotate * 64);
+        controls.adjustAngle(-rotate * ANGLE_ADJUST_SPEED);
       }
     }
   }
 
   if (ctx) {
-    if (levelMap) {
-      drawLevelMap(ctx, levelMap, lastGlobals);
+    if (levelCanvas) {
+      lastViewport = drawWorldView(ctx, levelCanvas, lastGlobals);
     }
+
+    if (lastGlobals && lastViewport && lastShipState) {
+      drawShipSprite(ctx, lastGlobals, lastShipState, lastViewport);
+    } else if (lastShipState) {
+      drawShipFallback(ctx, lastShipState);
+    }
+    if (lastViewport && currentBullets.length) {
+      drawBullets(ctx, currentBullets, lastViewport);
+    }
+
+    if (levelMap) {
+      drawMiniMap(ctx, levelMap, lastGlobals);
+    }
+
     if (lastShipState) {
-      drawShip(ctx, lastShipState);
       drawDebugPanel(ctx, lastShipState, lastGlobals, keyboard.state);
     }
+
+    ctx.fillStyle = '#0ff';
+    ctx.font = '16px monospace';
+    ctx.fillText(`GravityWars Web bootstrap - Δ=${deltaMs.toFixed(2)}ms`, 20, 30);
+    ctx.fillStyle = '#0f9';
+    ctx.fillText(wasmStatus, 20, 60);
   }
 
   if (runtime) {
@@ -372,8 +550,15 @@ loadGravityWarsModule()
     globalsReader = createGlobalStateReader(module.runtime);
     levelMap = createLevelMap(module.runtime);
     controls = createControls(module.runtime);
+    clearDynamicBlocks = resolveZeroArgFunction(module.runtime, 'wasm_clear_dynamic_blocks');
+    bulletReader = createBulletReader(module.runtime);
     getExport('init_gw')();
     getExport('main_init')();
+    tileAtlas = createTileAtlas(module.runtime);
+    shipSprites = createShipSprites(module.runtime, SHIP_SPECIAL_BLOCK_IDS);
+    if (levelMap && tileAtlas) {
+      levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
+    }
     wasmStatus = 'WASM module ready.';
   })
   .catch((error) => {

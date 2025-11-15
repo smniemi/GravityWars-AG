@@ -42,7 +42,7 @@ export function createShipStateReader(runtime: GravityWarsRuntime) {
 }
 
 function resolveFunction(runtime: GravityWarsRuntime, name: string): PtrFn {
-  const module = runtime as Record<string, unknown>;
+  const module = runtime as unknown as Record<string, unknown>;
   const candidates = [name, `_${name}`];
 
   for (const candidate of candidates) {

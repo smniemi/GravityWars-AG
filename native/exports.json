@@ -8,9 +8,14 @@
   "_get_global_state",
   "_get_level_buffer",
   "_get_objects_buffer",
+  "_get_block_buffer",
+  "_get_palette_buffer",
+  "_get_ship_buffer",
+  "_get_bullets_buffer",
   "_get_scans_buffer",
   "_wasm_set_thrust",
   "_wasm_set_fire",
-  "_wasm_adjust_sa"
+  "_wasm_adjust_sa",
+  "_wasm_clear_dynamic_blocks"
 ]
 

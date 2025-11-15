@@ -201,11 +201,12 @@ void moveShip(void) {
 		if (blocktype==E_BONUS) {
 			level[lx+ly*20]=37+(rand()&1);
 			objects[lx+ly*20]=E_NULL;
-			
+			dynamicBlocksChanged = 1;
 		}
 		else if (blocktype==E_WBONUS)  {						
 			level[lx+ly*20]=204;
 			objects[lx+ly*20]=E_WATER;
+			dynamicBlocksChanged = 1;
 		}
 		
 		// When all keys are consumed, then put in startgate
@@ -213,6 +214,7 @@ void moveShip(void) {
 			NumKeys--;
 			level[stop_x+stop_y*20]=41;
 			objects[stop_x+stop_y*20]='x';
+			dynamicBlocksChanged = 1;
 			play_sound(kSound_Whoosh);
 		}
 		
