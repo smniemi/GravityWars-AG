@@ -5,6 +5,7 @@
 
 #include "memory.h"
 #include "GameFunctions.h"
+#include "config.h"
 
 __attribute__((constructor)) static void wasm_init_defaults(void) {
   gamename[0] = '\0';
@@ -122,5 +123,23 @@ void wasm_adjust_sa(int delta) {
 
 void wasm_clear_dynamic_blocks(void) {
   dynamicBlocksChanged = 0;
+}
+
+extern void main_end(void);
+extern void main_init(void);
+
+void wasm_advance_level(void) {
+  main_end();
+  levelnum++;
+  if (levelnum >= TOTAL_NUMBER_OF_LEVELS) {
+    levelnum = 0;
+  }
+  gameOver = FALSE;
+  shipThrust = 0;
+  shipIsFiring = 0;
+  main_init();
+  shipState.state = SHIP_STATE_APPEARING;
+  shipState.animationPhase = 5 << 2;
+  dynamicBlocksChanged = 1;
 }
 

@@ -48,7 +48,7 @@ export function createTileAtlas(runtime: GravityWarsRuntime): TileAtlas {
       imageData.data[dest] = scalePaletteComponent(r);
       imageData.data[dest + 1] = scalePaletteComponent(g);
       imageData.data[dest + 2] = scalePaletteComponent(b);
-      imageData.data[dest + 3] = 255;
+      imageData.data[dest + 3] = paletteIndex === 0 ? 0 : 255;
     }
 
     const sx = (blockIndex % ATLAS_COLUMNS) * BLOCK_SIZE;

@@ -30,8 +30,7 @@ void makehole(int x, int y, int type) {
 	for(yy=0; yy<=31; yy++) {
 		for(xx=0; xx<=31; xx++) {
 			// Should add code here to preserve walls, and to remove small door colors			
-//			tmpmix[d]=(holemask[d] /*&& ( tmpmix[d-1]==DOOR1COLOR || tmpmix[d+1]==DOOR1COLOR || tmpmix[d-32]==DOOR1COLOR || tmpmix[d+32]==DOOR1COLOR || tmpmix[d]==DOOR1COLOR)*/) ? gfx[s] : tmpmix[d]; // added constraint for only making holes in grid
-			tmpmix[d]=(holemask[d] /*&& ( tmpmix[d-1]==DOOR1COLOR || tmpmix[d+1]==DOOR1COLOR || tmpmix[d-32]==DOOR1COLOR || tmpmix[d+32]==DOOR1COLOR || tmpmix[d]==DOOR1COLOR)*/) ? 0 : tmpmix[d]; // added constraint for only making holes in grid
+			tmpmix[d]=(holemask[d] /*&& ( tmpmix[d-1]==DOOR1COLOR || tmpmix[d+1]==DOOR1COLOR || tmpmix[d-32]==DOOR1COLOR || tmpmix[d+32]==DOOR1COLOR || tmpmix[d]==DOOR1COLOR)*/) ? gfx[s] : tmpmix[d]; // added constraint for only making holes in grid
 			s++;
 			d++;
 		}

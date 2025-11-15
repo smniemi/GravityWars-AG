@@ -16,6 +16,7 @@
   "_wasm_set_thrust",
   "_wasm_set_fire",
   "_wasm_adjust_sa",
-  "_wasm_clear_dynamic_blocks"
+  "_wasm_clear_dynamic_blocks",
+  "_wasm_advance_level"
 ]
 
