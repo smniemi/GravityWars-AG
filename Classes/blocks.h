@@ -13,5 +13,7 @@
 void getbox(int orx, int ory, uchar *out);
 
 void changeblocks(int orx, int ory, uchar *out);
+
+void putship(int x, int y);
 				
 #endif

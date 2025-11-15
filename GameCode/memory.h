@@ -6,7 +6,7 @@
 extern int thrustSoundIsActive;
 
 extern double lastTime;
-int trainer;
+extern int trainer;
 
 extern int highScore[TOTAL_NUMBER_OF_LEVELS];
 extern float bestTime[TOTAL_NUMBER_OF_LEVELS];

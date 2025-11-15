@@ -21,4 +21,6 @@ void play_sound(int sound );
 
 double getCurrentTimeInMillis();
 
+void doPanic(void);
+
 #endif

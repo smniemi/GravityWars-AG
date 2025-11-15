@@ -1,0 +1,12 @@
+level 	"Close to impossible"
+author	"P. Johannesson"
+comment "Just keep on trying!" 
+
+time	199
+fuel 	99	
+
+	x	y	start	stop	frame	speed
+-----------------------------------------------------
+anim	6	12	984	1007	984	2
+anim	8	17	1200	1223	1200	2
+anim	13	37	984	1007	984	2

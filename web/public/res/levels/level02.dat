@@ -1,0 +1,9 @@
+level 	"Labyrinth of barrels"
+author	"P. Johannesson"
+comment "Careful with the barrels!" 
+
+time	199
+fuel 	99	
+
+	x	y	start	stop	frame	speed
+-----------------------------------------------------

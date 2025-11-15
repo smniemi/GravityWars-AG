@@ -9,7 +9,11 @@
 #include "moveship.h"
 #include "hole.h"
 
+#ifdef __EMSCRIPTEN__
+#include "sound_shim.h"
+#else
 #include "SoundEngine.h"
+#endif
 
 #include <unistd.h>
 

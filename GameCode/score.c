@@ -50,6 +50,7 @@ void putdigit(short adr, short num) {   /* adr=x+(y<<8) */
 void putscore(int nr, short y) {}
 
 void putscoreOnly(int nr, short y) {  /* Don't save the background */
+#ifndef __EMSCRIPTEN__
 	long adr;
 	short xx,yy;
 	uchar *dp;
@@ -67,6 +68,7 @@ void putscoreOnly(int nr, short y) {  /* Don't save the background */
 			}
 			adr+=384;
 		}
+#endif
 	scoreUpdated = 1;
 } 
 void updatescore() {           /* Terrible Routine... (optimal speed though) */

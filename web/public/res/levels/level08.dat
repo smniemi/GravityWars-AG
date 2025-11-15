@@ -1,0 +1,9 @@
+level 	"The Neverending Keys"
+author	"P. Fritzsche"
+comment "Be patient.." 
+
+time	199
+fuel 	99	
+
+	x	y	start	stop	frame	speed
+-----------------------------------------------------

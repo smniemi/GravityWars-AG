@@ -26,7 +26,9 @@ void watermask(short x, short y, uchar type, char *back_adr) {
 	m=(x^y);
 	
 	mix_adr=shipmix;
-	ship_adr=ship[1+(shipThrustFlag & 1)][sa[0] >> 9];
+	int thrustIndex = shipThrustActivated ? 2 : 1;
+	int frameIndex = (int)((sa >> 9) & 31);
+	ship_adr=ship[thrustIndex][frameIndex];
 	
 	n=0;
 	for(yy=0; yy<=31; yy++) { 
