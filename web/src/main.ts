@@ -253,6 +253,10 @@ function drawActionEffects(
   if (!atlas) {
     return;
   }
+  // Disable image smoothing to prevent artifacts
+  const prevSmoothing = context.imageSmoothingEnabled;
+  context.imageSmoothingEnabled = false;
+  
   actions.forEach((action) => {
     // action.frame is already the block ID (48-51 for spark, 113-117 for splash)
     // Clamp to [start, stop-1] to skip the last frame
@@ -264,11 +268,15 @@ function drawActionEffects(
     }
     const worldX = action.x - 16;
     const worldY = action.y - 16;
-    const screenX = (worldX - viewport.cameraX) * viewport.zoom;
-    const screenY = (worldY - viewport.cameraY) * viewport.zoom;
-    const size = SHIP_SPRITE_SIZE * viewport.zoom;
+    // Round coordinates to avoid sub-pixel rendering artifacts
+    const screenX = Math.round((worldX - viewport.cameraX) * viewport.zoom);
+    const screenY = Math.round((worldY - viewport.cameraY) * viewport.zoom);
+    const size = Math.round(SHIP_SPRITE_SIZE * viewport.zoom);
     context.drawImage(atlas.canvas, pos.sx, pos.sy, SHIP_SPRITE_SIZE, SHIP_SPRITE_SIZE, screenX, screenY, size, size);
   });
+  
+  // Restore previous smoothing setting
+  context.imageSmoothingEnabled = prevSmoothing;
 }
 
 function drawShipFallback(context: CanvasRenderingContext2D, ship: ShipState) {
