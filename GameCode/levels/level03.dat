@@ -1,0 +1,9 @@
+level 	"Water Loo"
+author	"P. Johannesson"
+comment "Water for the people.." 
+
+time	199
+fuel 	125	
+
+	x	y	start	stop	frame	speed
+-----------------------------------------------------

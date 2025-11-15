@@ -1,0 +1,2559 @@
+// !$*UTF8*$!
+{
+	1D3623240D0F684500981E51 /* GravityWarsAppDelegate.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{0, 426}";
+			sepNavWindowFrame = "{{203, -42}, {1350, 760}}";
+		};
+	};
+	1D3623250D0F684500981E51 /* GravityWarsAppDelegate.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 1680}}";
+			sepNavSelRange = "{2310, 0}";
+			sepNavVisRange = "{0, 974}";
+			sepNavWindowFrame = "{{31, 76}, {1350, 760}}";
+		};
+	};
+	1D6058900D05DD3D006BFB54 /* GravityWars */ = {
+		activeExec = 0;
+		executables = (
+			26541C080FAC93E1002CBFF7 /* GravityWars */,
+		);
+	};
+	261D8A04101B02A500D28123 /* moveship.c:52 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		functionName = "moveShip()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 52;
+		location = GravityWars;
+		modificationTime = 283622715.899375;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8B7B101B267D00D28123 /* GamePlay.m:328 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-viewLogic";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 328;
+		location = GravityWars;
+		modificationTime = 283622715.899394;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8B7F101B26CC00D28123 /* moveship.c:404 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		functionName = "moveShip()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 404;
+		location = GravityWars;
+		modificationTime = 283622715.8994139;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8B83101B271D00D28123 /* main.m:13 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 29B97316FDCFA39411CA2CEA /* main.m */;
+		functionName = "main()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 13;
+		location = GravityWars;
+		modificationTime = 283622715.899433;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8BCD101B2B7600D28123 /* GamePlay.m:378 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-viewLogic";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 378;
+		location = GravityWars;
+		modificationTime = 283622715.899454;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8BF3101B2ED600D28123 /* GamePlay.m:454 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-viewLogic";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 454;
+		location = GravityWars;
+		modificationTime = 283622715.899474;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8BF7101B2F2800D28123 /* GamePlay.m:464 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-viewLogic";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 464;
+		location = GravityWars;
+		modificationTime = 283622715.8994941;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8BFC101B2F7300D28123 /* GamePlay.m:1377 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-drawView";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 1377;
+		location = GravityWars;
+		modificationTime = 283622715.899513;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8C0C101B312900D28123 /* moveship.c:298 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		functionName = "moveShip()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 298;
+		location = GravityWars;
+		modificationTime = 283622715.899532;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8C0E101B312D00D28123 /* moveship.c:320 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		functionName = "moveShip()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 320;
+		location = GravityWars;
+		modificationTime = 283622715.899552;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8C18101B31E200D28123 /* moveship.c:272 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		functionName = "moveShip()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 272;
+		location = GravityWars;
+		modificationTime = 283622715.899571;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	261D8C1A101B31E600D28123 /* moveship.c:432 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		functionName = "moveShip()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 432;
+		location = GravityWars;
+		modificationTime = 283622715.899589;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26259E9C0FE0B65A0019FB0B /* GamePlay.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 1170}}";
+			sepNavSelRange = "{859, 0}";
+			sepNavVisRange = "{0, 736}";
+			sepNavWindowFrame = "{{53, 34}, {1350, 760}}";
+		};
+	};
+	26259E9D0FE0B65A0019FB0B /* GamePlay.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {2088, 22918}}";
+			sepNavSelRange = "{17414, 1031}";
+			sepNavVisRange = "{17386, 1395}";
+			sepNavWindowFrame = "{{44, 118}, {1350, 760}}";
+		};
+	};
+	2625A01C0FE15DCE0019FB0B /* GameView.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1629, 1274}}";
+			sepNavSelRange = "{615, 14}";
+			sepNavVisRange = "{320, 1588}";
+			sepNavWindowFrame = "{{61, 71}, {1350, 760}}";
+		};
+	};
+	2625A1CA0FE2F2600019FB0B /* GameIntro.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 9926}}";
+			sepNavSelRange = "{11432, 0}";
+			sepNavVisRange = "{12034, 853}";
+			sepNavWindowFrame = "{{84, 48}, {1350, 760}}";
+		};
+	};
+	2625A1CB0FE2F2600019FB0B /* GameIntro.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 1288}}";
+			sepNavSelRange = "{1265, 0}";
+			sepNavVisRange = "{739, 895}";
+			sepNavWindowFrame = "{{38, 92}, {1350, 760}}";
+		};
+	};
+	26340BAE10781EB6005EECA8 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7E5141014A59900D31863 /* SoundEngine.cpp */;
+		name = "SoundEngine.cpp: 777";
+		rLen = 0;
+		rLoc = 28746;
+		rType = 0;
+		vrLen = 1031;
+		vrLoc = 28452;
+	};
+	26340C781078E719005EECA8 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2691F44D0FBCB2CC006EB040 /* EAGLView.m */;
+		name = "EAGLView.m: 339";
+		rLen = 0;
+		rLoc = 11035;
+		rType = 0;
+		vrLen = 1235;
+		vrLoc = 22326;
+	};
+	26340C7A1078E719005EECA8 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 28FD14FC0DC6FC130079059D /* EAGLView.h */;
+		name = "EAGLView.h: 32";
+		rLen = 0;
+		rLoc = 703;
+		rType = 0;
+		vrLen = 1006;
+		vrLoc = 260;
+	};
+	26340C7B1078E719005EECA8 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623240D0F684500981E51 /* GravityWarsAppDelegate.h */;
+		name = "GravityWarsAppDelegate.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 426;
+		vrLoc = 0;
+	};
+	26340C7C1078E719005EECA8 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* GravityWarsAppDelegate.m */;
+		name = "GravityWarsAppDelegate.m: 90";
+		rLen = 0;
+		rLoc = 2310;
+		rType = 0;
+		vrLen = 974;
+		vrLoc = 0;
+	};
+	263F014B10389F510066DAB1 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265422F70FAF904B002CBFF7 /* hole.h */;
+		name = "hole.h: 15";
+		rLen = 0;
+		rLoc = 207;
+		rType = 0;
+		vrLen = 207;
+		vrLoc = 0;
+	};
+	263F015010389F510066DAB1 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7E150101371EE00D31863 /* level00.obj */;
+		name = "level00.obj: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 965;
+		vrLoc = 0;
+	};
+	263F015810389F510066DAB1 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 263F015910389F510066DAB1 /* level09_.dat */;
+		name = "level09_.dat: 9";
+		rLen = 0;
+		rLoc = 141;
+		rType = 0;
+		vrLen = 183;
+		vrLoc = 0;
+	};
+	263F015910389F510066DAB1 /* level09_.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level09_.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level09_.dat;
+		sourceTree = "<absolute>";
+	};
+	263F024C1038B4D50066DAB1 /* Beacon.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 545}}";
+			sepNavSelRange = "{215, 0}";
+			sepNavVisRange = "{0, 690}";
+		};
+	};
+	263F024D1038B4D50066DAB1 /* Beacon+FBConnect.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 602}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{0, 1455}";
+		};
+	};
+	263F025E1038B6370066DAB1 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 263F024D1038B4D50066DAB1 /* Beacon+FBConnect.h */;
+		name = "Beacon+FBConnect.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1455;
+		vrLoc = 0;
+	};
+	263F02E01038C3640066DAB1 /* control.c:56 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421DE0FAF5C20002CBFF7 /* control.c */;
+		functionName = "control()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 56;
+		location = GravityWars;
+		modificationTime = 283622715.899681;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	263F02E21038C3950066DAB1 /* control.c:69 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421DE0FAF5C20002CBFF7 /* control.c */;
+		functionName = "control()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 69;
+		modificationTime = 283622715.8996969;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	263F02EC1038C5930066DAB1 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265422F10FAF8FE5002CBFF7 /* moveship.h */;
+		name = "moveship.h: 17";
+		rLen = 0;
+		rLoc = 237;
+		rType = 0;
+		vrLen = 258;
+		vrLoc = 0;
+	};
+	263F0362103A9CA00066DAB1 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 263F024C1038B4D50066DAB1 /* Beacon.h */;
+		name = "Beacon.h: 11";
+		rLen = 0;
+		rLoc = 215;
+		rType = 0;
+		vrLen = 690;
+		vrLoc = 0;
+	};
+	2643454A1120697100FD98F9 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421DD0FAF5C20002CBFF7 /* config.h */;
+		rLen = 1;
+		rLoc = 21;
+		rType = 1;
+	};
+	264345501120B17200FD98F9 /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = /Users/sami/Documents/code/GravityWars/Info.plist;
+		rLen = 0;
+		rLoc = 9223372036854775807;
+	};
+	264345511120B17200FD98F9 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B4B75B102DBD1300D5BA2C /* GamePlay.m */;
+		name = "GamePlay.m: 656";
+		rLen = 0;
+		rLoc = 17924;
+		rType = 0;
+		vrLen = 902;
+		vrLoc = 21997;
+	};
+	264345521120B17200FD98F9 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26259E9C0FE0B65A0019FB0B /* GamePlay.h */;
+		name = "GamePlay.h: 49";
+		rLen = 0;
+		rLoc = 859;
+		rType = 0;
+		vrLen = 736;
+		vrLoc = 0;
+	};
+	264345531120B17200FD98F9 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2625A01C0FE15DCE0019FB0B /* GameView.h */;
+		name = "GameView.h: 35";
+		rLen = 14;
+		rLoc = 615;
+		rType = 0;
+		vrLen = 1588;
+		vrLoc = 320;
+	};
+	264345541120B17200FD98F9 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421DD0FAF5C20002CBFF7 /* config.h */;
+		name = "config.h: 15";
+		rLen = 0;
+		rLoc = 402;
+		rType = 0;
+		vrLen = 1198;
+		vrLoc = 0;
+	};
+	2647EC91106901C20033CABD /* PBXBookmark */ = {
+		isa = PBXBookmark;
+		fRef = 2647EC171068F61E0033CABD /* back_nebula.jpg */;
+	};
+	2647EC92106901C20033CABD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7E5151014A59900D31863 /* SoundEngine.h */;
+		name = "SoundEngine.h: 316";
+		rLen = 0;
+		rLoc = 14181;
+		rType = 0;
+		vrLen = 1614;
+		vrLoc = 13647;
+	};
+	2647EC94106901C20033CABD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421E80FAF5C20002CBFF7 /* memory.c */;
+		name = "memory.c: 22";
+		rLen = 29;
+		rLoc = 413;
+		rType = 0;
+		vrLen = 856;
+		vrLoc = 0;
+	};
+	2647EC95106901C20033CABD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2691E85E0FB36A73006EB040 /* memory.h */;
+		name = "memory.h: 6";
+		rLen = 0;
+		rLoc = 91;
+		rType = 0;
+		vrLen = 1011;
+		vrLoc = 0;
+	};
+	2647ECFD10690D000033CABD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26ED37CF0FE5A62E00461159 /* GravityWars101.c */;
+		name = "GravityWars101.c: 64";
+		rLen = 16;
+		rLoc = 1825;
+		rType = 0;
+		vrLen = 503;
+		vrLoc = 2045;
+	};
+	2647ECFF10690D000033CABD /* PBXBookmark */ = {
+		isa = PBXBookmark;
+		fRef = 2647EC151068F61E0033CABD /* back4_park.JPG */;
+	};
+	2647ED6C106913970033CABD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265422110FAF5D78002CBFF7 /* GameDefines.h */;
+		name = "GameDefines.h: 25";
+		rLen = 13;
+		rLoc = 398;
+		rType = 0;
+		vrLen = 764;
+		vrLoc = 21;
+	};
+	2647ED6D106913970033CABD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265422880FAF7EBC002CBFF7 /* GameFunctions.h */;
+		name = "GameFunctions.h: 18";
+		rLen = 0;
+		rLoc = 316;
+		rType = 0;
+		vrLen = 404;
+		vrLoc = 0;
+	};
+	2647EDB3106962540033CABD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265422AB0FAF80B3002CBFF7 /* blocks.h */;
+		name = "blocks.h: 13";
+		rLen = 0;
+		rLoc = 167;
+		rType = 0;
+		vrLen = 271;
+		vrLoc = 0;
+	};
+	2647EDB4106962540033CABD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421DB0FAF5C20002CBFF7 /* CHANGES */;
+		name = "CHANGES: 29";
+		rLen = 0;
+		rLoc = 1027;
+		rType = 0;
+		vrLen = 1190;
+		vrLoc = 821;
+	};
+	26541C080FAC93E1002CBFF7 /* GravityWars */ = {
+		isa = PBXExecutable;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		autoAttachOnCrash = 1;
+		breakpointsEnabled = 0;
+		configStateDict = {
+			"PBXLSLaunchAction-0" = {
+				PBXLSLaunchAction = 0;
+				PBXLSLaunchStyle = 4;
+				class = XCIndigoRunLaunchConfig;
+				commandLineArgs = (
+				);
+				displayName = "iPhone Simulator runner";
+				environment = {
+				};
+				identifier = com.apple.Xcode.launch.iPhoneSimulatorRunConfig;
+				remoteHostInfo = "";
+				startActionInfo = "";
+			};
+		};
+		customDataFormattersEnabled = 1;
+		dataTipCustomDataFormattersEnabled = 1;
+		dataTipShowTypeColumn = 1;
+		dataTipSortType = 0;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		dylibVariantSuffix = "";
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		executableSystemSymbolLevel = 0;
+		executableUserSymbolLevel = 0;
+		libgmallocEnabled = 0;
+		name = GravityWars;
+		savedGlobals = {
+		};
+		showTypeColumn = 0;
+		sourceDirectories = (
+		);
+		startupPath = "<<ProductDirectory>>";
+		variableFormatDictionary = {
+			$cpsr = 1;
+			$d0 = 1;
+			$d1 = 1;
+			$d10 = 1;
+			$d11 = 1;
+			$d12 = 1;
+			$d13 = 1;
+			$d14 = 1;
+			$d15 = 1;
+			$d2 = 1;
+			$d3 = 1;
+			$d4 = 1;
+			$d5 = 1;
+			$d6 = 1;
+			$d7 = 1;
+			$d8 = 1;
+			$d9 = 1;
+			$ip = 1;
+			$lr = 1;
+			$pc = 1;
+			$r0 = 1;
+			$r1 = 1;
+			$r2 = 1;
+			$r3 = 1;
+			$r4 = 1;
+			$r5 = 1;
+			$r6 = 1;
+			$r7 = 1;
+			$r8 = 1;
+			$r9 = 1;
+			$s0 = 1;
+			$s1 = 1;
+			$s10 = 1;
+			$s11 = 1;
+			$s12 = 1;
+			$s13 = 1;
+			$s14 = 1;
+			$s15 = 1;
+			$s16 = 1;
+			$s17 = 1;
+			$s18 = 1;
+			$s19 = 1;
+			$s2 = 1;
+			$s20 = 1;
+			$s21 = 1;
+			$s22 = 1;
+			$s23 = 1;
+			$s24 = 1;
+			$s25 = 1;
+			$s26 = 1;
+			$s27 = 1;
+			$s28 = 1;
+			$s29 = 1;
+			$s3 = 1;
+			$s30 = 1;
+			$s31 = 1;
+			$s4 = 1;
+			$s5 = 1;
+			$s6 = 1;
+			$s7 = 1;
+			$s8 = 1;
+			$s9 = 1;
+			$sl = 1;
+			$sp = 1;
+		};
+	};
+	26541C200FAC93F0002CBFF7 /* Source Control */ = {
+		isa = PBXSourceControlManager;
+		fallbackIsa = XCSourceControlManager;
+		isSCMEnabled = 0;
+		scmConfiguration = {
+			repositoryNamesForRoots = {
+				"" = "";
+			};
+		};
+	};
+	26541C210FAC93F0002CBFF7 /* Code sense */ = {
+		isa = PBXCodeSenseManager;
+		indexTemplatePath = "";
+	};
+	26541C350FAC9E1E002CBFF7 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26541C360FAC9E1E002CBFF7 /* gltexture.c */;
+		name = "gltexture.c: 53";
+		rLen = 2;
+		rLoc = 1338;
+		rType = 0;
+		vrLen = 1056;
+		vrLoc = 1146;
+	};
+	26541C360FAC9E1E002CBFF7 /* gltexture.c */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.c;
+		name = gltexture.c;
+		path = /Users/sami/Downloads/gltexture/gltexture.c;
+		sourceTree = "<absolute>";
+	};
+	2654202D0FADC49F002CBFF7 /* GLView.m */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.objc;
+		name = GLView.m;
+		path = "/Users/sami/Downloads/Empty OpenGL ES Application/Classes/GLView.m";
+		sourceTree = "<absolute>";
+	};
+	2654202F0FADC49F002CBFF7 /* GLViewController.m */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.objc;
+		name = GLViewController.m;
+		path = "/Users/sami/Downloads/Empty OpenGL ES Application/Classes/GLViewController.m";
+		sourceTree = "<absolute>";
+	};
+	265420340FADC4F4002CBFF7 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265420350FADC4F4002CBFF7 /* OpenGLCommon.h */;
+		name = "OpenGLCommon.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 911;
+		vrLoc = 0;
+	};
+	265420350FADC4F4002CBFF7 /* OpenGLCommon.h */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.h;
+		name = OpenGLCommon.h;
+		path = "/Users/sami/Downloads/Empty OpenGL ES Application/Classes/OpenGLCommon.h";
+		sourceTree = "<absolute>";
+	};
+	265420360FADC4F4002CBFF7 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265420370FADC4F4002CBFF7 /* ConstantsAndMacros.h */;
+		name = "ConstantsAndMacros.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 493;
+		vrLoc = 0;
+	};
+	265420370FADC4F4002CBFF7 /* ConstantsAndMacros.h */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.h;
+		name = ConstantsAndMacros.h;
+		path = "/Users/sami/Downloads/Empty OpenGL ES Application/Classes/ConstantsAndMacros.h";
+		sourceTree = "<absolute>";
+	};
+	265420470FADC56B002CBFF7 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2654202F0FADC49F002CBFF7 /* GLViewController.m */;
+		name = "GLViewController.m: 24";
+		rLen = 0;
+		rLoc = 519;
+		rType = 0;
+		vrLen = 969;
+		vrLoc = 48;
+	};
+	265420570FADC640002CBFF7 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2654202D0FADC49F002CBFF7 /* GLView.m */;
+		name = "GLView.m: 14";
+		rLen = 0;
+		rLoc = 308;
+		rType = 0;
+		vrLen = 715;
+		vrLoc = 0;
+	};
+	265421D80FAF5C20002CBFF7 /* animate.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 784}}";
+			sepNavSelRange = "{493, 0}";
+			sepNavVisRange = "{363, 768}";
+			sepNavWindowFrame = "{{61, 71}, {1350, 760}}";
+		};
+	};
+	265421D90FAF5C20002CBFF7 /* blocks.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 4130}}";
+			sepNavSelRange = "{443, 0}";
+			sepNavVisRange = "{0, 1104}";
+			sepNavWindowFrame = "{{126, 79}, {1350, 760}}";
+		};
+	};
+	265421DB0FAF5C20002CBFF7 /* CHANGES */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 1708}}";
+			sepNavSelRange = "{1027, 0}";
+			sepNavVisRange = "{821, 1190}";
+			sepNavWindowFrame = "{{15, 113}, {1350, 760}}";
+		};
+	};
+	265421DD0FAF5C20002CBFF7 /* config.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 1209}}";
+			sepNavSelRange = "{617, 0}";
+			sepNavVisRange = "{308, 553}";
+			sepNavWindowFrame = "{{61, 71}, {1350, 760}}";
+		};
+	};
+	265421DE0FAF5C20002CBFF7 /* control.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 3248}}";
+			sepNavSelRange = "{1307, 4}";
+			sepNavVisRange = "{1133, 337}";
+			sepNavWindowFrame = "{{63, 75}, {1350, 760}}";
+		};
+	};
+	265421DF0FAF5C20002CBFF7 /* GravityWars101.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 3696}}";
+			sepNavSelRange = "{4172, 0}";
+			sepNavVisRange = "{2239, 515}";
+			sepNavWindowFrame = "{{216, 91}, {1350, 760}}";
+		};
+	};
+	265421E00FAF5C20002CBFF7 /* hole.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1506, 686}}";
+			sepNavSelRange = "{588, 6}";
+			sepNavVisRange = "{506, 750}";
+			sepNavWindowFrame = "{{38, 92}, {1350, 760}}";
+		};
+	};
+	265421E10FAF5C20002CBFF7 /* includes.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{77, 0}";
+			sepNavVisRange = "{0, 100}";
+		};
+	};
+	265421E20FAF5C20002CBFF7 /* init.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 7852}}";
+			sepNavSelRange = "{556, 0}";
+			sepNavVisRange = "{484, 266}";
+			sepNavWindowFrame = "{{61, 71}, {1350, 760}}";
+		};
+	};
+	265421E80FAF5C20002CBFF7 /* memory.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 3864}}";
+			sepNavSelRange = "{413, 29}";
+			sepNavVisRange = "{0, 856}";
+			sepNavWindowFrame = "{{15, 113}, {1350, 760}}";
+		};
+	};
+	265421E90FAF5C20002CBFF7 /* memory.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 1540}}";
+			sepNavSelRange = "{1645, 7}";
+			sepNavVisRange = "{1130, 1002}";
+			sepNavWindowFrame = "{{84, 50}, {1350, 760}}";
+		};
+	};
+	265421EB0FAF5C20002CBFF7 /* moveship.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 6160}}";
+			sepNavSelRange = "{3385, 0}";
+			sepNavVisRange = "{3310, 360}";
+			sepNavWindowFrame = "{{228, 46}, {1350, 760}}";
+		};
+	};
+	265421ED0FAF5C20002CBFF7 /* README */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 5278}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{1606, 1640}";
+		};
+	};
+	265421EE0FAF5C20002CBFF7 /* README.announce */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 910}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{0, 1446}";
+		};
+	};
+	265422110FAF5D78002CBFF7 /* GameDefines.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 574}}";
+			sepNavSelRange = "{398, 13}";
+			sepNavVisRange = "{21, 764}";
+			sepNavWindowFrame = "{{182, -149}, {1350, 760}}";
+		};
+	};
+	265422880FAF7EBC002CBFF7 /* GameFunctions.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 545}}";
+			sepNavSelRange = "{316, 0}";
+			sepNavVisRange = "{0, 404}";
+			sepNavWindowFrame = "{{15, 113}, {1350, 760}}";
+		};
+	};
+	265422890FAF7EBC002CBFF7 /* GameFunctions.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1405, 871}}";
+			sepNavSelRange = "{1061, 205}";
+			sepNavVisRange = "{319, 947}";
+			sepNavWindowFrame = "{{15, 113}, {1350, 760}}";
+		};
+	};
+	265422AB0FAF80B3002CBFF7 /* blocks.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{167, 0}";
+			sepNavVisRange = "{0, 271}";
+		};
+	};
+	265422CE0FAF8A35002CBFF7 /* animate.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{193, 0}";
+			sepNavVisRange = "{0, 193}";
+		};
+	};
+	265422D70FAF8B96002CBFF7 /* init.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{179, 0}";
+			sepNavVisRange = "{0, 281}";
+			sepNavWindowFrame = "{{84, 50}, {1350, 760}}";
+		};
+	};
+	265422F10FAF8FE5002CBFF7 /* moveship.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 545}}";
+			sepNavSelRange = "{237, 0}";
+			sepNavVisRange = "{0, 258}";
+		};
+	};
+	265422F70FAF904B002CBFF7 /* hole.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{207, 0}";
+			sepNavVisRange = "{0, 207}";
+		};
+	};
+	265423040FAF9255002CBFF7 /* control.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{193, 0}";
+			sepNavVisRange = "{0, 193}";
+			sepNavWindowFrame = "{{15, 113}, {1350, 760}}";
+		};
+	};
+	2654242D0FAF9445002CBFF7 /* GravityWars101.c:76 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421DF0FAF5C20002CBFF7 /* GravityWars101.c */;
+		functionName = "main_gw()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 76;
+		location = GravityWars;
+		modificationTime = 283622715.899008;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	266FF9BC1055A66F0002FBF4 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2691E25C0FB231FF006EB040 /* level01 */;
+		name = "level01: 3";
+		rLen = 1;
+		rLoc = 5473;
+		rType = 0;
+		vrLen = 6304;
+		vrLoc = 0;
+	};
+	266FF9BE1055A66F0002FBF4 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26BC97DF10040AFC00DCA033 /* level01.obj */;
+		name = "level01.obj: 41";
+		rLen = 0;
+		rLoc = 1000;
+		rType = 0;
+		vrLen = 987;
+		vrLoc = 192;
+	};
+	266FF9DD1055A6A70002FBF4 /* cocoslive.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{0, 491}";
+		};
+	};
+	266FF9DE1055A6A70002FBF4 /* cocoslive.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{0, 651}";
+		};
+	};
+	266FF9DF1055A6A70002FBF4 /* ScoreServerRequest.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 1218}}";
+			sepNavSelRange = "{2474, 73}";
+			sepNavVisRange = "{1013, 1540}";
+		};
+	};
+	266FF9E01055A6A70002FBF4 /* ScoreServerRequest.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 2604}}";
+			sepNavSelRange = "{3015, 7}";
+			sepNavVisRange = "{2670, 1303}";
+		};
+	};
+	266FF9E11055A6A70002FBF4 /* ScoreServerPost.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 4396}}";
+			sepNavSelRange = "{9279, 0}";
+			sepNavVisRange = "{8190, 1094}";
+		};
+	};
+	266FF9E21055A6A70002FBF4 /* ScoreServerPost.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 1736}}";
+			sepNavSelRange = "{2661, 3}";
+			sepNavVisRange = "{2043, 1278}";
+		};
+	};
+	266FFA031055A7620002FBF4 /* ccMacros.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 658}}";
+			sepNavSelRange = "{370, 0}";
+			sepNavVisRange = "{114, 1101}";
+		};
+	};
+	266FFA061055AA5B0002FBF4 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 266FFA031055A7620002FBF4 /* ccMacros.h */;
+		name = "ccMacros.h: 13";
+		rLen = 0;
+		rLoc = 370;
+		rType = 0;
+		vrLen = 1101;
+		vrLoc = 114;
+	};
+	266FFA611055B3320002FBF4 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 266FF9DE1055A6A70002FBF4 /* cocoslive.h */;
+		name = "cocoslive.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 651;
+		vrLoc = 0;
+	};
+	266FFA621055B3320002FBF4 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 266FF9DD1055A6A70002FBF4 /* cocoslive.m */;
+		name = "cocoslive.m: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 491;
+		vrLoc = 0;
+	};
+	266FFA631055B3320002FBF4 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 266FF9E21055A6A70002FBF4 /* ScoreServerPost.h */;
+		name = "ScoreServerPost.h: 105";
+		rLen = 3;
+		rLoc = 2661;
+		rType = 0;
+		vrLen = 1278;
+		vrLoc = 2043;
+	};
+	266FFA6E1055B3320002FBF4 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265422D70FAF8B96002CBFF7 /* init.h */;
+		name = "init.h: 13";
+		rLen = 0;
+		rLoc = 179;
+		rType = 0;
+		vrLen = 281;
+		vrLoc = 0;
+	};
+	2674788F10602ED2004D9DFF /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		name = "moveship.c: 381";
+		rLen = 0;
+		rLoc = 7871;
+		rType = 0;
+		vrLen = 956;
+		vrLoc = 7371;
+	};
+	2674789410602ED2004D9DFF /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421DE0FAF5C20002CBFF7 /* control.c */;
+		name = "control.c: 58";
+		rLen = 0;
+		rLoc = 1351;
+		rType = 0;
+		vrLen = 885;
+		vrLoc = 806;
+	};
+	267478B410602FE2004D9DFF /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7E14E101371EE00D31863 /* level00.dat */;
+		name = "level00.dat: 6";
+		rLen = 0;
+		rLoc = 103;
+		rType = 0;
+		vrLen = 190;
+		vrLoc = 0;
+	};
+	267478B510602FE2004D9DFF /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26BC98E71004D2FF00DCA033 /* level01.dat */;
+		name = "level01.dat: 6";
+		rLen = 0;
+		rLoc = 96;
+		rType = 0;
+		vrLen = 181;
+		vrLoc = 0;
+	};
+	26837B83104A771800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421E20FAF5C20002CBFF7 /* init.c */;
+		name = "init.c: 57";
+		rLen = 8;
+		rLoc = 1017;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 785;
+	};
+	26837D1F104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7DBC510102EAE00D31863 /* level02.dat */;
+		name = "level02.dat: 2";
+		rLen = 0;
+		rLoc = 40;
+		rType = 0;
+		vrLen = 194;
+		vrLoc = 0;
+	};
+	26837D20104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EAA41015B1C200D31863 /* level03.dat */;
+		name = "level03.dat: 2";
+		rLen = 0;
+		rLoc = 29;
+		rType = 0;
+		vrLen = 181;
+		vrLoc = 0;
+	};
+	26837D21104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EAA61015B1C200D31863 /* level04.dat */;
+		name = "level04.dat: 2";
+		rLen = 0;
+		rLoc = 44;
+		rType = 0;
+		vrLen = 194;
+		vrLoc = 0;
+	};
+	26837D22104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EAA81015B1C200D31863 /* level05.dat */;
+		name = "level05.dat: 2";
+		rLen = 0;
+		rLoc = 29;
+		rType = 0;
+		vrLen = 184;
+		vrLoc = 0;
+	};
+	26837D23104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EAAA1015B1C200D31863 /* level06.dat */;
+		name = "level06.dat: 2";
+		rLen = 0;
+		rLoc = 39;
+		rType = 0;
+		vrLen = 196;
+		vrLoc = 0;
+	};
+	26837D24104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2691E2750FB23200006EB040 /* level07.dat */;
+		name = "level07.dat: 2";
+		rLen = 0;
+		rLoc = 32;
+		rType = 0;
+		vrLen = 174;
+		vrLoc = 0;
+	};
+	26837D25104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EAAD1015B1C200D31863 /* level08.dat */;
+		name = "level08.dat: 2";
+		rLen = 0;
+		rLoc = 40;
+		rType = 0;
+		vrLen = 179;
+		vrLoc = 0;
+	};
+	26837D26104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EAAF1015B1C200D31863 /* level09.dat */;
+		name = "level09.dat: 2";
+		rLen = 0;
+		rLoc = 30;
+		rType = 0;
+		vrLen = 171;
+		vrLoc = 0;
+	};
+	26837D27104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EAB11015B1C200D31863 /* level10.dat */;
+		name = "level10.dat: 16";
+		rLen = 0;
+		rLoc = 358;
+		rType = 0;
+		vrLen = 454;
+		vrLoc = 0;
+	};
+	26837D28104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EAB31015B1C200D31863 /* level11.dat */;
+		name = "level11.dat: 15";
+		rLen = 0;
+		rLoc = 309;
+		rType = 0;
+		vrLen = 382;
+		vrLoc = 0;
+	};
+	26837D29104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EAB51015B1C200D31863 /* level12.dat */;
+		name = "level12.dat: 10";
+		rLen = 0;
+		rLoc = 183;
+		rType = 0;
+		vrLen = 183;
+		vrLoc = 0;
+	};
+	26837D2A104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EAB71015B1C200D31863 /* level13.dat */;
+		name = "level13.dat: 5";
+		rLen = 0;
+		rLoc = 91;
+		rType = 0;
+		vrLen = 187;
+		vrLoc = 0;
+	};
+	26837D2B104AA9B800E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EABD1015B1C200D31863 /* level14.dat */;
+		name = "level14.dat: 2";
+		rLen = 0;
+		rLoc = 39;
+		rType = 0;
+		vrLen = 266;
+		vrLoc = 0;
+	};
+	26837E1B104AEC4900E2A437 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B4B2D8102B808100D5BA2C /* tutorial.h */;
+		name = "tutorial.h: 51";
+		rLen = 0;
+		rLoc = 1349;
+		rType = 0;
+		vrLen = 1101;
+		vrLoc = 126;
+	};
+	26855F1A1056EE9A003A60D8 /* GamePlay.m:1586 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-scorePostFail:";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 1586;
+		location = GravityWars;
+		modificationTime = 283622715.899714;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26855F5C1056F91C003A60D8 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 266FF9E11055A6A70002FBF4 /* ScoreServerPost.m */;
+		name = "ScoreServerPost.m: 316";
+		rLen = 0;
+		rLoc = 9279;
+		rType = 0;
+		vrLen = 1094;
+		vrLoc = 8190;
+	};
+	26855F6F1056FC97003A60D8 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7E1871013A85C00D31863 /* ScoreServerRequest.h */;
+		name = "ScoreServerRequest.h: 84";
+		rLen = 73;
+		rLoc = 2474;
+		rType = 0;
+		vrLen = 1495;
+		vrLoc = 1058;
+	};
+	26855F701056FC97003A60D8 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 266FF9E01055A6A70002FBF4 /* ScoreServerRequest.m */;
+		name = "ScoreServerRequest.m: 115";
+		rLen = 7;
+		rLoc = 3015;
+		rType = 0;
+		vrLen = 1303;
+		vrLoc = 2670;
+	};
+	268560471057158D003A60D8 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 18";
+		rLen = 0;
+		rLoc = 355;
+		rType = 0;
+		vrLen = 355;
+		vrLoc = 0;
+	};
+	2691E25C0FB231FF006EB040 /* level01 */ = {
+		isa = PBXFileReference;
+		fileEncoding = 4;
+		lastKnownFileType = text;
+		name = level01;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level01;
+		sourceTree = "<absolute>";
+	};
+	2691E2750FB23200006EB040 /* level07.dat */ = {
+		isa = PBXFileReference;
+		fileEncoding = 4;
+		lastKnownFileType = text;
+		name = level07.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level07.dat;
+		sourceTree = "<absolute>";
+	};
+	2691E2770FB23200006EB040 /* level07.obj */ = {
+		isa = PBXFileReference;
+		fileEncoding = 4;
+		lastKnownFileType = text;
+		name = level07.obj;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level07.obj;
+		sourceTree = "<absolute>";
+	};
+	2691E3E00FB2324E006EB040 /* init.c:85 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421E20FAF5C20002CBFF7 /* init.c */;
+		functionName = "loaddata()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 85;
+		location = GravityWars;
+		modificationTime = 283622715.89905;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	2691E3FA0FB23287006EB040 /* init.c:69 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421E20FAF5C20002CBFF7 /* init.c */;
+		functionName = "loaddata()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 69;
+		location = GravityWars;
+		modificationTime = 283622715.899072;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	2691E41B0FB2B4F3006EB040 /* init.c:311 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421E20FAF5C20002CBFF7 /* init.c */;
+		functionName = "loadGfx()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 311;
+		location = GravityWars;
+		modificationTime = 283622715.899092;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	2691E5FE0FB31FAF006EB040 /* EAGLView.m:121 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 28FD14FD0DC6FC130079059D /* EAGLView.m */;
+		functionName = "-initWithCoder:";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 121;
+		location = GravityWars;
+		modificationTime = 283622715.89911;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	2691E85E0FB36A73006EB040 /* memory.h */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.h;
+		name = memory.h;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/memory.h;
+		sourceTree = "<absolute>";
+	};
+	2691E8760FB36B42006EB040 /* blocks.c */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.c;
+		name = blocks.c;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/blocks.c;
+		sourceTree = "<absolute>";
+	};
+	2691F44D0FBCB2CC006EB040 /* EAGLView.m */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.objc;
+		name = EAGLView.m;
+		path = /Users/sami/Documents/code/GravityWars/Classes/EAGLView.m;
+		sourceTree = "<group>";
+	};
+	2691F5F30FBEEB57006EB040 /* EAGLView.m:379 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 28FD14FD0DC6FC130079059D /* EAGLView.m */;
+		functionName = "-drawView";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 379;
+		modificationTime = 283622715.8991309;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B4B124102B629900D5BA2C /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265423040FAF9255002CBFF7 /* control.h */;
+		name = "control.h: 15";
+		rLen = 0;
+		rLoc = 193;
+		rType = 0;
+		vrLen = 193;
+		vrLoc = 0;
+	};
+	26B4B1AB102B654E00D5BA2C /* GamePlay.m:49 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-updateScoreTextures";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 49;
+		location = GravityWars;
+		modificationTime = 283622715.899609;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B4B2D8102B808100D5BA2C /* tutorial.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 35714}}";
+			sepNavSelRange = "{1349, 0}";
+			sepNavVisRange = "{126, 1101}";
+		};
+	};
+	26B4B504102CC9A200D5BA2C /* GameIntro.m:415 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 2625A1CA0FE2F2600019FB0B /* GameIntro.m */;
+		functionName = "-drawView";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 415;
+		location = GravityWars;
+		modificationTime = 283622715.899627;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B4B6BA102DA72000D5BA2C /* level04.obj */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level04.obj;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level04.obj;
+		sourceTree = "<absolute>";
+	};
+	26B4B6D0102DB33700D5BA2C /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B4B6D1102DB33700D5BA2C /* level05.obj */;
+		name = "level05.obj: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 994;
+		vrLoc = 96;
+	};
+	26B4B6D1102DB33700D5BA2C /* level05.obj */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level05.obj;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level05.obj;
+		sourceTree = "<absolute>";
+	};
+	26B4B6D2102DB33700D5BA2C /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B4B6D3102DB33700D5BA2C /* level06 */;
+		name = "level06: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 6004;
+		vrLoc = 0;
+	};
+	26B4B6D3102DB33700D5BA2C /* level06 */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level06;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level06;
+		sourceTree = "<absolute>";
+	};
+	26B4B6D4102DB33700D5BA2C /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B4B6D5102DB33700D5BA2C /* level10.obj */;
+		name = "level10.obj: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 965;
+		vrLoc = 0;
+	};
+	26B4B6D5102DB33700D5BA2C /* level10.obj */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level10.obj;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level10.obj;
+		sourceTree = "<absolute>";
+	};
+	26B4B6D6102DB33700D5BA2C /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7E6321014B47D00D31863 /* level00 */;
+		name = "level00: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 6304;
+		vrLoc = 0;
+	};
+	26B4B6DB102DB33700D5BA2C /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7E155101371EE00D31863 /* level02 */;
+		name = "level02: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 6304;
+		vrLoc = 0;
+	};
+	26B4B6DC102DB33700D5BA2C /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B4B6BA102DA72000D5BA2C /* level04.obj */;
+		name = "level04.obj: 50";
+		rLen = 0;
+		rLoc = 1179;
+		rType = 0;
+		vrLen = 968;
+		vrLoc = 72;
+	};
+	26B4B72E102DB69000D5BA2C /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265422CE0FAF8A35002CBFF7 /* animate.h */;
+		name = "animate.h: 15";
+		rLen = 0;
+		rLoc = 193;
+		rType = 0;
+		vrLen = 193;
+		vrLoc = 0;
+	};
+	26B4B75B102DBD1300D5BA2C /* GamePlay.m */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.objc;
+		name = GamePlay.m;
+		path = /Users/sami/Documents/code/GravityWars/Classes/GamePlay.m;
+		sourceTree = "<group>";
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1139, 21411}}";
+			sepNavSelRange = "{17924, 0}";
+			sepNavVisRange = "{21997, 902}";
+		};
+	};
+	26B4B75D102DBD1300D5BA2C /* GamePlay.m:1317 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-drawViewMessages";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 1317;
+		location = GravityWars;
+		modificationTime = 283622715.899647;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B4B81A102FF85F00D5BA2C /* moveship.c:247 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		functionName = "moveShip()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 247;
+		location = GravityWars;
+		modificationTime = 283622715.8996639;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B7DBC510102EAE00D31863 /* level02.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level02.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level02.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7DD3E10104EB100D31863 /* init.c:117 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421E20FAF5C20002CBFF7 /* init.c */;
+		functionName = "loaddata()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 117;
+		location = GravityWars;
+		modificationTime = 283622715.899201;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B7DF981011BEA300D31863 /* EAGLView.m:376 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 28FD14FD0DC6FC130079059D /* EAGLView.m */;
+		functionName = "-drawView";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 376;
+		location = GravityWars;
+		modificationTime = 283622715.89922;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B7DFBB10123A8C00D31863 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2691E2770FB23200006EB040 /* level07.obj */;
+		name = "level07.obj: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1034;
+		vrLoc = 144;
+	};
+	26B7DFBF10123A8C00D31863 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7DFC010123A8C00D31863 /* level08.obj */;
+		name = "level08.obj: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1015;
+		vrLoc = 0;
+	};
+	26B7DFC010123A8C00D31863 /* level08.obj */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level08.obj;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level08.obj;
+		sourceTree = "<absolute>";
+	};
+	26B7E04F1012FBCF00D31863 /* GamePlay.m:393 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-viewLogic";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 393;
+		location = GravityWars;
+		modificationTime = 283622715.8992389;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B7E0531012FBEB00D31863 /* GamePlay.m:411 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-viewLogic";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 411;
+		location = GravityWars;
+		modificationTime = 283622715.89926;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B7E076101367F400D31863 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421E10FAF5C20002CBFF7 /* includes.h */;
+		name = "includes.h: 5";
+		rLen = 0;
+		rLoc = 77;
+		rType = 0;
+		vrLen = 100;
+		vrLoc = 0;
+	};
+	26B7E14E101371EE00D31863 /* level00.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level00.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level00.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7E150101371EE00D31863 /* level00.obj */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level00.obj;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level00.obj;
+		sourceTree = "<absolute>";
+	};
+	26B7E155101371EE00D31863 /* level02 */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level02;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level02;
+		sourceTree = "<absolute>";
+	};
+	26B7E158101371EE00D31863 /* level02.obj */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level02.obj;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level02.obj;
+		sourceTree = "<absolute>";
+	};
+	26B7E1871013A85C00D31863 /* ScoreServerRequest.h */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.h;
+		name = ScoreServerRequest.h;
+		path = "/Users/sami/Downloads/cocos2d-iphone-0.7.3/cocoslive/ScoreServerRequest.h";
+		sourceTree = "<absolute>";
+	};
+	26B7E5141014A59900D31863 /* SoundEngine.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1379, 21350}}";
+			sepNavSelRange = "{25932, 0}";
+			sepNavVisRange = "{25326, 1539}";
+		};
+	};
+	26B7E5151014A59900D31863 /* SoundEngine.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 4844}}";
+			sepNavSelRange = "{8302, 31}";
+			sepNavVisRange = "{7939, 812}";
+		};
+	};
+	26B7E6321014B47D00D31863 /* level00 */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level00;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level00;
+		sourceTree = "<absolute>";
+	};
+	26B7E6631014B9FD00D31863 /* moveship.c:52 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		functionName = "moveShip()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 52;
+		location = GravityWars;
+		modificationTime = 283622715.899279;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B7E70A10150C0300D31863 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421E00FAF5C20002CBFF7 /* hole.c */;
+		name = "hole.c: 41";
+		rLen = 12;
+		rLoc = 1275;
+		rType = 0;
+		vrLen = 1104;
+		vrLoc = 207;
+	};
+	26B7E98710152EBB00D31863 /* GamePlay.m:60 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-updateScoreTextures";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 60;
+		location = GravityWars;
+		modificationTime = 283622715.899298;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26B7EA781015B1C200D31863 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7E158101371EE00D31863 /* level02.obj */;
+		name = "level02.obj: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1015;
+		vrLoc = 0;
+	};
+	26B7EA791015B1C200D31863 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26B7EA7A1015B1C200D31863 /* level03 */;
+		name = "level03: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 6304;
+		vrLoc = 0;
+	};
+	26B7EA7A1015B1C200D31863 /* level03 */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level03;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level03;
+		sourceTree = "<absolute>";
+	};
+	26B7EAA41015B1C200D31863 /* level03.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level03.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level03.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7EAA61015B1C200D31863 /* level04.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level04.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level04.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7EAA81015B1C200D31863 /* level05.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level05.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level05.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7EAAA1015B1C200D31863 /* level06.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level06.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level06.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7EAAD1015B1C200D31863 /* level08.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level08.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level08.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7EAAF1015B1C200D31863 /* level09.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level09.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level09.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7EAB11015B1C200D31863 /* level10.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level10.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level10.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7EAB31015B1C200D31863 /* level11.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level11.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level11.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7EAB51015B1C200D31863 /* level12.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level12.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level12.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7EAB71015B1C200D31863 /* level13.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level13.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level13.dat;
+		sourceTree = "<absolute>";
+	};
+	26B7EABD1015B1C200D31863 /* level14.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level14.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level14.dat;
+		sourceTree = "<absolute>";
+	};
+	26BC97DF10040AFC00DCA033 /* level01.obj */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level01.obj;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level01.obj;
+		sourceTree = "<absolute>";
+	};
+	26BC983C1004B54300DCA033 /* GamePlay.m:1224 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 26259E9D0FE0B65A0019FB0B /* GamePlay.m */;
+		functionName = "-drawView";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 1224;
+		location = GravityWars;
+		modificationTime = 283622715.899185;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26BC98E71004D2FF00DCA033 /* level01.dat */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level01.dat;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level01.dat;
+		sourceTree = "<absolute>";
+	};
+	26CADC7510829417005CABB4 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 32CA4F630368D1EE00C91783 /* GravityWars_Prefix.pch */;
+		name = "GravityWars_Prefix.pch: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 183;
+		vrLoc = 0;
+	};
+	26CC01771076683A002AF9DD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26E56ABC0FCDCD4C00C3349E /* Texture2D.h */;
+		name = "Texture2D.h: 42";
+		rLen = 0;
+		rLoc = 2340;
+		rType = 0;
+		vrLen = 1489;
+		vrLoc = 3288;
+	};
+	26CC01781076683A002AF9DD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26E56ABB0FCDCD4C00C3349E /* Texture2D.m */;
+		name = "Texture2D.m: 197";
+		rLen = 27;
+		rLoc = 6532;
+		rType = 0;
+		vrLen = 1311;
+		vrLoc = 5509;
+	};
+	26CCFF811074BFB2002AF9DD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2625A1CA0FE2F2600019FB0B /* GameIntro.m */;
+		name = "GameIntro.m: 333";
+		rLen = 0;
+		rLoc = 11432;
+		rType = 0;
+		vrLen = 853;
+		vrLoc = 12034;
+	};
+	26CCFF821074BFB2002AF9DD /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2625A1CB0FE2F2600019FB0B /* GameIntro.h */;
+		name = "GameIntro.h: 66";
+		rLen = 0;
+		rLoc = 1265;
+		rType = 0;
+		vrLen = 895;
+		vrLoc = 739;
+	};
+	26E56ABB0FCDCD4C00C3349E /* Texture2D.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1074, 4690}}";
+			sepNavSelRange = "{6532, 27}";
+			sepNavVisRange = "{5509, 1311}";
+		};
+	};
+	26E56ABC0FCDCD4C00C3349E /* Texture2D.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1272, 1624}}";
+			sepNavSelRange = "{2340, 0}";
+			sepNavVisRange = "{3288, 1489}";
+		};
+	};
+	26EA4AF30FC692A00066A21E /* memory.c:238 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421E80FAF5C20002CBFF7 /* memory.c */;
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 238;
+		modificationTime = 283622730.330196;
+		originalNumberOfMultipleMatches = 1;
+		state = 1;
+	};
+	26EB9A7D101DD040003BCF1D /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421EE0FAF5C20002CBFF7 /* README.announce */;
+		name = "README.announce: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1446;
+		vrLoc = 0;
+	};
+	26ED37CF0FE5A62E00461159 /* GravityWars101.c */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.c;
+		name = GravityWars101.c;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/GravityWars101.c;
+		sourceTree = "<group>";
+	};
+	26ED37D10FE5A62E00461159 /* GravityWars101.c:69 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421DF0FAF5C20002CBFF7 /* GravityWars101.c */;
+		functionName = "init_gw()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 69;
+		location = GravityWars;
+		modificationTime = 283622715.899169;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26F9B465101ADDED0002A8B5 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421D80FAF5C20002CBFF7 /* animate.c */;
+		name = "animate.c: 20";
+		rLen = 0;
+		rLoc = 493;
+		rType = 0;
+		vrLen = 768;
+		vrLoc = 363;
+	};
+	26F9B466101ADDED0002A8B5 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 2691E8760FB36B42006EB040 /* blocks.c */;
+		name = "blocks.c: 13";
+		rLen = 0;
+		rLoc = 229;
+		rType = 0;
+		vrLen = 769;
+		vrLoc = 0;
+	};
+	26F9B46A101ADDED0002A8B5 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265421ED0FAF5C20002CBFF7 /* README */;
+		name = "README: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1640;
+		vrLoc = 1606;
+	};
+	26F9B4E7101AE7D60002A8B5 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 26F9B4E8101AE7D60002A8B5 /* level03.obj */;
+		name = "level03.obj: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1015;
+		vrLoc = 0;
+	};
+	26F9B4E8101AE7D60002A8B5 /* level03.obj */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text;
+		name = level03.obj;
+		path = /Users/sami/Documents/code/GravityWars/GameCode/levels/level03.obj;
+		sourceTree = "<absolute>";
+	};
+	26F9B5B2101AF85E0002A8B5 /* control.c:53 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421DE0FAF5C20002CBFF7 /* control.c */;
+		functionName = "control()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 53;
+		location = GravityWars;
+		modificationTime = 283622715.899318;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26F9B5E9101AFD720002A8B5 /* moveship.c:52 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		functionName = "moveShip()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 52;
+		location = GravityWars;
+		modificationTime = 283622715.899336;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26F9B5ED101AFE0A0002A8B5 /* moveship.c:52 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 265421EB0FAF5C20002CBFF7 /* moveship.c */;
+		functionName = "moveShip()";
+		hitCount = 0;
+		ignoreCount = 0;
+		lineNumber = 52;
+		location = GravityWars;
+		modificationTime = 283622715.899357;
+		originalNumberOfMultipleMatches = 0;
+		state = 2;
+	};
+	26FE6AD710E780D200307155 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 265422890FAF7EBC002CBFF7 /* GameFunctions.m */;
+		name = "GameFunctions.m: 56";
+		rLen = 205;
+		rLoc = 1061;
+		rType = 0;
+		vrLen = 947;
+		vrLoc = 319;
+	};
+	28FD14FC0DC6FC130079059D /* EAGLView.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 924}}";
+			sepNavSelRange = "{703, 0}";
+			sepNavVisRange = "{260, 1006}";
+			sepNavWindowFrame = "{{44, 72}, {1350, 760}}";
+		};
+	};
+	28FD14FD0DC6FC130079059D /* EAGLView.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1044, 10654}}";
+			sepNavSelRange = "{7430, 0}";
+			sepNavVisRange = "{6763, 1536}";
+			sepNavWindowFrame = "{{15, 110}, {1350, 760}}";
+		};
+	};
+	29B97313FDCFA39411CA2CEA /* Project object */ = {
+		activeBuildConfigurationName = Debug;
+		activeExecutable = 26541C080FAC93E1002CBFF7 /* GravityWars */;
+		activeSDKPreference = iphonesimulator3.0;
+		activeTarget = 1D6058900D05DD3D006BFB54 /* GravityWars */;
+		addToTargets = (
+			1D6058900D05DD3D006BFB54 /* GravityWars */,
+		);
+		breakpoints = (
+			2654242D0FAF9445002CBFF7 /* GravityWars101.c:76 */,
+			2691E3E00FB2324E006EB040 /* init.c:85 */,
+			2691E3FA0FB23287006EB040 /* init.c:69 */,
+			2691E41B0FB2B4F3006EB040 /* init.c:311 */,
+			2691E5FE0FB31FAF006EB040 /* EAGLView.m:121 */,
+			2691F5F30FBEEB57006EB040 /* EAGLView.m:379 */,
+			26EA4AF30FC692A00066A21E /* memory.c:238 */,
+			26ED37D10FE5A62E00461159 /* GravityWars101.c:69 */,
+			26BC983C1004B54300DCA033 /* GamePlay.m:1224 */,
+			26B7DD3E10104EB100D31863 /* init.c:117 */,
+			26B7DF981011BEA300D31863 /* EAGLView.m:376 */,
+			26B7E04F1012FBCF00D31863 /* GamePlay.m:393 */,
+			26B7E0531012FBEB00D31863 /* GamePlay.m:411 */,
+			26B7E6631014B9FD00D31863 /* moveship.c:52 */,
+			26B7E98710152EBB00D31863 /* GamePlay.m:60 */,
+			26F9B5B2101AF85E0002A8B5 /* control.c:53 */,
+			26F9B5E9101AFD720002A8B5 /* moveship.c:52 */,
+			26F9B5ED101AFE0A0002A8B5 /* moveship.c:52 */,
+			261D8A04101B02A500D28123 /* moveship.c:52 */,
+			261D8B7B101B267D00D28123 /* GamePlay.m:328 */,
+			261D8B7F101B26CC00D28123 /* moveship.c:404 */,
+			261D8B83101B271D00D28123 /* main.m:13 */,
+			261D8BCD101B2B7600D28123 /* GamePlay.m:378 */,
+			261D8BF3101B2ED600D28123 /* GamePlay.m:454 */,
+			261D8BF7101B2F2800D28123 /* GamePlay.m:464 */,
+			261D8BFC101B2F7300D28123 /* GamePlay.m:1377 */,
+			261D8C0C101B312900D28123 /* moveship.c:298 */,
+			261D8C0E101B312D00D28123 /* moveship.c:320 */,
+			261D8C18101B31E200D28123 /* moveship.c:272 */,
+			261D8C1A101B31E600D28123 /* moveship.c:432 */,
+			26B4B1AB102B654E00D5BA2C /* GamePlay.m:49 */,
+			26B4B504102CC9A200D5BA2C /* GameIntro.m:415 */,
+			26B4B75D102DBD1300D5BA2C /* GamePlay.m:1317 */,
+			26B4B81A102FF85F00D5BA2C /* moveship.c:247 */,
+			263F02E01038C3640066DAB1 /* control.c:56 */,
+			263F02E21038C3950066DAB1 /* control.c:69 */,
+			26855F1A1056EE9A003A60D8 /* GamePlay.m:1586 */,
+		);
+		codeSenseManager = 26541C210FAC93F0002CBFF7 /* Code sense */;
+		executables = (
+			26541C080FAC93E1002CBFF7 /* GravityWars */,
+		);
+		expressions = (
+			"sa[0]",
+			levelnum,
+			"([ array count ]-1)/2",
+			TOTAL_NUMBER_OF_LEVELS,
+		);
+		perUserDictionary = {
+			PBXConfiguration.PBXFileTableDataSource3.PBXErrorsWarningsDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXErrorsWarningsDataSource_LocationID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					300,
+					714,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXErrorsWarningsDataSource_TypeID,
+					PBXErrorsWarningsDataSource_MessageID,
+					PBXErrorsWarningsDataSource_LocationID,
+				);
+			};
+			PBXConfiguration.PBXFileTableDataSource3.PBXExecutablesDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXExecutablesDataSource_NameID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					22,
+					300,
+					712,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXExecutablesDataSource_ActiveFlagID,
+					PBXExecutablesDataSource_NameID,
+					PBXExecutablesDataSource_CommentsID,
+				);
+			};
+			PBXConfiguration.PBXFileTableDataSource3.PBXFileTableDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					824,
+					20,
+					48,
+					43,
+					43,
+					20,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+					PBXFileDataSource_Target_ColumnID,
+				);
+			};
+			PBXConfiguration.PBXFileTableDataSource3.PBXSymbolsDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXSymbolsDataSource_SymbolNameID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					16,
+					200,
+					50,
+					764,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXSymbolsDataSource_SymbolTypeIconID,
+					PBXSymbolsDataSource_SymbolNameID,
+					PBXSymbolsDataSource_SymbolTypeID,
+					PBXSymbolsDataSource_ReferenceNameID,
+				);
+			};
+			PBXConfiguration.PBXTargetDataSource.PBXTargetDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					784,
+					60,
+					20,
+					48,
+					43,
+					43,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXTargetDataSource_PrimaryAttribute,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+				);
+			};
+			PBXPerProjectTemplateStateSaveDate = 287317512;
+			PBXWorkspaceStateSaveDate = 287317512;
+		};
+		perUserProjectItems = {
+			26340BAE10781EB6005EECA8 /* PBXTextBookmark */ = 26340BAE10781EB6005EECA8 /* PBXTextBookmark */;
+			26340C781078E719005EECA8 /* PBXTextBookmark */ = 26340C781078E719005EECA8 /* PBXTextBookmark */;
+			26340C7A1078E719005EECA8 /* PBXTextBookmark */ = 26340C7A1078E719005EECA8 /* PBXTextBookmark */;
+			26340C7B1078E719005EECA8 /* PBXTextBookmark */ = 26340C7B1078E719005EECA8 /* PBXTextBookmark */;
+			26340C7C1078E719005EECA8 /* PBXTextBookmark */ = 26340C7C1078E719005EECA8 /* PBXTextBookmark */;
+			263F014B10389F510066DAB1 /* PBXTextBookmark */ = 263F014B10389F510066DAB1 /* PBXTextBookmark */;
+			263F015010389F510066DAB1 /* PBXTextBookmark */ = 263F015010389F510066DAB1 /* PBXTextBookmark */;
+			263F015810389F510066DAB1 /* PBXTextBookmark */ = 263F015810389F510066DAB1 /* PBXTextBookmark */;
+			263F025E1038B6370066DAB1 /* PBXTextBookmark */ = 263F025E1038B6370066DAB1 /* PBXTextBookmark */;
+			263F02EC1038C5930066DAB1 /* PBXTextBookmark */ = 263F02EC1038C5930066DAB1 /* PBXTextBookmark */;
+			263F0362103A9CA00066DAB1 /* PBXTextBookmark */ = 263F0362103A9CA00066DAB1 /* PBXTextBookmark */;
+			2643454A1120697100FD98F9 /* PBXTextBookmark */ = 2643454A1120697100FD98F9 /* PBXTextBookmark */;
+			264345501120B17200FD98F9 /* PlistBookmark */ = 264345501120B17200FD98F9 /* PlistBookmark */;
+			264345511120B17200FD98F9 /* PBXTextBookmark */ = 264345511120B17200FD98F9 /* PBXTextBookmark */;
+			264345521120B17200FD98F9 /* PBXTextBookmark */ = 264345521120B17200FD98F9 /* PBXTextBookmark */;
+			264345531120B17200FD98F9 /* PBXTextBookmark */ = 264345531120B17200FD98F9 /* PBXTextBookmark */;
+			264345541120B17200FD98F9 /* PBXTextBookmark */ = 264345541120B17200FD98F9 /* PBXTextBookmark */;
+			2647EC91106901C20033CABD /* PBXBookmark */ = 2647EC91106901C20033CABD /* PBXBookmark */;
+			2647EC92106901C20033CABD /* PBXTextBookmark */ = 2647EC92106901C20033CABD /* PBXTextBookmark */;
+			2647EC94106901C20033CABD /* PBXTextBookmark */ = 2647EC94106901C20033CABD /* PBXTextBookmark */;
+			2647EC95106901C20033CABD /* PBXTextBookmark */ = 2647EC95106901C20033CABD /* PBXTextBookmark */;
+			2647ECFD10690D000033CABD /* PBXTextBookmark */ = 2647ECFD10690D000033CABD /* PBXTextBookmark */;
+			2647ECFF10690D000033CABD /* PBXBookmark */ = 2647ECFF10690D000033CABD /* PBXBookmark */;
+			2647ED6C106913970033CABD /* PBXTextBookmark */ = 2647ED6C106913970033CABD /* PBXTextBookmark */;
+			2647ED6D106913970033CABD /* PBXTextBookmark */ = 2647ED6D106913970033CABD /* PBXTextBookmark */;
+			2647EDB3106962540033CABD /* PBXTextBookmark */ = 2647EDB3106962540033CABD /* PBXTextBookmark */;
+			2647EDB4106962540033CABD /* PBXTextBookmark */ = 2647EDB4106962540033CABD /* PBXTextBookmark */;
+			26541C350FAC9E1E002CBFF7 /* PBXTextBookmark */ = 26541C350FAC9E1E002CBFF7 /* PBXTextBookmark */;
+			265420340FADC4F4002CBFF7 /* PBXTextBookmark */ = 265420340FADC4F4002CBFF7 /* PBXTextBookmark */;
+			265420360FADC4F4002CBFF7 /* PBXTextBookmark */ = 265420360FADC4F4002CBFF7 /* PBXTextBookmark */;
+			265420470FADC56B002CBFF7 /* PBXTextBookmark */ = 265420470FADC56B002CBFF7 /* PBXTextBookmark */;
+			265420570FADC640002CBFF7 /* PBXTextBookmark */ = 265420570FADC640002CBFF7 /* PBXTextBookmark */;
+			266FF9BC1055A66F0002FBF4 /* PBXTextBookmark */ = 266FF9BC1055A66F0002FBF4 /* PBXTextBookmark */;
+			266FF9BE1055A66F0002FBF4 /* PBXTextBookmark */ = 266FF9BE1055A66F0002FBF4 /* PBXTextBookmark */;
+			266FFA061055AA5B0002FBF4 /* PBXTextBookmark */ = 266FFA061055AA5B0002FBF4 /* PBXTextBookmark */;
+			266FFA611055B3320002FBF4 /* PBXTextBookmark */ = 266FFA611055B3320002FBF4 /* PBXTextBookmark */;
+			266FFA621055B3320002FBF4 /* PBXTextBookmark */ = 266FFA621055B3320002FBF4 /* PBXTextBookmark */;
+			266FFA631055B3320002FBF4 /* PBXTextBookmark */ = 266FFA631055B3320002FBF4 /* PBXTextBookmark */;
+			266FFA6E1055B3320002FBF4 /* PBXTextBookmark */ = 266FFA6E1055B3320002FBF4 /* PBXTextBookmark */;
+			2674788F10602ED2004D9DFF /* PBXTextBookmark */ = 2674788F10602ED2004D9DFF /* PBXTextBookmark */;
+			2674789410602ED2004D9DFF /* PBXTextBookmark */ = 2674789410602ED2004D9DFF /* PBXTextBookmark */;
+			267478B410602FE2004D9DFF /* PBXTextBookmark */ = 267478B410602FE2004D9DFF /* PBXTextBookmark */;
+			267478B510602FE2004D9DFF /* PBXTextBookmark */ = 267478B510602FE2004D9DFF /* PBXTextBookmark */;
+			26837B83104A771800E2A437 /* PBXTextBookmark */ = 26837B83104A771800E2A437 /* PBXTextBookmark */;
+			26837D1F104AA9B800E2A437 /* PBXTextBookmark */ = 26837D1F104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D20104AA9B800E2A437 /* PBXTextBookmark */ = 26837D20104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D21104AA9B800E2A437 /* PBXTextBookmark */ = 26837D21104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D22104AA9B800E2A437 /* PBXTextBookmark */ = 26837D22104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D23104AA9B800E2A437 /* PBXTextBookmark */ = 26837D23104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D24104AA9B800E2A437 /* PBXTextBookmark */ = 26837D24104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D25104AA9B800E2A437 /* PBXTextBookmark */ = 26837D25104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D26104AA9B800E2A437 /* PBXTextBookmark */ = 26837D26104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D27104AA9B800E2A437 /* PBXTextBookmark */ = 26837D27104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D28104AA9B800E2A437 /* PBXTextBookmark */ = 26837D28104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D29104AA9B800E2A437 /* PBXTextBookmark */ = 26837D29104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D2A104AA9B800E2A437 /* PBXTextBookmark */ = 26837D2A104AA9B800E2A437 /* PBXTextBookmark */;
+			26837D2B104AA9B800E2A437 /* PBXTextBookmark */ = 26837D2B104AA9B800E2A437 /* PBXTextBookmark */;
+			26837E1B104AEC4900E2A437 /* PBXTextBookmark */ = 26837E1B104AEC4900E2A437 /* PBXTextBookmark */;
+			26855F5C1056F91C003A60D8 /* PBXTextBookmark */ = 26855F5C1056F91C003A60D8 /* PBXTextBookmark */;
+			26855F6F1056FC97003A60D8 /* PBXTextBookmark */ = 26855F6F1056FC97003A60D8 /* PBXTextBookmark */;
+			26855F701056FC97003A60D8 /* PBXTextBookmark */ = 26855F701056FC97003A60D8 /* PBXTextBookmark */;
+			268560471057158D003A60D8 /* PBXTextBookmark */ = 268560471057158D003A60D8 /* PBXTextBookmark */;
+			26B4B124102B629900D5BA2C /* PBXTextBookmark */ = 26B4B124102B629900D5BA2C /* PBXTextBookmark */;
+			26B4B6D0102DB33700D5BA2C /* PBXTextBookmark */ = 26B4B6D0102DB33700D5BA2C /* PBXTextBookmark */;
+			26B4B6D2102DB33700D5BA2C /* PBXTextBookmark */ = 26B4B6D2102DB33700D5BA2C /* PBXTextBookmark */;
+			26B4B6D4102DB33700D5BA2C /* PBXTextBookmark */ = 26B4B6D4102DB33700D5BA2C /* PBXTextBookmark */;
+			26B4B6D6102DB33700D5BA2C /* PBXTextBookmark */ = 26B4B6D6102DB33700D5BA2C /* PBXTextBookmark */;
+			26B4B6DB102DB33700D5BA2C /* PBXTextBookmark */ = 26B4B6DB102DB33700D5BA2C /* PBXTextBookmark */;
+			26B4B6DC102DB33700D5BA2C /* PBXTextBookmark */ = 26B4B6DC102DB33700D5BA2C /* PBXTextBookmark */;
+			26B4B72E102DB69000D5BA2C /* PBXTextBookmark */ = 26B4B72E102DB69000D5BA2C /* PBXTextBookmark */;
+			26B7DFBB10123A8C00D31863 /* PBXTextBookmark */ = 26B7DFBB10123A8C00D31863 /* PBXTextBookmark */;
+			26B7DFBF10123A8C00D31863 /* PBXTextBookmark */ = 26B7DFBF10123A8C00D31863 /* PBXTextBookmark */;
+			26B7E076101367F400D31863 /* PBXTextBookmark */ = 26B7E076101367F400D31863 /* PBXTextBookmark */;
+			26B7E70A10150C0300D31863 /* PBXTextBookmark */ = 26B7E70A10150C0300D31863 /* PBXTextBookmark */;
+			26B7EA781015B1C200D31863 /* PBXTextBookmark */ = 26B7EA781015B1C200D31863 /* PBXTextBookmark */;
+			26B7EA791015B1C200D31863 /* PBXTextBookmark */ = 26B7EA791015B1C200D31863 /* PBXTextBookmark */;
+			26CADC7510829417005CABB4 /* PBXTextBookmark */ = 26CADC7510829417005CABB4 /* PBXTextBookmark */;
+			26CC01771076683A002AF9DD /* PBXTextBookmark */ = 26CC01771076683A002AF9DD /* PBXTextBookmark */;
+			26CC01781076683A002AF9DD /* PBXTextBookmark */ = 26CC01781076683A002AF9DD /* PBXTextBookmark */;
+			26CCFF811074BFB2002AF9DD /* PBXTextBookmark */ = 26CCFF811074BFB2002AF9DD /* PBXTextBookmark */;
+			26CCFF821074BFB2002AF9DD /* PBXTextBookmark */ = 26CCFF821074BFB2002AF9DD /* PBXTextBookmark */;
+			26EB9A7D101DD040003BCF1D /* PBXTextBookmark */ = 26EB9A7D101DD040003BCF1D /* PBXTextBookmark */;
+			26F9B465101ADDED0002A8B5 /* PBXTextBookmark */ = 26F9B465101ADDED0002A8B5 /* PBXTextBookmark */;
+			26F9B466101ADDED0002A8B5 /* PBXTextBookmark */ = 26F9B466101ADDED0002A8B5 /* PBXTextBookmark */;
+			26F9B46A101ADDED0002A8B5 /* PBXTextBookmark */ = 26F9B46A101ADDED0002A8B5 /* PBXTextBookmark */;
+			26F9B4E7101AE7D60002A8B5 /* PBXTextBookmark */ = 26F9B4E7101AE7D60002A8B5 /* PBXTextBookmark */;
+			26FE6AD710E780D200307155 /* PBXTextBookmark */ = 26FE6AD710E780D200307155 /* PBXTextBookmark */;
+		};
+		sourceControlManager = 26541C200FAC93F0002CBFF7 /* Source Control */;
+		userBuildSettings = {
+		};
+	};
+	29B97316FDCFA39411CA2CEA /* main.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{355, 0}";
+			sepNavVisRange = "{0, 355}";
+			sepNavWindowFrame = "{{15, 113}, {1350, 760}}";
+		};
+	};
+	32CA4F630368D1EE00C91783 /* GravityWars_Prefix.pch */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1002, 568}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{0, 183}";
+			sepNavWindowFrame = "{{61, 71}, {1350, 760}}";
+		};
+	};
+	8D1107310486CEB800E47090 /* Info.plist */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1191, 568}}";
+			sepNavSelRange = "{399, 0}";
+			sepNavVisRect = "{{0, 0}, {1191, 568}}";
+			sepNavWindowFrame = "{{38, 92}, {1350, 760}}";
+		};
+	};
+}

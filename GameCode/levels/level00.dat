@@ -1,0 +1,9 @@
+level 	"Introduction"
+author	"Sami Niemi"
+comment "This is to get you started!" 
+
+time    1999	
+fuel 	999	
+
+	x	y	start	stop	frame	speed
+-----------------------------------------------------
