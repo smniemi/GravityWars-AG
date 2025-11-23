@@ -9,7 +9,8 @@ import { loadGravityWarsModule } from './core/wasmBridge.js';
 import type { GravityWarsRuntime } from './core/wasmBridge.js';
 import { sendDebugSnapshot } from './debugger.js';
 import { createTileAtlas, type TileAtlas } from './render/tileAtlas.js';
-import { buildLevelCanvas, drawWorldView, type ViewportInfo } from './render/worldCanvas.js';
+import { SoundManager } from './core/sound.js';
+import { buildLevelCanvas, drawWorldView, updateLevelCanvas, type ViewportInfo } from './render/worldCanvas.js';
 import { createShipSprites, type ShipSprites, SHIP_SPRITE_SIZE } from './render/shipSprites.js';
 
 const root = document.getElementById('app') ?? createRoot();
@@ -42,6 +43,7 @@ let lastGlobals: GlobalState | null = null;
 let levelMap: LevelMap | null = null;
 let tileAtlas: TileAtlas | null = null;
 let levelCanvas: HTMLCanvasElement | null = null;
+let lastTiles: Uint8Array | null = null;
 let lastViewport: ViewportInfo | null = null;
 let shipSprites: ShipSprites | null = null;
 let clearDynamicBlocks: (() => void) | null = null;
@@ -52,6 +54,7 @@ let actionReader: ReturnType<typeof createActionReader> | null = null;
 let actionStates: ActionState[] = [];
 let levelAdvancePending = false;
 const keyboard = createKeyboardInput();
+const soundManager = new SoundManager();
 let controls: ControlFns | null = null;
 type ExportName = 'init_gw' | 'main_init' | 'control' | 'animate';
 
@@ -256,7 +259,7 @@ function drawActionEffects(
   // Disable image smoothing to prevent artifacts
   const prevSmoothing = context.imageSmoothingEnabled;
   context.imageSmoothingEnabled = false;
-  
+
   actions.forEach((action) => {
     // action.frame is already the block ID (48-51 for spark, 113-117 for splash)
     // Clamp to [start, stop-1] to skip the last frame
@@ -274,7 +277,7 @@ function drawActionEffects(
     const size = Math.round(SHIP_SPRITE_SIZE * viewport.zoom);
     context.drawImage(atlas.canvas, pos.sx, pos.sy, SHIP_SPRITE_SIZE, SHIP_SPRITE_SIZE, screenX, screenY, size, size);
   });
-  
+
   // Restore previous smoothing setting
   context.imageSmoothingEnabled = prevSmoothing;
 }
@@ -540,6 +543,7 @@ function handleLevelTransition() {
     }
     currentBullets = [];
     levelAdvancePending = false;
+    lastTiles = null;
   }
 }
 
@@ -587,6 +591,7 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
         clearDynamicBlocks?.();
       }
+      soundManager.update(lastGlobals, actionStates, levelMap);
     }
     if (bulletReader) {
       currentBullets = bulletReader.read().filter((bullet) => bullet.active);
@@ -601,7 +606,7 @@ const loop = new GameLoop(({ deltaMs }) => {
       if (rotate !== 0) {
         controls.adjustAngle(-rotate * ANGLE_ADJUST_SPEED);
       }
-      
+
       // Handle level changes
       if (nextLevel) {
         controls.nextLevel();
@@ -616,7 +621,7 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
         currentBullets = [];
       }
-      
+
       if (prevLevel) {
         controls.prevLevel();
         keyboard.state.prevLevel = false;
@@ -633,6 +638,26 @@ const loop = new GameLoop(({ deltaMs }) => {
     }
 
     handleLevelTransition();
+
+    // Check for tile updates (animations)
+    if (levelMap && levelCanvas && tileAtlas) {
+      if (!lastTiles || lastTiles.length !== levelMap.tiles.length) {
+        lastTiles = new Uint8Array(levelMap.tiles);
+      } else {
+        const dirtyIndices: number[] = [];
+        // Scan for changes
+        for (let i = 0; i < levelMap.tiles.length; i++) {
+          if (levelMap.tiles[i] !== lastTiles[i]) {
+            dirtyIndices.push(i);
+            lastTiles[i] = levelMap.tiles[i];
+          }
+        }
+
+        if (dirtyIndices.length > 0) {
+          updateLevelCanvas(levelCanvas, levelMap, tileAtlas, dirtyIndices);
+        }
+      }
+    }
   }
 
   if (ctx) {

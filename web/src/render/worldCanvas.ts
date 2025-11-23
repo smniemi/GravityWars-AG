@@ -46,6 +46,42 @@ export function buildLevelCanvas(map: LevelMap, atlas: TileAtlas): HTMLCanvasEle
   return canvas;
 }
 
+export function updateLevelCanvas(
+  canvas: HTMLCanvasElement,
+  map: LevelMap,
+  atlas: TileAtlas,
+  dirtyIndices: number[]
+): void {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  ctx.imageSmoothingEnabled = false;
+
+  for (const idx of dirtyIndices) {
+    const x = idx % map.width;
+    const y = Math.floor(idx / map.width);
+    const blockId = map.tiles[idx];
+    const pos = atlas.positions[blockId] ?? atlas.positions[0];
+
+    // Clear the tile area first (in case of transparency, though blocks are usually opaque)
+    ctx.clearRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+    if (pos) {
+      ctx.drawImage(
+        atlas.canvas,
+        pos.sx,
+        pos.sy,
+        TILE_SIZE,
+        TILE_SIZE,
+        x * TILE_SIZE,
+        y * TILE_SIZE,
+        TILE_SIZE,
+        TILE_SIZE
+      );
+    }
+  }
+}
+
 export function drawWorldView(
   ctx: CanvasRenderingContext2D,
   levelCanvas: HTMLCanvasElement,
