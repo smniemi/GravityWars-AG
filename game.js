@@ -5,6 +5,15 @@ const ctx = canvas.getContext('2d');
 const GRAVITY_CONSTANT = 0.5;
 const MAX_HEALTH = 100;
 const PROJECTILE_DAMAGE = 25;
+const MIN_PLANETS = 3;
+const MAX_PLANETS = 5;
+const MAX_TRAIL_LENGTH = 30;
+const PLAYER_COLLISION_RADIUS = 15;
+const PROJECTILE_RADIUS = 5;
+const STAR_COUNT = 100;
+const STAR_X_SEED = 123.45;
+const STAR_Y_SEED = 234.56;
+const TARGET_FRAME_TIME = 16.67; // 60 FPS
 
 // Game State
 let gameState = {
@@ -61,7 +70,7 @@ function initGame() {
 // Generate random planets
 function generatePlanets() {
     const planets = [];
-    const numPlanets = 3 + Math.floor(Math.random() * 3); // 3-5 planets
+    const numPlanets = MIN_PLANETS + Math.floor(Math.random() * (MAX_PLANETS - MIN_PLANETS + 1));
     
     for (let i = 0; i < numPlanets; i++) {
         planets.push({
@@ -118,10 +127,10 @@ function fire() {
     
     gameState.projectile = {
         x: player.x,
-        y: player.y - 15,
+        y: player.y - PLAYER_COLLISION_RADIUS,
         vx: Math.cos(angleRad) * velocity * direction,
         vy: -Math.sin(angleRad) * velocity,
-        radius: 5,
+        radius: PROJECTILE_RADIUS,
         trail: []
     };
     
@@ -136,7 +145,7 @@ function updatePhysics(deltaTime) {
     
     // Add current position to trail
     proj.trail.push({ x: proj.x, y: proj.y });
-    if (proj.trail.length > 30) proj.trail.shift();
+    if (proj.trail.length > MAX_TRAIL_LENGTH) proj.trail.shift();
     
     // Apply gravity from planets
     gameState.planets.forEach(planet => {
@@ -162,7 +171,7 @@ function updatePhysics(deltaTime) {
         const dy = proj.y - player.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
-        if (dist < 15 + proj.radius) {
+        if (dist < PLAYER_COLLISION_RADIUS + proj.radius) {
             // Hit!
             if (index + 1 !== gameState.currentPlayer) {
                 player.health -= PROJECTILE_DAMAGE;
@@ -214,9 +223,9 @@ function render() {
     
     // Draw stars
     ctx.fillStyle = 'white';
-    for (let i = 0; i < 100; i++) {
-        const x = (i * 123.45) % canvas.width;
-        const y = (i * 234.56) % canvas.height;
+    for (let i = 0; i < STAR_COUNT; i++) {
+        const x = (i * STAR_X_SEED) % canvas.width;
+        const y = (i * STAR_Y_SEED) % canvas.height;
         ctx.fillRect(x, y, 1, 1);
     }
     
@@ -300,7 +309,7 @@ function render() {
 let lastTime = Date.now();
 function gameLoop() {
     const currentTime = Date.now();
-    const deltaTime = Math.min((currentTime - lastTime) / 16.67, 2); // Cap at 2x speed
+    const deltaTime = Math.min((currentTime - lastTime) / TARGET_FRAME_TIME, 2); // Cap at 2x speed
     lastTime = currentTime;
     
     updatePhysics(deltaTime);
