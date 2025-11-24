@@ -1,40 +1,4 @@
 import { ShaderProgram } from './shader.js';
-const VERTEX_SHADER = `#version 300 es
-layout(location = 0) in vec2 a_position;
-layout(location = 1) in vec2 a_texCoord;
-
-uniform vec2 u_resolution;
-uniform vec2 u_camera;
-uniform float u_zoom;
-
-out vec2 v_texCoord;
-
-void main() {
-  vec2 position = (a_position - u_camera) * u_zoom;
-  vec2 zeroToOne = position / u_resolution;
-  vec2 zeroToTwo = zeroToOne * 2.0;
-  vec2 clipSpace = zeroToTwo - 1.0;
-
-  gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-  v_texCoord = a_texCoord;
-}
-`;
-const FRAGMENT_SHADER = `#version 300 es
-precision mediump float;
-
-in vec2 v_texCoord;
-uniform sampler2D u_texture;
-uniform vec4 u_color;
-
-out vec4 outColor;
-
-void main() {
-  vec4 texColor = texture(u_texture, v_texCoord);
-  outColor = texColor * u_color;
-  // Simple alpha test if needed, though most tiles are opaque
-  if (outColor.a < 0.1) discard;
-}
-`;
 const TILE_SIZE = 32;
 export class TilemapRenderer {
     gl;
@@ -46,17 +10,49 @@ export class TilemapRenderer {
     mapHeight = 0;
     constructor(gl) {
         this.gl = gl;
-        this.shader = new ShaderProgram(gl, VERTEX_SHADER, FRAGMENT_SHADER);
-        const vao = gl.createVertexArray();
-        if (!vao)
-            throw new Error('Failed to create VAO');
-        this.vao = vao;
-        gl.bindVertexArray(vao);
-        const buffer = gl.createBuffer();
-        if (!buffer)
-            throw new Error('Failed to create buffer');
-        this.vertexBuffer = buffer;
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        // Simple shader for tiles
+        const vsSource = `#version 300 es
+        in vec2 a_position;
+        in vec2 a_texCoord;
+        
+        uniform vec2 u_resolution;
+        uniform vec2 u_camera;
+        uniform float u_zoom;
+        
+        out vec2 v_texCoord;
+        
+        void main() {
+            // Convert world pos to view pos
+            vec2 viewPos = (a_position - u_camera) * u_zoom;
+            
+            // Convert to clip space (-1 to 1)
+            // 0,0 is top-left in screen pixels
+            vec2 clipPos = (viewPos / u_resolution) * 2.0 - 1.0;
+            
+            // Flip Y because WebGL is bottom-left 0,0 but screen is top-left 0,0
+            gl_Position = vec4(clipPos.x, -clipPos.y, 0, 1);
+            
+            v_texCoord = a_texCoord;
+        }`;
+        const fsSource = `#version 300 es
+        precision mediump float;
+        
+        in vec2 v_texCoord;
+        uniform sampler2D u_texture;
+        uniform vec4 u_color;
+        
+        out vec4 outColor;
+        
+        void main() {
+            vec4 texColor = texture(u_texture, v_texCoord);
+            if (texColor.a < 0.1) discard;
+            outColor = texColor * u_color;
+        }`;
+        this.shader = new ShaderProgram(gl, vsSource, fsSource);
+        this.vao = gl.createVertexArray();
+        gl.bindVertexArray(this.vao);
+        this.vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
         // a_position
         const posLoc = this.shader.getAttributeLocation('a_position');
         gl.enableVertexAttribArray(posLoc);
@@ -69,17 +65,21 @@ export class TilemapRenderer {
         this.shader.use();
         this.gl.uniform4f(this.shader.getUniformLocation('u_color'), 1, 1, 1, 1);
     }
-    build(map, atlas) {
+    build(map, atlas, predicate) {
         this.mapWidth = map.width;
         this.mapHeight = map.height;
         // 6 vertices per tile, 4 floats per vertex (x, y, u, v)
+        // worst case size
         const vertices = new Float32Array(map.width * map.height * 6 * 4);
         let ptr = 0;
         const atlasWidth = atlas.canvas.width;
         const atlasHeight = atlas.canvas.height;
         for (let y = 0; y < map.height; y++) {
             for (let x = 0; x < map.width; x++) {
-                const blockId = map.tiles[y * map.width + x];
+                const index = y * map.width + x;
+                if (predicate && !predicate(index))
+                    continue;
+                const blockId = map.tiles[index];
                 const pos = atlas.positions[blockId];
                 if (!pos)
                     continue;
@@ -128,16 +128,6 @@ export class TilemapRenderer {
         this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
     }
     updateTiles(map, atlas) {
-        // For now, if many tiles change, it might be simpler to rebuild.
-        // But for destructible terrain, we can update just the affected quads.
-        // However, since we packed the buffer sequentially, we can calculate the offset.
-        // NOTE: This assumes the buffer was built iterating x then y exactly as above.
-        // And that EVERY tile has space reserved.
-        // Wait, my build loop skips tiles if !pos. That breaks the indexing.
-        // To support partial updates efficiently, we should probably always emit a quad, 
-        // but with 0 size or transparent texture if empty.
-        // OR, just rebuild the whole mesh. It's 20x45 = 900 tiles. 
-        // Rebuilding 900 quads is extremely cheap in JS. Let's just rebuild for simplicity and robustness.
         this.build(map, atlas);
     }
     setColor(r, g, b, a) {

@@ -1,6 +1,7 @@
 import { createWebGLContext, resizeCanvasToDisplaySize } from './glContext.js';
 import { SpriteBatch } from './spriteBatch.js';
 import { TilemapRenderer } from './tilemapRenderer.js';
+import { isOverlayObject } from '../overlayObjects.js';
 import { Texture } from './texture.js';
 import type { LevelMap } from '../../core/levelMap.js';
 import type { TileAtlas } from '../tileAtlas.js';
@@ -21,7 +22,8 @@ export class WebGLRenderer {
     canvas: HTMLCanvasElement;
     gl: WebGL2RenderingContext;
     spriteBatch: SpriteBatch;
-    tilemapRenderer: TilemapRenderer;
+    backgroundRenderer: TilemapRenderer;
+    foregroundRenderer: TilemapRenderer;
 
     atlasTexture: Texture | null = null;
     shipTextures: {
@@ -36,7 +38,8 @@ export class WebGLRenderer {
         this.canvas = canvas;
         this.gl = createWebGLContext(canvas);
         this.spriteBatch = new SpriteBatch(this.gl);
-        this.tilemapRenderer = new TilemapRenderer(this.gl);
+        this.backgroundRenderer = new TilemapRenderer(this.gl);
+        this.foregroundRenderer = new TilemapRenderer(this.gl);
 
         // Enable blending
         this.gl.enable(this.gl.BLEND);
@@ -142,13 +145,85 @@ export class WebGLRenderer {
     }
 
     buildLevel(map: LevelMap, atlas: TileAtlas) {
-        this.tilemapRenderer.build(map, atlas);
+        this.backgroundRenderer.build(map, atlas, (i) => !isOverlayObject(map.objects[i]));
+        this.foregroundRenderer.build(map, atlas, (i) => isOverlayObject(map.objects[i]));
     }
 
     updateLevel(map: LevelMap, atlas: TileAtlas) {
         this.buildLevel(map, atlas);
     }
 
+    drawWorldBackground(map: LevelMap) {
+        if (!this.atlasTexture) return;
+
+        this.gl.clearColor(0.02, 0.024, 0.04, 1.0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+        this.drawBackground();
+
+        // Dynamic Shadow Calculation
+        // Light source is at the center of the map
+        const TILE_SIZE = 32;
+        const mapCenterX = (map.width * TILE_SIZE) / 2;
+        const mapCenterY = (map.height * TILE_SIZE) / 2;
+
+        const camCenterX = this.viewport.cameraX + (this.canvas.width / this.viewport.zoom) / 2;
+        const camCenterY = this.viewport.cameraY + (this.canvas.height / this.viewport.zoom) / 2;
+
+        // Vector from Center to Camera
+        const vecX = camCenterX - mapCenterX;
+        const vecY = camCenterY - mapCenterY;
+
+        // Scale factor for shadow offset
+        const shadowScale = 0.015;
+        const shadowX = vecX * shadowScale;
+        const shadowY = vecY * shadowScale;
+
+        const shadowAlpha = 0.5;
+
+        // Shadow: World (Background)
+        this.backgroundRenderer.setColor(0, 0, 0, shadowAlpha);
+        this.backgroundRenderer.draw(
+            this.atlasTexture,
+            this.viewport.cameraX - shadowX,
+            this.viewport.cameraY - shadowY,
+            this.viewport.zoom
+        );
+
+        // Shadow: World (Foreground) - optional, but good for consistency
+        this.foregroundRenderer.setColor(0, 0, 0, shadowAlpha);
+        this.foregroundRenderer.draw(
+            this.atlasTexture,
+            this.viewport.cameraX - shadowX,
+            this.viewport.cameraY - shadowY,
+            this.viewport.zoom
+        );
+
+        this.backgroundRenderer.setColor(1, 1, 1, 1); // Reset
+        this.foregroundRenderer.setColor(1, 1, 1, 1); // Reset
+
+        // Draw World (Background)
+        this.backgroundRenderer.draw(
+            this.atlasTexture,
+            this.viewport.cameraX,
+            this.viewport.cameraY,
+            this.viewport.zoom
+        );
+    }
+
+    drawWorldForeground() {
+        if (!this.atlasTexture) return;
+
+        // Draw World (Foreground/Overlay)
+        this.foregroundRenderer.draw(
+            this.atlasTexture,
+            this.viewport.cameraX,
+            this.viewport.cameraY,
+            this.viewport.zoom
+        );
+    }
+
+    // Legacy support if needed, or remove
     drawWorld(map: LevelMap, globals: GlobalState | null) {
         if (globals) {
             // Calculate optimal zoom to fit viewport within level bounds
@@ -158,34 +233,8 @@ export class WebGLRenderer {
             // Clamp camera within bounds
             this.clampCamera(map.width, map.height, globals.sx, globals.sy);
         }
-
-        this.gl.clearColor(0.02, 0.024, 0.04, 1.0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-
-        this.drawBackground();
-
-        const shadowAlpha = 0.5;
-        const shadowOffset = 4;
-
-        // Shadow: World
-        if (this.atlasTexture) {
-            this.tilemapRenderer.setColor(0, 0, 0, shadowAlpha);
-            this.tilemapRenderer.draw(
-                this.atlasTexture,
-                this.viewport.cameraX - shadowOffset,
-                this.viewport.cameraY - shadowOffset,
-                this.viewport.zoom
-            );
-            this.tilemapRenderer.setColor(1, 1, 1, 1); // Reset
-
-            // Draw World (Foreground)
-            this.tilemapRenderer.draw(
-                this.atlasTexture,
-                this.viewport.cameraX,
-                this.viewport.cameraY,
-                this.viewport.zoom
-            );
-        }
+        this.drawWorldBackground(map);
+        // Note: Ship and Foreground must be drawn manually after this in main loop
     }
 
     private calculateOptimalZoom(mapWidth: number, mapHeight: number): number {
@@ -277,33 +326,92 @@ export class WebGLRenderer {
     }
 
     drawBullets(bullets: BulletSnapshot[]) {
-        if (!this.whiteTexture) {
-            this.whiteTexture = new Texture(this.gl);
-            this.whiteTexture.setData(1, 1, new Uint8Array([255, 255, 255, 255]));
+        if (!this.bulletTexture) {
+            this.bulletTexture = new Texture(this.gl);
+            // Create a 16x16 radial gradient texture
+            const size = 16;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d')!;
+
+            const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            grad.addColorStop(0.4, 'rgba(200, 240, 255, 0.8)');
+            grad.addColorStop(1, 'rgba(0, 100, 255, 0)');
+
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, size, size);
+
+            this.bulletTexture.setImage(canvas);
         }
 
-        if (this.whiteTexture) {
-            const worldSize = Math.max(3 / this.viewport.zoom, 2.4);
+        if (this.bulletTexture) {
+            // Bullet size in world units
+            const worldSize = 0.8;
             this.spriteBatch.begin(this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
 
             for (const bullet of bullets) {
                 this.spriteBatch.draw(
-                    this.whiteTexture,
-                    bullet.x,
-                    bullet.y,
+                    this.bulletTexture,
+                    bullet.x - worldSize / 2,
+                    bullet.y - worldSize / 2,
                     worldSize,
                     worldSize,
                     0, 0, 1, 1,
-                    [0.48, 0.97, 1.0, 1.0] // #7cf7ff
+                    [1, 1, 1, 1]
                 );
             }
             this.spriteBatch.flush();
         }
     }
 
-    drawActions(_actions: ActionState[], _atlas: TileAtlas) {
-        // TODO: Implement action drawing
+    drawActions(actions: ActionState[], atlas: TileAtlas) {
+        if (!this.atlasTexture) return;
+
+        this.spriteBatch.begin(this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
+
+        for (const action of actions) {
+            if (!action.active) continue;
+
+            // Map action frames to atlas blocks
+            // SPARK: 48-51
+            // SPLASH: 113-117
+            // We can use the 'frame' property directly if it maps to block IDs?
+            // The 'frame' in ActionState seems to be an animation counter, not a block ID.
+            // However, looking at GamePlay.m, it seems 'frame' might be the block ID for some actions?
+            // Let's assume 'frame' in ActionState IS the block ID to render.
+            // If not, we need a mapping.
+            // Based on `actions.ts`, frame is read from the struct.
+
+            // Let's try using action.frame as the block ID directly first.
+            // If it's 0-based index into the atlas.
+
+            const blockId = action.frame;
+            const pos = atlas.positions[blockId];
+
+            if (pos) {
+                const atlasWidth = atlas.canvas.width;
+                const atlasHeight = atlas.canvas.height;
+                const u0 = pos.sx / atlasWidth;
+                const v0 = pos.sy / atlasHeight;
+                const u1 = (pos.sx + 32) / atlasWidth;
+                const v1 = (pos.sy + 32) / atlasHeight;
+
+                // Actions are usually 32x32
+                this.spriteBatch.draw(
+                    this.atlasTexture,
+                    action.x,
+                    action.y,
+                    1.0, 1.0, // 1 tile size
+                    u0, v0, u1, v1,
+                    [1, 1, 1, 1]
+                );
+            }
+        }
+
+        this.spriteBatch.flush();
     }
 
-    private whiteTexture: Texture | null = null;
+    private bulletTexture: Texture | null = null;
 }

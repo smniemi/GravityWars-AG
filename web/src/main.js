@@ -1,3 +1,4 @@
+console.log('[MAIN] Starting execution...');
 import { GameLoop } from './core/index.js';
 import { createKeyboardInput } from './core/input.js';
 import { createShipStateReader } from './core/shipState.js';
@@ -25,7 +26,10 @@ canvas.style.width = '100%';
 canvas.style.height = '100%';
 canvas.style.display = 'block';
 canvas.style.background = '#05060a';
+canvas.tabIndex = 0; // Make canvas focusable
+canvas.style.outline = 'none'; // Remove focus outline
 root.appendChild(canvas);
+canvas.focus();
 const renderer = new WebGLRenderer(canvas);
 // const ctx = canvas.getContext('2d'); // Keep for debug panel overlay if we want, or move debug to HTML?
 // Actually, let's keep a 2D context for the debug panel on a separate canvas or just overlay?
@@ -40,6 +44,17 @@ uiCanvas.style.height = '100%';
 uiCanvas.style.pointerEvents = 'none'; // Let clicks pass through
 root.appendChild(uiCanvas);
 const uiCtx = uiCanvas.getContext('2d');
+const debugLog = document.createElement('div');
+debugLog.id = 'debug-log';
+debugLog.style.position = 'absolute';
+debugLog.style.top = '10px';
+debugLog.style.left = '10px';
+debugLog.style.color = 'lime';
+debugLog.style.fontSize = '20px';
+debugLog.style.fontFamily = 'monospace';
+debugLog.style.zIndex = '1000';
+debugLog.innerText = 'Waiting for input...';
+document.body.appendChild(debugLog);
 function resize() {
     renderer.resize();
     const width = canvas.clientWidth;
@@ -455,6 +470,9 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
         if (controls) {
             const { thrust, fire, rotate, nextLevel, prevLevel } = keyboard.state;
+            if (thrust || fire || rotate !== 0) {
+                console.log(`[Main] Input active: thrust=${thrust} fire=${fire} rotate=${rotate}`);
+            }
             controls.setThrust(thrust ? 32 : 0);
             controls.setFire(fire ? 1 : 0);
             if (rotate !== 0) {
@@ -523,6 +541,9 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
         // Main ship
         renderer.drawShip(lastGlobals, lastShipState, SHIP_BLOCK_MAP);
+    }
+    if (levelMap) {
+        renderer.drawWorldForeground();
     }
     if (currentBullets.length) {
         renderer.drawBullets(currentBullets);

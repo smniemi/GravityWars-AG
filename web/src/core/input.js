@@ -17,6 +17,10 @@ export function createKeyboardInput() {
         prevLevel: false
     };
     const downHandler = (event) => {
+        const debugEl = document.getElementById('debug-log');
+        if (debugEl) {
+            debugEl.innerText = `Key: ${event.code}`;
+        }
         const action = KEY_BINDINGS[event.code] ?? KEY_BINDINGS[event.key];
         if (!action)
             return;
@@ -70,13 +74,13 @@ export function createKeyboardInput() {
         }
         event.preventDefault();
     };
-    window.addEventListener('keydown', downHandler);
-    window.addEventListener('keyup', upHandler);
+    document.addEventListener('keydown', downHandler);
+    document.addEventListener('keyup', upHandler);
     return {
         state,
         dispose() {
-            window.removeEventListener('keydown', downHandler);
-            window.removeEventListener('keyup', upHandler);
+            document.removeEventListener('keydown', downHandler);
+            document.removeEventListener('keyup', upHandler);
         }
     };
 }
