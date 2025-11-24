@@ -6,7 +6,7 @@ export type KeyboardState = {
   prevLevel: boolean;
 };
 
-const KEY_BINDINGS: Record<string, keyof InputState | 'rotate-left' | 'rotate-right' | 'next-level' | 'prev-level'> = {
+const KEY_BINDINGS: Record<string, keyof KeyboardState | 'rotate-left' | 'rotate-right' | 'next-level' | 'prev-level'> = {
   ArrowUp: 'thrust',
   ArrowLeft: 'rotate-left',
   ArrowRight: 'rotate-right',

@@ -48,13 +48,20 @@ export function createTileAtlas(runtime: GravityWarsRuntime): TileAtlas {
       imageData.data[dest] = scalePaletteComponent(r);
       imageData.data[dest + 1] = scalePaletteComponent(g);
       imageData.data[dest + 2] = scalePaletteComponent(b);
-      imageData.data[dest + 3] = paletteIndex === 0 ? 0 : 255;
+
+      // Legacy logic from EAGLView.m:
+      // p[m+3] = (c!=0 && (c<176 || c>190 ))*255;
+      // This means indices 176-190 are transparent background.
+      const isTransparent = paletteIndex === 0 || (paletteIndex >= 176 && paletteIndex <= 190);
+      imageData.data[dest + 3] = isTransparent ? 0 : 255;
     }
 
-    const sx = (blockIndex % ATLAS_COLUMNS) * BLOCK_SIZE;
-    const sy = Math.floor(blockIndex / ATLAS_COLUMNS) * BLOCK_SIZE;
-    atlasCtx.putImageData(imageData, sx, sy);
-    positions[blockIndex] = { sx, sy };
+    const col = blockIndex % ATLAS_COLUMNS;
+    const row = Math.floor(blockIndex / ATLAS_COLUMNS);
+    const dx = col * BLOCK_SIZE;
+    const dy = row * BLOCK_SIZE;
+    atlasCtx.putImageData(imageData, dx, dy);
+    positions.push({ sx: dx, sy: dy });
   }
 
   return {
@@ -88,4 +95,3 @@ function resolveFunction(runtime: GravityWarsRuntime, name: string): PtrFn {
 
   throw new Error(`Unable to resolve wasm export ${name}`);
 }
-

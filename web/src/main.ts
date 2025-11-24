@@ -10,8 +10,9 @@ import type { GravityWarsRuntime } from './core/wasmBridge.js';
 import { sendDebugSnapshot } from './debugger.js';
 import { createTileAtlas, type TileAtlas } from './render/tileAtlas.js';
 import { SoundManager } from './core/sound.js';
-import { buildLevelCanvas, drawWorldView, updateLevelCanvas, type ViewportInfo } from './render/worldCanvas.js';
-import { createShipSprites, type ShipSprites, SHIP_SPRITE_SIZE } from './render/shipSprites.js';
+
+import { createShipSprites, type ShipSprites } from './render/shipSprites.js';
+import { WebGLRenderer } from './render/webgl/renderer.js';
 
 const root = document.getElementById('app') ?? createRoot();
 
@@ -32,7 +33,35 @@ canvas.style.background = '#05060a';
 
 root.appendChild(canvas);
 
-const ctx = canvas.getContext('2d');
+const renderer = new WebGLRenderer(canvas);
+// const ctx = canvas.getContext('2d'); // Keep for debug panel overlay if we want, or move debug to HTML?
+// Actually, let's keep a 2D context for the debug panel on a separate canvas or just overlay?
+// The current implementation draws debug panel on the SAME canvas. WebGL and 2D cannot share a canvas.
+// We need a separate canvas for the debug UI.
+
+const uiCanvas = document.createElement('canvas');
+uiCanvas.style.position = 'absolute';
+uiCanvas.style.top = '0';
+uiCanvas.style.left = '0';
+uiCanvas.style.width = '100%';
+uiCanvas.style.height = '100%';
+uiCanvas.style.pointerEvents = 'none'; // Let clicks pass through
+root.appendChild(uiCanvas);
+
+const uiCtx = uiCanvas.getContext('2d');
+
+function resize() {
+  renderer.resize();
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  if (uiCanvas.width !== width || uiCanvas.height !== height) {
+    uiCanvas.width = width;
+    uiCanvas.height = height;
+  }
+}
+
+window.addEventListener('resize', resize);
+resize();
 
 let wasmStatus = 'WASM pending build…';
 let runtime: Awaited<ReturnType<typeof loadGravityWarsModule>> | null = null;
@@ -42,9 +71,10 @@ let globalsReader: ReturnType<typeof createGlobalStateReader> | null = null;
 let lastGlobals: GlobalState | null = null;
 let levelMap: LevelMap | null = null;
 let tileAtlas: TileAtlas | null = null;
-let levelCanvas: HTMLCanvasElement | null = null;
+// let levelCanvas: HTMLCanvasElement | null = null; // Removed
+
 let lastTiles: Uint8Array | null = null;
-let lastViewport: ViewportInfo | null = null;
+
 let shipSprites: ShipSprites | null = null;
 let clearDynamicBlocks: (() => void) | null = null;
 let advanceLevel: (() => void) | null = null;
@@ -125,6 +155,7 @@ const SHIP_STATE = {
 // Action frame ranges:
 // SPARK (bullet explosion): frames 48-51 (4 frames)
 // SPLASH (water): frames 113-117 (5 frames)
+// Note: These are handled by renderer.drawActions now.
 
 function getExport(name: ExportName): () => void {
   if (!runtime) {
@@ -155,137 +186,12 @@ function getExport(name: ExportName): () => void {
   throw new Error(`Export ${name} not found on wasm runtime.`);
 }
 
-function drawShipSprite(
-  context: CanvasRenderingContext2D,
-  globals: GlobalState,
-  ship: ShipState,
-  viewport: ViewportInfo
-) {
-  const screenX = (globals.sx - viewport.cameraX) * viewport.zoom;
-  const screenY = (globals.sy - viewport.cameraY) * viewport.zoom;
-  const drawSize = SHIP_SPRITE_SIZE * viewport.zoom;
-
-  const image = ship.image ?? SHIP_IMAGE.NO_THRUST;
-  if (
-    shipSprites &&
-    (image === SHIP_IMAGE.NO_THRUST || image === SHIP_IMAGE.THRUST)
-  ) {
-    const orientation = ((globals.sa ?? 0) >>> 9) & 31;
-    const variant = image === SHIP_IMAGE.THRUST ? shipSprites.thrust : shipSprites.noThrust;
-    const sprite = variant[orientation];
-    if (sprite) {
-      context.drawImage(sprite, screenX, screenY, drawSize, drawSize);
-      return true;
-    }
-  }
-
-  const blockId = SHIP_BLOCK_MAP[image];
-  if (blockId !== undefined) {
-    const specialSprite = shipSprites?.specials[blockId];
-    if (specialSprite) {
-      context.drawImage(specialSprite, screenX, screenY, drawSize, drawSize);
-      return true;
-    }
-    if (tileAtlas) {
-      const pos = tileAtlas.positions[blockId];
-      if (pos) {
-        context.drawImage(
-          tileAtlas.canvas,
-          pos.sx,
-          pos.sy,
-          SHIP_SPRITE_SIZE,
-          SHIP_SPRITE_SIZE,
-          screenX,
-          screenY,
-          drawSize,
-          drawSize
-        );
-        return true;
-      }
-    }
-  }
-
-  drawShipMarker(context, globals, viewport);
-  return false;
-}
-
-function drawShipMarker(
-  context: CanvasRenderingContext2D,
-  globals: GlobalState,
-  viewport: ViewportInfo
-) {
-  const shipX = (globals.sx - viewport.cameraX) * viewport.zoom;
-  const shipY = (globals.sy - viewport.cameraY) * viewport.zoom;
-
-  context.save();
-  context.translate(shipX + SHIP_SPRITE_SIZE * viewport.zoom * 0.5, shipY + SHIP_SPRITE_SIZE * viewport.zoom * 0.5);
-  const angle = ((globals.sa % 16384) / 16384) * Math.PI * 2;
-  context.rotate(-angle + Math.PI / 2);
-  context.fillStyle = '#fff';
-  context.beginPath();
-  context.moveTo(0, -16);
-  context.lineTo(10, 10);
-  context.lineTo(-10, 10);
-  context.closePath();
-  context.fill();
-  context.restore();
-}
-
-function drawBullets(
-  context: CanvasRenderingContext2D,
-  bullets: BulletSnapshot[],
-  viewport: ViewportInfo
-) {
-  context.fillStyle = '#7cf7ff';
-  const size = Math.max(3, 4 * viewport.zoom * 0.6);
-  bullets.forEach((bullet) => {
-    const screenX = (bullet.x - viewport.cameraX) * viewport.zoom;
-    const screenY = (bullet.y - viewport.cameraY) * viewport.zoom;
-    context.beginPath();
-    context.arc(screenX, screenY, size / 2, 0, Math.PI * 2);
-    context.fill();
-  });
-}
-
-function drawActionEffects(
-  context: CanvasRenderingContext2D,
-  actions: ActionState[],
-  viewport: ViewportInfo
-) {
-  const atlas = tileAtlas;
-  if (!atlas) {
-    return;
-  }
-  // Disable image smoothing to prevent artifacts
-  const prevSmoothing = context.imageSmoothingEnabled;
-  context.imageSmoothingEnabled = false;
-
-  actions.forEach((action) => {
-    // action.frame is already the block ID (48-51 for spark, 113-117 for splash)
-    // Clamp to [start, stop-1] to skip the last frame
-    const maxFrame = action.stop - 1;
-    const blockId = Math.max(action.start, Math.min(maxFrame, action.frame));
-    const pos = atlas.positions[blockId];
-    if (!pos) {
-      return;
-    }
-    const worldX = action.x - 16;
-    const worldY = action.y - 16;
-    // Round coordinates to avoid sub-pixel rendering artifacts
-    const screenX = Math.round((worldX - viewport.cameraX) * viewport.zoom);
-    const screenY = Math.round((worldY - viewport.cameraY) * viewport.zoom);
-    const size = Math.round(SHIP_SPRITE_SIZE * viewport.zoom);
-    context.drawImage(atlas.canvas, pos.sx, pos.sy, SHIP_SPRITE_SIZE, SHIP_SPRITE_SIZE, screenX, screenY, size, size);
-  });
-
-  // Restore previous smoothing setting
-  context.imageSmoothingEnabled = prevSmoothing;
-}
+// drawShipSprite, drawBullets, drawActionEffects removed - moved to WebGLRenderer
 
 function drawShipFallback(context: CanvasRenderingContext2D, ship: ShipState) {
   const scale = 1 / 64;
-  const px = canvas.width / 2 + ship.x * scale;
-  const py = canvas.height / 2 - ship.y * scale;
+  const px = uiCanvas.width / 2 + ship.x * scale;
+  const py = uiCanvas.height / 2 - ship.y * scale;
 
   context.fillStyle = ship.active ? '#ff0' : '#777';
   context.beginPath();
@@ -305,8 +211,8 @@ function drawMiniMap(
   const tileSize = MINIMAP_TILE_SIZE;
   const mapWidthPx = map.width * tileSize;
   const mapHeightPx = map.height * tileSize;
-  const originX = canvas.width - mapWidthPx - 20;
-  const originY = canvas.height - mapHeightPx - 20;
+  const originX = uiCanvas.width - mapWidthPx - 20;
+  const originY = uiCanvas.height - mapHeightPx - 20;
 
   context.fillStyle = 'rgba(0, 0, 0, 0.7)';
   context.fillRect(originX - 4, originY - 4, mapWidthPx + 8, mapHeightPx + 8);
@@ -456,7 +362,7 @@ function drawDebugPanel(
   const width = 280;
   const lineHeight = 16;
   const height = lines.length * lineHeight + 12;
-  const x = canvas.width - width - 12;
+  const x = uiCanvas.width - width - 12;
   const y = 12;
 
   context.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -538,7 +444,7 @@ function handleLevelTransition() {
       tileAtlas = createTileAtlas(runtime.runtime);
       shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
       if (levelMap && tileAtlas) {
-        levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
+        renderer.buildLevel(levelMap, tileAtlas);
       }
     }
     currentBullets = [];
@@ -548,29 +454,30 @@ function handleLevelTransition() {
 }
 
 const loop = new GameLoop(({ deltaMs }) => {
-  lastViewport = null;
 
-  if (!levelCanvas && levelMap && tileAtlas) {
+
+  if (levelMap && tileAtlas && !renderer.atlasTexture) {
     try {
-      levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
-      console.log('[gravitywars] level canvas ready', levelCanvas.width, levelCanvas.height);
+      renderer.setTileAtlas(tileAtlas);
+      renderer.buildLevel(levelMap, tileAtlas);
+      console.log('[gravitywars] WebGL level built');
     } catch (error) {
-      console.error('Failed to build level canvas', error);
+      console.error('Failed to build level', error);
     }
   }
 
   if (!shipSprites && runtime?.runtime) {
     try {
       shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
+      renderer.setShipSprites(shipSprites);
     } catch (error) {
       console.error('Failed to build ship sprites', error);
     }
   }
 
-  if (ctx) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#05060a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  renderer.clear();
+  if (uiCtx) {
+    uiCtx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
   }
 
   if (runtime) {
@@ -581,13 +488,33 @@ const loop = new GameLoop(({ deltaMs }) => {
     }
     if (globalsReader) {
       lastGlobals = globalsReader.read();
+
+      // Update background based on level
+      const levelNum = lastGlobals.levelnum;
+      const bgIndex = levelNum % 7;
+      let bgName = 'space.jpg'; // Default/Fallback
+
+      switch (bgIndex) {
+        case 0: bgName = 'back5_park.JPG'; break;
+        case 1: bgName = 'back_nebula.jpg'; break;
+        case 2: bgName = 'back_park.JPG'; break;
+        case 3: bgName = 'back2_park.JPG'; break;
+        case 4: bgName = 'back3_park.JPG'; break;
+        case 5: bgName = 'back4_park.JPG'; break;
+        case 6: bgName = 'back_park.JPG'; break;
+      }
+
+      renderer.setBackgroundImage(`/assets/backgrounds/${bgName}`);
+
       if (lastGlobals.dynamicBlocksChanged) {
         if (runtime?.runtime) {
           tileAtlas = createTileAtlas(runtime.runtime);
           shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
         }
         if (levelMap && tileAtlas) {
-          levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
+          renderer.setTileAtlas(tileAtlas);
+          renderer.setShipSprites(shipSprites!);
+          renderer.buildLevel(levelMap, tileAtlas);
         }
         clearDynamicBlocks?.();
       }
@@ -616,7 +543,9 @@ const loop = new GameLoop(({ deltaMs }) => {
           tileAtlas = createTileAtlas(runtime.runtime);
           shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
           if (levelMap && tileAtlas) {
-            levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
+            renderer.setTileAtlas(tileAtlas);
+            renderer.setShipSprites(shipSprites);
+            renderer.buildLevel(levelMap, tileAtlas);
           }
         }
         currentBullets = [];
@@ -630,7 +559,9 @@ const loop = new GameLoop(({ deltaMs }) => {
           tileAtlas = createTileAtlas(runtime.runtime);
           shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
           if (levelMap && tileAtlas) {
-            levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
+            renderer.setTileAtlas(tileAtlas);
+            renderer.setShipSprites(shipSprites);
+            renderer.buildLevel(levelMap, tileAtlas);
           }
         }
         currentBullets = [];
@@ -640,7 +571,7 @@ const loop = new GameLoop(({ deltaMs }) => {
     handleLevelTransition();
 
     // Check for tile updates (animations)
-    if (levelMap && levelCanvas && tileAtlas) {
+    if (levelMap && tileAtlas) {
       if (!lastTiles || lastTiles.length !== levelMap.tiles.length) {
         lastTiles = new Uint8Array(levelMap.tiles);
       } else {
@@ -654,42 +585,51 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
 
         if (dirtyIndices.length > 0) {
-          updateLevelCanvas(levelCanvas, levelMap, tileAtlas, dirtyIndices);
+          renderer.updateLevel(levelMap, tileAtlas);
         }
       }
     }
   }
 
-  if (ctx) {
-    if (levelCanvas) {
-      lastViewport = drawWorldView(ctx, levelCanvas, lastGlobals);
-    }
+  if (levelMap) {
+    renderer.drawWorld(levelMap, lastGlobals);
+  }
 
-    if (lastGlobals && lastViewport && lastShipState) {
-      drawShipSprite(ctx, lastGlobals, lastShipState, lastViewport);
-    } else if (lastShipState) {
-      drawShipFallback(ctx, lastShipState);
+  if (lastGlobals && lastShipState) {
+    // Shadow
+    if (lastShipState.state !== 2) { // Not exploding
+      renderer.drawShip(lastGlobals, lastShipState, SHIP_BLOCK_MAP, -4, 4, [0, 0, 0, 0.5]);
     }
-    if (lastViewport && currentBullets.length) {
-      drawBullets(ctx, currentBullets, lastViewport);
-    }
-    if (lastViewport && actionStates.length) {
-      drawActionEffects(ctx, actionStates, lastViewport);
+    // Main ship
+    renderer.drawShip(lastGlobals, lastShipState, SHIP_BLOCK_MAP);
+  }
+
+  if (currentBullets.length) {
+    renderer.drawBullets(currentBullets);
+  }
+
+  if (actionStates.length && tileAtlas) {
+    renderer.drawActions(actionStates, tileAtlas);
+  }
+
+  if (uiCtx) {
+    if (!levelMap && lastShipState) {
+      drawShipFallback(uiCtx, lastShipState);
     }
 
     if (levelMap) {
-      drawMiniMap(ctx, levelMap, lastGlobals);
+      drawMiniMap(uiCtx, levelMap, lastGlobals);
     }
 
     if (lastShipState) {
-      drawDebugPanel(ctx, lastShipState, lastGlobals, keyboard.state);
+      drawDebugPanel(uiCtx, lastShipState, lastGlobals, keyboard.state);
     }
 
-    ctx.fillStyle = '#0ff';
-    ctx.font = '16px monospace';
-    ctx.fillText(`GravityWars Web bootstrap - Δ=${deltaMs.toFixed(2)}ms`, 20, 30);
-    ctx.fillStyle = '#0f9';
-    ctx.fillText(wasmStatus, 20, 60);
+    uiCtx.fillStyle = '#0ff';
+    uiCtx.font = '16px monospace';
+    uiCtx.fillText(`GravityWars WebGL - Δ=${deltaMs.toFixed(2)}ms`, 20, 30);
+    uiCtx.fillStyle = '#0f9';
+    uiCtx.fillText(wasmStatus, 20, 60);
   }
 
   if (runtime) {
@@ -718,9 +658,12 @@ loadGravityWarsModule()
     getExport('init_gw')();
     getExport('main_init')();
     tileAtlas = createTileAtlas(module.runtime);
+    console.log('DEBUG: TileAtlas created', tileAtlas);
     shipSprites = createShipSprites(module.runtime, SHIP_SPECIAL_BLOCK_IDS);
     if (levelMap && tileAtlas) {
-      levelCanvas = buildLevelCanvas(levelMap, tileAtlas);
+      renderer.setTileAtlas(tileAtlas);
+      renderer.setShipSprites(shipSprites);
+      renderer.buildLevel(levelMap, tileAtlas);
     }
     wasmStatus = 'WASM module ready.';
   })
