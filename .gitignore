@@ -1,0 +1,33 @@
+# Build outputs
+.wasm-build/
+web/dist/
+web/node_modules/
+node_modules/
+
+# Editor
+.vscode/
+.idea/
+
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Upscaler outputs
+tools/upscaled_textures/
+temp_block_*.png
+upscaled_block_*.png
+
+# OS
+.DS_Store
+Thumbs.db
