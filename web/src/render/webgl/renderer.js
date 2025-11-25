@@ -129,9 +129,6 @@ export class WebGLRenderer {
         // Shadow: World (Background)
         this.backgroundRenderer.setColor(0, 0, 0, shadowAlpha);
         this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX - shadowX, this.viewport.cameraY - shadowY, this.viewport.zoom);
-        // Shadow: World (Foreground) - optional, but good for consistency
-        this.foregroundRenderer.setColor(0, 0, 0, shadowAlpha);
-        this.foregroundRenderer.draw(this.atlasTexture, this.viewport.cameraX - shadowX, this.viewport.cameraY - shadowY, this.viewport.zoom);
         this.backgroundRenderer.setColor(1, 1, 1, 1); // Reset
         this.foregroundRenderer.setColor(1, 1, 1, 1); // Reset
         // Draw World (Background)
@@ -148,7 +145,10 @@ export class WebGLRenderer {
         if (globals) {
             // Calculate optimal zoom to fit viewport within level bounds
             const minZoom = this.calculateOptimalZoom(map.width, map.height);
-            this.viewport.zoom = Math.max(4.0, minZoom);
+            // Detect mobile: use 2x zoom out (zoom=2.0) for mobile, 4.0 for desktop
+            const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
+            const baseZoom = isMobile ? 2.0 : 4.0;
+            this.viewport.zoom = Math.max(baseZoom, minZoom);
             // Clamp camera within bounds
             this.clampCamera(map.width, map.height, globals.sx, globals.sy);
         }

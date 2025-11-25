@@ -6,15 +6,18 @@ const KEY_BINDINGS = {
     Equal: 'next-level',
     '+': 'next-level',
     Minus: 'prev-level',
-    '-': 'prev-level'
+    '-': 'prev-level',
+    Digit0: 'toggle-debug',
+    '0': 'toggle-debug'
 };
-export function createKeyboardInput() {
+export async function createKeyboardInput(touchElement) {
     const state = {
         thrust: false,
         fire: false,
         rotate: 0,
         nextLevel: false,
-        prevLevel: false
+        prevLevel: false,
+        toggleDebug: false // Default: debug displays off
     };
     const downHandler = (event) => {
         const debugEl = document.getElementById('debug-log');
@@ -42,6 +45,9 @@ export function createKeyboardInput() {
                 break;
             case 'prev-level':
                 state.prevLevel = true;
+                break;
+            case 'toggle-debug':
+                state.toggleDebug = !state.toggleDebug; // Toggle on press
                 break;
         }
         event.preventDefault();
@@ -76,11 +82,19 @@ export function createKeyboardInput() {
     };
     document.addEventListener('keydown', downHandler);
     document.addEventListener('keyup', upHandler);
+    // Initialize touch input if element provided
+    let touchDispose = null;
+    if (touchElement) {
+        const { createTouchInput } = await import('./touchInput.js');
+        const touchInput = createTouchInput(touchElement, state);
+        touchDispose = touchInput.dispose;
+    }
     return {
         state,
         dispose() {
             document.removeEventListener('keydown', downHandler);
             document.removeEventListener('keyup', upHandler);
+            touchDispose?.();
         }
     };
 }

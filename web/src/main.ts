@@ -99,7 +99,13 @@ let currentBullets: BulletSnapshot[] = [];
 let actionReader: ReturnType<typeof createActionReader> | null = null;
 let actionStates: ActionState[] = [];
 let levelAdvancePending = false;
-const keyboard = createKeyboardInput();
+
+// Initialize input system asynchronously
+let keyboard: Awaited<ReturnType<typeof createKeyboardInput>> | null = null;
+(async () => {
+  keyboard = await createKeyboardInput(root);
+})();
+
 const soundManager = new SoundManager();
 let controls: ControlFns | null = null;
 type ExportName = 'init_gw' | 'main_init' | 'control' | 'animate';
@@ -542,19 +548,25 @@ const loop = new GameLoop(({ deltaMs }) => {
     if (actionReader) {
       actionStates = actionReader.read();
     }
-    if (controls) {
+    if (controls && keyboard) {
       const { thrust, fire, rotate, nextLevel, prevLevel } = keyboard.state;
       if (thrust || fire || rotate !== 0) {
         console.log(`[Main] Input active: thrust=${thrust} fire=${fire} rotate=${rotate}`);
       }
-      controls.setThrust(thrust ? 32 : 0);
+
+      // Mobile gets higher thrust to simulate lower gravity
+      const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
+      const thrustValue = isMobile ? 24 : 16;
+      const angleSpeed = isMobile ? ANGLE_ADJUST_SPEED * 0.5 : ANGLE_ADJUST_SPEED; // 2x slower rotation on mobile
+
+      controls.setThrust(thrust ? thrustValue : 0);
       controls.setFire(fire ? 1 : 0);
       if (rotate !== 0) {
-        controls.adjustAngle(-rotate * ANGLE_ADJUST_SPEED);
+        controls.adjustAngle(-rotate * angleSpeed);
       }
 
       // Handle level changes
-      if (nextLevel) {
+      if (nextLevel && keyboard) {
         controls.nextLevel();
         keyboard.state.nextLevel = false;
         if (runtime?.runtime) {
@@ -570,7 +582,7 @@ const loop = new GameLoop(({ deltaMs }) => {
         currentBullets = [];
       }
 
-      if (prevLevel) {
+      if (prevLevel && keyboard) {
         controls.prevLevel();
         keyboard.state.prevLevel = false;
         if (runtime?.runtime) {
@@ -644,15 +656,20 @@ const loop = new GameLoop(({ deltaMs }) => {
       drawMiniMap(uiCtx, levelMap, lastGlobals);
     }
 
-    if (lastShipState) {
-      drawDebugPanel(uiCtx, lastShipState, lastGlobals, keyboard.state);
-    }
+    // Debug displays - toggleable with "0" key
+    const showDebug = keyboard?.state.toggleDebug ?? false;
 
-    uiCtx.fillStyle = '#0ff';
-    uiCtx.font = '16px monospace';
-    uiCtx.fillText(`GravityWars WebGL - Δ=${deltaMs.toFixed(2)}ms`, 20, 30);
-    uiCtx.fillStyle = '#0f9';
-    uiCtx.fillText(wasmStatus, 20, 60);
+    if (showDebug) {
+      if (lastShipState) {
+        drawDebugPanel(uiCtx, lastShipState, lastGlobals, keyboard?.state ?? { thrust: false, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false });
+      }
+
+      uiCtx.fillStyle = '#0ff';
+      uiCtx.font = '16px monospace';
+      uiCtx.fillText(`GravityWars WebGL - Δ=${deltaMs.toFixed(2)}ms`, 20, 30);
+      uiCtx.fillStyle = '#0f9';
+      uiCtx.fillText(wasmStatus, 20, 60);
+    }
   }
 
   if (runtime) {
@@ -660,7 +677,7 @@ const loop = new GameLoop(({ deltaMs }) => {
       wasmStatus,
       ship: lastShipState,
       globals: lastGlobals,
-      input: keyboard.state
+      input: keyboard?.state ?? { thrust: false, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false }
     });
   }
 });

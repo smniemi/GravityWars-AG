@@ -34,8 +34,10 @@ export class SoundManager {
 
     constructor() {
         // AudioContext must be initialized after user interaction
+        // iOS requires touch events specifically
         window.addEventListener('click', () => this.init(), { once: true });
         window.addEventListener('keydown', () => this.init(), { once: true });
+        window.addEventListener('touchstart', () => this.init(), { once: true });
     }
 
     private async init() {
@@ -48,6 +50,12 @@ export class SoundManager {
             this.musicGain.connect(this.context.destination);
 
             this.enabled = true;
+
+            // Resume context if suspended (iOS requirement)
+            if (this.context.state === 'suspended') {
+                await this.context.resume();
+            }
+
             await this.loadSounds();
             this.playMusic();
             console.log('[SoundManager] Audio initialized');
@@ -100,6 +108,11 @@ export class SoundManager {
 
     public play(name: keyof typeof this.SOUNDS, loop = false): AudioBufferSourceNode | null {
         if (!this.enabled || !this.context) return null;
+
+        // Resume context if suspended (iOS can suspend it)
+        if (this.context.state === 'suspended') {
+            this.context.resume();
+        }
 
         const buffer = this.buffers.get(name);
         if (!buffer) return null;

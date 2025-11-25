@@ -4,9 +4,10 @@ export type KeyboardState = {
   rotate: -1 | 0 | 1;
   nextLevel: boolean;
   prevLevel: boolean;
+  toggleDebug: boolean;
 };
 
-const KEY_BINDINGS: Record<string, keyof KeyboardState | 'rotate-left' | 'rotate-right' | 'next-level' | 'prev-level'> = {
+const KEY_BINDINGS: Record<string, keyof KeyboardState | 'rotate-left' | 'rotate-right' | 'next-level' | 'prev-level' | 'toggle-debug'> = {
   ArrowUp: 'thrust',
   ArrowLeft: 'rotate-left',
   ArrowRight: 'rotate-right',
@@ -14,16 +15,19 @@ const KEY_BINDINGS: Record<string, keyof KeyboardState | 'rotate-left' | 'rotate
   Equal: 'next-level',
   '+': 'next-level',
   Minus: 'prev-level',
-  '-': 'prev-level'
+  '-': 'prev-level',
+  Digit0: 'toggle-debug',
+  '0': 'toggle-debug'
 };
 
-export function createKeyboardInput() {
+export async function createKeyboardInput(touchElement?: HTMLElement) {
   const state: KeyboardState = {
     thrust: false,
     fire: false,
     rotate: 0,
     nextLevel: false,
-    prevLevel: false
+    prevLevel: false,
+    toggleDebug: false // Default: debug displays off
   };
 
   const downHandler = (event: KeyboardEvent) => {
@@ -51,6 +55,9 @@ export function createKeyboardInput() {
         break;
       case 'prev-level':
         state.prevLevel = true;
+        break;
+      case 'toggle-debug':
+        state.toggleDebug = !state.toggleDebug; // Toggle on press
         break;
     }
     event.preventDefault();
@@ -85,11 +92,20 @@ export function createKeyboardInput() {
   document.addEventListener('keydown', downHandler);
   document.addEventListener('keyup', upHandler);
 
+  // Initialize touch input if element provided
+  let touchDispose: (() => void) | null = null;
+  if (touchElement) {
+    const { createTouchInput } = await import('./touchInput.js');
+    const touchInput = createTouchInput(touchElement, state);
+    touchDispose = touchInput.dispose;
+  }
+
   return {
     state,
     dispose() {
       document.removeEventListener('keydown', downHandler);
       document.removeEventListener('keyup', upHandler);
+      touchDispose?.();
     }
   };
 }
