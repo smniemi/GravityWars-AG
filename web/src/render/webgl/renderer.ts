@@ -34,6 +34,14 @@ export class WebGLRenderer {
 
     viewport: ViewportInfo = { cameraX: 0, cameraY: 0, zoom: 4.0 };
 
+    // Shockwave state
+    private shockwaveActive = false;
+    private shockwaveStartTime = 0;
+    private shockwaveCenter = { x: 0, y: 0 };
+    private lastShipState = 0;
+    private lastSx = 0;
+    private lastSy = 0;
+
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.gl = createWebGLContext(canvas);
@@ -227,8 +235,56 @@ export class WebGLRenderer {
             this.viewport.zoom = Math.max(baseZoom, minZoom);
 
             // Clamp camera within bounds
-            this.clampCamera(map.width, map.height, globals.sx, globals.sy);
+            // Only update camera if not exploding (shockwave active)
+            if (!this.shockwaveActive) {
+                this.clampCamera(map.width, map.height, globals.sx, globals.sy);
+            }
+
+            // Check for explosion trigger (transition to state 2)
+            if (globals.shipState === 2 && this.lastShipState !== 2) {
+                this.shockwaveActive = true;
+                this.shockwaveStartTime = performance.now() / 1000;
+
+                // Calculate velocity from previous frame
+                const dx = globals.sx - this.lastSx;
+                const dy = globals.sy - this.lastSy;
+                const len = Math.sqrt(dx * dx + dy * dy);
+
+                let offsetX = 0;
+                let offsetY = 0;
+
+                // Offset center towards the wall (direction of movement)
+                if (len > 0) {
+                    // 16 pixels offset (half ship size)
+                    offsetX = (dx / len) * 16;
+                    offsetY = (dy / len) * 16;
+                }
+
+                // Convert fixed point to pixels and apply offset
+                // Note: globals.sx/sy are ALREADY in pixels (unlike bullets which are fixed point)
+                this.shockwaveCenter = {
+                    x: (globals.sx + 16) + offsetX,
+                    y: (globals.sy + 16) + offsetY
+                };
+            }
+            this.lastShipState = globals.shipState;
+            this.lastSx = globals.sx;
+            this.lastSy = globals.sy;
         }
+
+        // Update shockwave uniforms
+        if (this.shockwaveActive) {
+            const time = (performance.now() / 1000) - this.shockwaveStartTime;
+            if (time > 2.0) {
+                this.shockwaveActive = false;
+                this.backgroundRenderer.setShockwave({ x: 0, y: 0 }, 0);
+                this.foregroundRenderer.setShockwave({ x: 0, y: 0 }, 0);
+            } else {
+                this.backgroundRenderer.setShockwave(this.shockwaveCenter, time);
+                this.foregroundRenderer.setShockwave(this.shockwaveCenter, time);
+            }
+        }
+
         this.drawWorldBackground(map);
         // Note: Ship and Foreground must be drawn manually after this in main loop
     }
@@ -238,20 +294,18 @@ export class WebGLRenderer {
         const worldWidth = mapWidth * TILE_SIZE;
         const worldHeight = mapHeight * TILE_SIZE;
 
-        const canvasAspect = this.canvas.width / this.canvas.height;
-        const worldAspect = worldWidth / worldHeight;
+        // We want to ensure the viewport is always within the playing field.
+        // This means we must zoom in enough so that the viewport width <= worldWidth
+        // AND viewport height <= worldHeight.
+        // zoom >= canvas.width / worldWidth
+        // zoom >= canvas.height / worldHeight
 
-        let zoom: number;
+        const widthRatio = this.canvas.width / worldWidth;
+        const heightRatio = this.canvas.height / worldHeight;
 
-        if (canvasAspect > worldAspect) {
-            // Canvas is wider - fit to height
-            zoom = this.canvas.height / worldHeight;
-        } else {
-            // Canvas is taller - fit to width
-            zoom = this.canvas.width / worldWidth;
-        }
-
-        return zoom;
+        // Return the max of the two ratios to ensure we cover the canvas
+        // (or rather, ensure the viewport fits INSIDE the world)
+        return Math.max(widthRatio, heightRatio);
     }
 
     private clampCamera(mapWidth: number, mapHeight: number, shipX: number, shipY: number) {
@@ -343,8 +397,9 @@ export class WebGLRenderer {
         }
 
         if (this.bulletTexture) {
-            // Bullet size in world units
-            const worldSize = 0.8;
+            // Bullet size in world units (pixels)
+            // Tiles are 32x32. Bullets should be visible.
+            const worldSize = 6.0;
             this.spriteBatch.begin(this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
 
             for (const bullet of bullets) {

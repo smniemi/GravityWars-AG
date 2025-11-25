@@ -26,11 +26,44 @@ export class TilemapRenderer {
         uniform vec2 u_camera;
         uniform float u_zoom;
         
+        // Shockwave uniforms
+        uniform vec2 u_shockwaveCenter; // World coordinates
+        uniform float u_shockwaveTime;  // Time since explosion start (seconds)
+        uniform vec3 u_shockwaveParams; // x: amplitude, y: frequency, z: speed
+        
         out vec2 v_texCoord;
         
         void main() {
+            vec2 pos = a_position;
+            
+            // Shockwave effect
+            if (u_shockwaveTime > 0.0) {
+                float dist = distance(pos, u_shockwaveCenter);
+                float waveDist = u_shockwaveTime * u_shockwaveParams.z; // Speed
+                
+                // Calculate wave
+                float diff = dist - waveDist;
+                float width = 200.0; // Width of the wave ring
+                
+                if (abs(diff) < width) {
+                    // Create a ripple
+                    float angle = diff / width * 3.14159; // -PI to PI
+                    float offset = cos(angle) * u_shockwaveParams.x; // Amplitude
+                    
+                    // Falloff based on distance from center (optional)
+                    // float falloff = 1.0 - clamp(dist / 1000.0, 0.0, 1.0);
+                    // offset *= falloff;
+                    
+                    // Direction vector from center
+                    vec2 dir = normalize(pos - u_shockwaveCenter);
+                    if (length(pos - u_shockwaveCenter) < 0.1) dir = vec2(0.0);
+                    
+                    pos += dir * offset;
+                }
+            }
+
             // Convert world pos to view pos
-            vec2 viewPos = (a_position - u_camera) * u_zoom;
+            vec2 viewPos = (pos - u_camera) * u_zoom;
             
             // Convert to clip space (-1 to 1)
             // 0,0 is top-left in screen pixels
@@ -157,5 +190,12 @@ export class TilemapRenderer {
         this.gl.bindVertexArray(this.vao);
         this.gl.drawArrays(this.gl.TRIANGLES, 0, this.vertexCount);
         this.gl.bindVertexArray(null);
+    }
+    setShockwave(center: { x: number, y: number }, time: number, amplitude: number = 10.0) {
+        this.shader.use();
+        this.gl.uniform2f(this.shader.getUniformLocation('u_shockwaveCenter'), center.x, center.y);
+        this.gl.uniform1f(this.shader.getUniformLocation('u_shockwaveTime'), time);
+        // Params: amplitude, frequency (unused in simple ripple), speed
+        this.gl.uniform3f(this.shader.getUniformLocation('u_shockwaveParams'), amplitude, 1.0, 500.0);
     }
 }

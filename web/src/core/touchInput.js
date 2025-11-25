@@ -1,6 +1,5 @@
 export function createTouchInput(element, state) {
     const activeTouches = new Map();
-    const STEER_THRESHOLD = 15; // pixels left/right
     function getTouchZone(x) {
         const rect = element.getBoundingClientRect();
         const relativeX = x - rect.left;
@@ -21,20 +20,23 @@ export function createTouchInput(element, state) {
                 state.fire = true;
             }
             else {
-                // Right zone: thrust just by pressing, steering by horizontal drag
+                // Right zone: thrust + analog steering
                 thrustActive = true;
-                const deltaX = touch.currentX - touch.startX; // positive = right
-                // Steering on horizontal drag
-                if (deltaX < -STEER_THRESHOLD) {
-                    rotateLeft = true;
+                const deltaX = touch.currentX - touch.startX;
+                const deltaY = touch.currentY - touch.startY;
+                // Calculate angle from start point to current point
+                const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                if (dist > 10) {
+                    // Calculate angle in radians
+                    state.targetAngle = Math.atan2(deltaY, deltaX);
                 }
-                else if (deltaX > STEER_THRESHOLD) {
-                    rotateRight = true;
+                else {
+                    state.targetAngle = undefined;
                 }
             }
         }
         state.thrust = thrustActive;
-        // Handle rotation
+        // Handle rotation (legacy)
         if (rotateLeft && !rotateRight) {
             state.rotate = -1;
         }

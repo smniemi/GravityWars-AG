@@ -5,6 +5,7 @@ export type KeyboardState = {
   nextLevel: boolean;
   prevLevel: boolean;
   toggleDebug: boolean;
+  targetAngle?: number; // Optional target angle in radians for analog steering
 };
 
 const KEY_BINDINGS: Record<string, keyof KeyboardState | 'rotate-left' | 'rotate-right' | 'next-level' | 'prev-level' | 'toggle-debug'> = {

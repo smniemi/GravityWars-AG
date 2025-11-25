@@ -108,7 +108,7 @@ let keyboard: Awaited<ReturnType<typeof createKeyboardInput>> | null = null;
 
 const soundManager = new SoundManager();
 let controls: ControlFns | null = null;
-type ExportName = 'init_gw' | 'main_init' | 'control' | 'animate';
+type ExportName = 'init_gw' | 'main_init' | 'control' | 'animate' | 'wasm_next_level' | 'wasm_prev_level';
 
 const cachedExports: Partial<Record<ExportName, () => void>> = {};
 
@@ -131,7 +131,7 @@ const BACKGROUND_TILE_COLOR = '#07090d';
 const MINIMAP_TILE_SIZE = 6;
 const GRID_LINE_COLOR = 'rgba(255, 255, 255, 0.06)';
 const TILE_PALETTE: Record<number, string> = {};
-const ANGLE_ADJUST_SPEED = 128; // 2x faster rotation
+const ANGLE_ADJUST_SPEED = 256; // 2x faster rotation
 const SHIP_IMAGE = {
   NO_THRUST: 0,
   THRUST: 1,
@@ -561,7 +561,30 @@ const loop = new GameLoop(({ deltaMs }) => {
 
       controls.setThrust(thrust ? thrustValue : 0);
       controls.setFire(fire ? 1 : 0);
-      if (rotate !== 0) {
+
+      if (keyboard.state.targetAngle !== undefined && lastGlobals) {
+        // Analog steering
+        // Formula: Game = -Screen - PI/2
+
+        const targetRad = -keyboard.state.targetAngle - Math.PI / 2;
+        const currentRad = ((lastGlobals.sa % 16384) / 16384) * Math.PI * 2;
+
+        // Calculate shortest difference
+        let diff = targetRad - currentRad;
+        // Normalize to -PI to PI
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+
+        // Apply steering with some smoothing/speed limit
+        // Let's try applying a fraction of the difference as the adjustment
+        const adjustment = diff * 0.1; // 10% per frame towards target
+
+        // Convert radians to WASM units
+        const adjustmentUnits = (adjustment / (Math.PI * 2)) * 16384;
+
+        controls.adjustAngle(adjustmentUnits);
+
+      } else if (rotate !== 0) {
         controls.adjustAngle(-rotate * angleSpeed);
       }
 
@@ -697,6 +720,20 @@ loadGravityWarsModule()
     actionReader = createActionReader(module.runtime);
     getExport('init_gw')();
     getExport('main_init')();
+
+    // Force start at Level 1
+    // We loop backwards until we hit level 1
+    let currentLevel = globalsReader.read().levelnum;
+    console.log(`[Main] Initial level: ${currentLevel}. Resetting to 1...`);
+    let attempts = 0;
+    const prevLevelFn = getExport('wasm_prev_level');
+
+    while (currentLevel > 1 && attempts < 20) {
+      prevLevelFn();
+      currentLevel = globalsReader.read().levelnum;
+      attempts++;
+    }
+    console.log(`[Main] Level set to: ${currentLevel}`);
     tileAtlas = createTileAtlas(module.runtime);
     console.log('DEBUG: TileAtlas created', tileAtlas);
     shipSprites = createShipSprites(module.runtime, SHIP_SPECIAL_BLOCK_IDS);
