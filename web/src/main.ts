@@ -11,9 +11,9 @@ import type { GravityWarsRuntime } from './core/wasmBridge.js';
 import { sendDebugSnapshot } from './debugger.js';
 import { createTileAtlas, type TileAtlas } from './render/tileAtlas.js';
 import { SoundManager } from './core/sound.js';
-
 import { createShipSprites, type ShipSprites } from './render/shipSprites.js';
 import { WebGLRenderer } from './render/webgl/renderer.js';
+import { drawHUD } from './ui/hud.js';
 
 const root = document.getElementById('app') ?? createRoot();
 
@@ -38,10 +38,6 @@ root.appendChild(canvas);
 canvas.focus();
 
 const renderer = new WebGLRenderer(canvas);
-// const ctx = canvas.getContext('2d'); // Keep for debug panel overlay if we want, or move debug to HTML?
-// Actually, let's keep a 2D context for the debug panel on a separate canvas or just overlay?
-// The current implementation draws debug panel on the SAME canvas. WebGL and 2D cannot share a canvas.
-// We need a separate canvas for the debug UI.
 
 const uiCanvas = document.createElement('canvas');
 uiCanvas.style.position = 'absolute';
@@ -54,17 +50,7 @@ root.appendChild(uiCanvas);
 
 const uiCtx = uiCanvas.getContext('2d');
 
-const debugLog = document.createElement('div');
-debugLog.id = 'debug-log';
-debugLog.style.position = 'absolute';
-debugLog.style.top = '10px';
-debugLog.style.left = '10px';
-debugLog.style.color = 'lime';
-debugLog.style.fontSize = '20px';
-debugLog.style.fontFamily = 'monospace';
-debugLog.style.zIndex = '1000';
-debugLog.innerText = 'Waiting for input...';
-document.body.appendChild(debugLog);
+
 
 function resize() {
   renderer.resize();
@@ -87,7 +73,6 @@ let globalsReader: ReturnType<typeof createGlobalStateReader> | null = null;
 let lastGlobals: GlobalState | null = null;
 let levelMap: LevelMap | null = null;
 let tileAtlas: TileAtlas | null = null;
-// let levelCanvas: HTMLCanvasElement | null = null; // Removed
 
 let lastTiles: Uint8Array | null = null;
 
@@ -174,11 +159,6 @@ const SHIP_STATE = {
   DISAPPEARING: 4
 } as const;
 
-// Action frame ranges:
-// SPARK (bullet explosion): frames 48-51 (4 frames)
-// SPLASH (water): frames 113-117 (5 frames)
-// Note: These are handled by renderer.drawActions now.
-
 function getExport(name: ExportName): () => void {
   if (!runtime) {
     throw new Error('WASM runtime not ready');
@@ -207,8 +187,6 @@ function getExport(name: ExportName): () => void {
 
   throw new Error(`Export ${name} not found on wasm runtime.`);
 }
-
-// drawShipSprite, drawBullets, drawActionEffects removed - moved to WebGLRenderer
 
 function drawShipFallback(context: CanvasRenderingContext2D, ship: ShipState) {
   const scale = 1 / 64;
@@ -679,6 +657,10 @@ const loop = new GameLoop(({ deltaMs }) => {
       drawMiniMap(uiCtx, levelMap, lastGlobals);
     }
 
+    if (lastGlobals) {
+      drawHUD(uiCtx, lastGlobals);
+    }
+
     // Debug displays - toggleable with "0" key
     const showDebug = keyboard?.state.toggleDebug ?? false;
 
@@ -722,18 +704,28 @@ loadGravityWarsModule()
     getExport('main_init')();
 
     // Force start at Level 1
-    // We loop backwards until we hit level 1
+    // We loop backwards until we hit level 1, OR forward if we are at 0
     let currentLevel = globalsReader.read().levelnum;
     console.log(`[Main] Initial level: ${currentLevel}. Resetting to 1...`);
     let attempts = 0;
     const prevLevelFn = getExport('wasm_prev_level');
+    const nextLevelFn = getExport('wasm_next_level');
 
+    // If we are at 0, go up to 1
+    while (currentLevel < 1 && attempts < 20) {
+      nextLevelFn();
+      currentLevel = globalsReader.read().levelnum;
+      attempts++;
+    }
+
+    // If we are > 1, go down to 1
     while (currentLevel > 1 && attempts < 20) {
       prevLevelFn();
       currentLevel = globalsReader.read().levelnum;
       attempts++;
     }
     console.log(`[Main] Level set to: ${currentLevel}`);
+
     tileAtlas = createTileAtlas(module.runtime);
     console.log('DEBUG: TileAtlas created', tileAtlas);
     shipSprites = createShipSprites(module.runtime, SHIP_SPECIAL_BLOCK_IDS);
@@ -748,4 +740,3 @@ loadGravityWarsModule()
     wasmStatus = `WASM unavailable: ${error.message}`;
     console.warn(error);
   });
-
