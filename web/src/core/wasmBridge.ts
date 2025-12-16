@@ -1,7 +1,7 @@
-const DEFAULT_MANIFEST_URL = 'native/gravitywars.json';
-const DEFAULT_LOADER_URL = 'native/gravitywars.js';
-const DEFAULT_WASM_URL = 'native/gravitywars.wasm';
-const DEFAULT_DATA_URL = 'native/gravitywars.data';
+const DEFAULT_MANIFEST_URL = new URL('../native/gravitywars.json', import.meta.url).href;
+const DEFAULT_LOADER_URL = new URL('../native/gravitywars.js', import.meta.url).href;
+const DEFAULT_WASM_URL = new URL('../native/gravitywars.wasm', import.meta.url).href;
+const DEFAULT_DATA_URL = new URL('../native/gravitywars.data', import.meta.url).href;
 
 type GravityWarsFactory = (moduleConfig?: Record<string, unknown>) => Promise<GravityWarsRuntime>;
 
@@ -56,8 +56,9 @@ export async function loadGravityWarsModule(
   const factory =
     options.factoryOverride ??
     ((await import(
-      /* @vite-ignore */ new URL(loaderUrl, window.location.href).toString()
+      /* @vite-ignore */ loaderUrl
     )).default as GravityWarsFactory);
+
 
   if (typeof factory !== 'function') {
     throw new Error(`GravityWars loader at ${loaderUrl} is invalid. Expected default export factory.`);

@@ -13,23 +13,23 @@ export class SoundManager {
     private wasInWater = false;
 
     private readonly SOUNDS = {
-        key: 'sounds/key2.wav',
-        cling: 'sounds/cling.wav',
-        splash: 'sounds/splash2.wav',
-        happy: 'sounds/finish.wav',
-        whoosh: 'sounds/whoosh2.wav',
-        explode: 'sounds/explode2.wav',
-        wallhit: 'sounds/wallhit.wav',
-        thrust: 'sounds/aircraft008.wav',
-        punch: 'sounds/punch.wav'
+        key: new URL('../sounds/key2.wav', import.meta.url).href,
+        cling: new URL('../sounds/cling.wav', import.meta.url).href,
+        splash: new URL('../sounds/splash2.wav', import.meta.url).href,
+        happy: new URL('../sounds/finish.wav', import.meta.url).href,
+        whoosh: new URL('../sounds/whoosh2.wav', import.meta.url).href,
+        explode: new URL('../sounds/explode2.wav', import.meta.url).href,
+        wallhit: new URL('../sounds/wallhit.wav', import.meta.url).href,
+        thrust: new URL('../sounds/aircraft008.wav', import.meta.url).href,
+        punch: new URL('../sounds/punch.wav', import.meta.url).href
     };
 
     private readonly MUSIC = [
-        'music/Gw1.m4r',
-        'music/Gw2.m4r',
-        'music/Gw3.m4r',
-        'music/Gw4.m4r',
-        'music/Gw5.m4r'
+        new URL('../music/Gw1.m4r', import.meta.url).href,
+        new URL('../music/Gw2.m4r', import.meta.url).href,
+        new URL('../music/Gw3.m4r', import.meta.url).href,
+        new URL('../music/Gw4.m4r', import.meta.url).href,
+        new URL('../music/Gw5.m4r', import.meta.url).href
     ];
 
     constructor() {
