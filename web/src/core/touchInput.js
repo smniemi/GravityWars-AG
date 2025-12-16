@@ -1,4 +1,4 @@
-export function createTouchInput(element, state) {
+export function createTouchInput(element, state, joystick) {
     const activeTouches = new Map();
     function getTouchZone(x) {
         const rect = element.getBoundingClientRect();
@@ -9,57 +9,45 @@ export function createTouchInput(element, state) {
     function updateState() {
         // Reset state first
         state.fire = false;
-        state.thrust = false;
+        state.thrust = 0;
         state.rotate = 0;
-        let thrustActive = false;
-        let rotateLeft = false;
-        let rotateRight = false;
+        state.targetAngle = undefined;
+        let fireActive = false;
         for (const touch of activeTouches.values()) {
             if (touch.zone === 'left') {
-                // Left zone: fire
-                state.fire = true;
-            }
-            else {
-                // Right zone: thrust + analog steering
-                thrustActive = true;
-                const deltaX = touch.currentX - touch.startX;
-                const deltaY = touch.currentY - touch.startY;
-                // Calculate angle from start point to current point
-                const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                if (dist > 10) {
-                    // Calculate angle in radians
-                    state.targetAngle = Math.atan2(deltaY, deltaX);
-                }
-                else {
-                    state.targetAngle = undefined;
-                }
+                fireActive = true;
             }
         }
-        state.thrust = thrustActive;
-        // Handle rotation (legacy)
-        if (rotateLeft && !rotateRight) {
-            state.rotate = -1;
-        }
-        else if (rotateRight && !rotateLeft) {
-            state.rotate = 1;
-        }
-        else {
-            state.rotate = 0;
+        state.fire = fireActive;
+        if (joystick && joystick.active) {
+            state.thrust = joystick.magnitude;
+            state.targetAngle = joystick.angle;
         }
     }
     function handleTouchStart(e) {
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
-            const zone = getTouchZone(touch.clientX);
-            activeTouches.set(touch.identifier, {
-                id: touch.identifier,
-                startX: touch.clientX,
-                startY: touch.clientY,
-                currentX: touch.clientX,
-                currentY: touch.clientY,
-                zone
-            });
+            const rect = element.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            // Try to pass to joystick first if on right side
+            // Actually, let's just check if joystick handles it
+            let handledByJoystick = false;
+            if (joystick) {
+                handledByJoystick = joystick.handleTouchStart(x, y, touch.identifier);
+            }
+            if (!handledByJoystick) {
+                const zone = getTouchZone(touch.clientX);
+                activeTouches.set(touch.identifier, {
+                    id: touch.identifier,
+                    startX: touch.clientX,
+                    startY: touch.clientY,
+                    currentX: touch.clientX,
+                    currentY: touch.clientY,
+                    zone
+                });
+            }
         }
         updateState();
     }
@@ -67,10 +55,18 @@ export function createTouchInput(element, state) {
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
-            const info = activeTouches.get(touch.identifier);
-            if (info) {
-                info.currentX = touch.clientX;
-                info.currentY = touch.clientY;
+            const rect = element.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            if (joystick && joystick.touchId === touch.identifier) {
+                joystick.handleTouchMove(x, y, touch.identifier);
+            }
+            else {
+                const info = activeTouches.get(touch.identifier);
+                if (info) {
+                    info.currentX = touch.clientX;
+                    info.currentY = touch.clientY;
+                }
             }
         }
         updateState();
@@ -79,7 +75,12 @@ export function createTouchInput(element, state) {
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
-            activeTouches.delete(touch.identifier);
+            if (joystick && joystick.touchId === touch.identifier) {
+                joystick.handleTouchEnd(touch.identifier);
+            }
+            else {
+                activeTouches.delete(touch.identifier);
+            }
         }
         updateState();
     }
@@ -87,7 +88,12 @@ export function createTouchInput(element, state) {
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
-            activeTouches.delete(touch.identifier);
+            if (joystick && joystick.touchId === touch.identifier) {
+                joystick.handleTouchEnd(touch.identifier);
+            }
+            else {
+                activeTouches.delete(touch.identifier);
+            }
         }
         updateState();
     }

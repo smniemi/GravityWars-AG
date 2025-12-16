@@ -1,18 +1,18 @@
-console.log('[MAIN] Starting execution...');
-import { GameLoop } from './core/index.js';
-import { createKeyboardInput } from './core/input.js';
-import { createShipStateReader } from './core/shipState.js';
-import { createGlobalStateReader } from './core/globalState.js';
-import { createLevelMap } from './core/levelMap.js';
-import { createBulletReader } from './core/bullets.js';
-import { createActionReader } from './core/actions.js';
-import { loadGravityWarsModule } from './core/wasmBridge.js';
 import { sendDebugSnapshot } from './debugger.js';
 import { createTileAtlas } from './render/tileAtlas.js';
 import { SoundManager } from './core/sound.js';
 import { createShipSprites } from './render/shipSprites.js';
 import { WebGLRenderer } from './render/webgl/renderer.js';
 import { drawHUD } from './ui/hud.js';
+import { Joystick } from './ui/joystick.js';
+import { loadGravityWarsModule } from './core/wasmBridge.js';
+import { createShipStateReader } from './core/shipState.js';
+import { createGlobalStateReader } from './core/globalState.js';
+import { createLevelMap } from './core/levelMap.js';
+import { createBulletReader } from './core/bullets.js';
+import { createActionReader } from './core/actions.js';
+import { createKeyboardInput } from './core/input.js';
+import { GameLoop } from './core/index.js';
 const root = document.getElementById('app') ?? createRoot();
 function createRoot() {
     const el = document.createElement('div');
@@ -41,6 +41,9 @@ uiCanvas.style.height = '100%';
 uiCanvas.style.pointerEvents = 'none'; // Let clicks pass through
 root.appendChild(uiCanvas);
 const uiCtx = uiCanvas.getContext('2d');
+// Joystick
+const joystick = new Joystick();
+const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
 function resize() {
     renderer.resize();
     const width = canvas.clientWidth;
@@ -48,6 +51,11 @@ function resize() {
     if (uiCanvas.width !== width || uiCanvas.height !== height) {
         uiCanvas.width = width;
         uiCanvas.height = height;
+        // Update joystick position
+        // 75% right, 80% down
+        // Size: 2x ship size. Ship is 32px? Let's say 64px radius.
+        const radius = 64;
+        joystick.setPosition(width * 0.75, height * 0.8, radius);
     }
 }
 window.addEventListener('resize', resize);
@@ -72,7 +80,7 @@ let levelAdvancePending = false;
 // Initialize input system asynchronously
 let keyboard = null;
 (async () => {
-    keyboard = await createKeyboardInput(root);
+    keyboard = await createKeyboardInput(root, joystick);
 })();
 const soundManager = new SoundManager();
 let controls = null;
@@ -320,7 +328,8 @@ function createControls(runtime) {
         setFire: resolveVoidFunction(runtime, 'wasm_set_fire'),
         adjustAngle: resolveVoidFunction(runtime, 'wasm_adjust_sa'),
         nextLevel: resolveZeroArgFunction(runtime, 'wasm_next_level'),
-        prevLevel: resolveZeroArgFunction(runtime, 'wasm_prev_level')
+        prevLevel: resolveZeroArgFunction(runtime, 'wasm_prev_level'),
+        setLevel: resolveVoidFunction(runtime, 'wasm_set_level')
     };
 }
 function resolveVoidFunction(runtime, name) {
@@ -359,17 +368,8 @@ function handleLevelTransition() {
     if (lastShipState.state === SHIP_STATE.DISAPPEARING && lastShipState.animationPhase <= 0) {
         levelAdvancePending = true;
         advanceLevel();
-        if (runtime?.runtime) {
-            levelMap = createLevelMap(runtime.runtime);
-            tileAtlas = createTileAtlas(runtime.runtime);
-            shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
-            if (levelMap && tileAtlas) {
-                renderer.buildLevel(levelMap, tileAtlas);
-            }
-        }
-        currentBullets = [];
+        reloadLevel();
         levelAdvancePending = false;
-        lastTiles = null;
     }
 }
 const loop = new GameLoop(({ deltaMs }) => {
@@ -454,67 +454,38 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
         if (controls && keyboard) {
             const { thrust, fire, rotate, nextLevel, prevLevel } = keyboard.state;
-            if (thrust || fire || rotate !== 0) {
-                console.log(`[Main] Input active: thrust=${thrust} fire=${fire} rotate=${rotate}`);
-            }
             // Mobile gets higher thrust to simulate lower gravity
-            const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
             const thrustValue = isMobile ? 24 : 16;
             const angleSpeed = isMobile ? ANGLE_ADJUST_SPEED * 0.5 : ANGLE_ADJUST_SPEED; // 2x slower rotation on mobile
-            controls.setThrust(thrust ? thrustValue : 0);
+            // Apply analog thrust if available (thrust is 0-1)
+            controls.setThrust(thrust * thrustValue);
             controls.setFire(fire ? 1 : 0);
             if (keyboard.state.targetAngle !== undefined && lastGlobals) {
                 // Analog steering
-                // Formula: Game = -Screen - PI/2
                 const targetRad = -keyboard.state.targetAngle - Math.PI / 2;
                 const currentRad = ((lastGlobals.sa % 16384) / 16384) * Math.PI * 2;
-                // Calculate shortest difference
                 let diff = targetRad - currentRad;
-                // Normalize to -PI to PI
                 while (diff > Math.PI)
                     diff -= Math.PI * 2;
                 while (diff < -Math.PI)
                     diff += Math.PI * 2;
-                // Apply steering with some smoothing/speed limit
-                // Let's try applying a fraction of the difference as the adjustment
-                const adjustment = diff * 0.1; // 10% per frame towards target
-                // Convert radians to WASM units
+                const adjustment = diff * 0.1;
                 const adjustmentUnits = (adjustment / (Math.PI * 2)) * 16384;
                 controls.adjustAngle(adjustmentUnits);
             }
             else if (rotate !== 0) {
                 controls.adjustAngle(-rotate * angleSpeed);
             }
-            // Handle level changes
+            // Handle level changes (debug keys)
             if (nextLevel && keyboard) {
                 controls.nextLevel();
                 keyboard.state.nextLevel = false;
-                if (runtime?.runtime) {
-                    levelMap = createLevelMap(runtime.runtime);
-                    tileAtlas = createTileAtlas(runtime.runtime);
-                    shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
-                    if (levelMap && tileAtlas) {
-                        renderer.setTileAtlas(tileAtlas);
-                        renderer.setShipSprites(shipSprites);
-                        renderer.buildLevel(levelMap, tileAtlas);
-                    }
-                }
-                currentBullets = [];
+                reloadLevel();
             }
             if (prevLevel && keyboard) {
                 controls.prevLevel();
                 keyboard.state.prevLevel = false;
-                if (runtime?.runtime) {
-                    levelMap = createLevelMap(runtime.runtime);
-                    tileAtlas = createTileAtlas(runtime.runtime);
-                    shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
-                    if (levelMap && tileAtlas) {
-                        renderer.setTileAtlas(tileAtlas);
-                        renderer.setShipSprites(shipSprites);
-                        renderer.buildLevel(levelMap, tileAtlas);
-                    }
-                }
-                currentBullets = [];
+                reloadLevel();
             }
         }
         handleLevelTransition();
@@ -568,11 +539,15 @@ const loop = new GameLoop(({ deltaMs }) => {
         if (lastGlobals) {
             drawHUD(uiCtx, lastGlobals);
         }
+        // Render Joystick
+        if (isMobile) {
+            joystick.render(uiCtx);
+        }
         // Debug displays - toggleable with "0" key
         const showDebug = keyboard?.state.toggleDebug ?? false;
         if (showDebug) {
             if (lastShipState) {
-                drawDebugPanel(uiCtx, lastShipState, lastGlobals, keyboard?.state ?? { thrust: false, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false });
+                drawDebugPanel(uiCtx, lastShipState, lastGlobals, keyboard?.state ?? { thrust: 0, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false });
             }
             uiCtx.fillStyle = '#0ff';
             uiCtx.font = '16px monospace';
@@ -586,10 +561,23 @@ const loop = new GameLoop(({ deltaMs }) => {
             wasmStatus,
             ship: lastShipState,
             globals: lastGlobals,
-            input: keyboard?.state ?? { thrust: false, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false }
+            input: keyboard?.state ?? { thrust: 0, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false }
         });
     }
 });
+function reloadLevel() {
+    if (runtime?.runtime) {
+        levelMap = createLevelMap(runtime.runtime);
+        tileAtlas = createTileAtlas(runtime.runtime);
+        shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
+        if (levelMap && tileAtlas) {
+            renderer.setTileAtlas(tileAtlas);
+            renderer.setShipSprites(shipSprites);
+            renderer.buildLevel(levelMap, tileAtlas);
+        }
+    }
+    currentBullets = [];
+}
 loop.start();
 loadGravityWarsModule()
     .then((module) => {
