@@ -13,23 +13,23 @@ export class SoundManager {
     private wasInWater = false;
 
     private readonly SOUNDS = {
-        key: '/sounds/key2.wav',
-        cling: '/sounds/cling.wav',
-        splash: '/sounds/splash2.wav',
-        happy: '/sounds/finish.wav',
-        whoosh: '/sounds/whoosh2.wav',
-        explode: '/sounds/explode2.wav',
-        wallhit: '/sounds/wallhit.wav',
-        thrust: '/sounds/aircraft008.wav',
-        punch: '/sounds/punch.wav'
+        key: 'sounds/key2.wav',
+        cling: 'sounds/cling.wav',
+        splash: 'sounds/splash2.wav',
+        happy: 'sounds/finish.wav',
+        whoosh: 'sounds/whoosh2.wav',
+        explode: 'sounds/explode2.wav',
+        wallhit: 'sounds/wallhit.wav',
+        thrust: 'sounds/aircraft008.wav',
+        punch: 'sounds/punch.wav'
     };
 
     private readonly MUSIC = [
-        '/music/Gw1.m4r',
-        '/music/Gw2.m4r',
-        '/music/Gw3.m4r',
-        '/music/Gw4.m4r',
-        '/music/Gw5.m4r'
+        'music/Gw1.m4r',
+        'music/Gw2.m4r',
+        'music/Gw3.m4r',
+        'music/Gw4.m4r',
+        'music/Gw5.m4r'
     ];
 
     constructor() {
