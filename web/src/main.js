@@ -187,6 +187,7 @@ function drawShipFallback(context, ship) {
     context.font = '12px monospace';
     context.fillText(`(${ship.x}, ${ship.y})`, px + 10, py - 10);
 }
+// @ts-ignore
 function drawMiniMap(context, map, globals) {
     const tileSize = MINIMAP_TILE_SIZE;
     const mapWidthPx = map.width * tileSize;
