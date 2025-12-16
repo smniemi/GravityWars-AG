@@ -23,7 +23,14 @@ const KEY_BINDINGS: Record<string, keyof KeyboardState | 'rotate-left' | 'rotate
 
 import type { Joystick } from '../ui/joystick.js';
 
-export async function createKeyboardInput(touchElement?: HTMLElement, joystick?: Joystick) {
+import type { Button } from '../ui/button.js';
+
+export async function createKeyboardInput(
+  touchElement?: HTMLElement,
+  joystick?: Joystick,
+  fireButton?: Button,
+  thrustButton?: Button
+) {
   const state: KeyboardState = {
     thrust: 0,
     fire: false,
@@ -99,7 +106,7 @@ export async function createKeyboardInput(touchElement?: HTMLElement, joystick?:
   let touchDispose: (() => void) | null = null;
   if (touchElement) {
     const { createTouchInput } = await import('./touchInput.js');
-    const touchInput = createTouchInput(touchElement, state, joystick);
+    const touchInput = createTouchInput(touchElement, state, joystick, fireButton, thrustButton);
     touchDispose = touchInput.dispose;
   }
 
@@ -112,4 +119,6 @@ export async function createKeyboardInput(touchElement?: HTMLElement, joystick?:
     }
   };
 }
+
+
 

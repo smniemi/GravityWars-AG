@@ -10,7 +10,7 @@ const KEY_BINDINGS = {
     Digit0: 'toggle-debug',
     '0': 'toggle-debug'
 };
-export async function createKeyboardInput(touchElement, joystick) {
+export async function createKeyboardInput(touchElement, joystick, fireButton, thrustButton) {
     const state = {
         thrust: 0,
         fire: false,
@@ -86,7 +86,7 @@ export async function createKeyboardInput(touchElement, joystick) {
     let touchDispose = null;
     if (touchElement) {
         const { createTouchInput } = await import('./touchInput.js');
-        const touchInput = createTouchInput(touchElement, state, joystick);
+        const touchInput = createTouchInput(touchElement, state, joystick, fireButton, thrustButton);
         touchDispose = touchInput.dispose;
     }
     return {

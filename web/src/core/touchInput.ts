@@ -1,5 +1,6 @@
 import type { KeyboardState } from './input.js';
 import type { Joystick } from '../ui/joystick.js';
+import type { Button } from '../ui/button.js';
 
 interface TouchInfo {
     id: number;
@@ -10,7 +11,13 @@ interface TouchInfo {
     zone: 'left' | 'right';
 }
 
-export function createTouchInput(element: HTMLElement, state: KeyboardState, joystick?: Joystick) {
+export function createTouchInput(
+    element: HTMLElement,
+    state: KeyboardState,
+    joystick?: Joystick,
+    fireButton?: Button,
+    thrustButton?: Button
+) {
     const activeTouches = new Map<number, TouchInfo>();
 
     function getTouchZone(x: number): 'left' | 'right' {
@@ -27,18 +34,18 @@ export function createTouchInput(element: HTMLElement, state: KeyboardState, joy
         state.rotate = 0;
         state.targetAngle = undefined;
 
-        let fireActive = false;
-
-        for (const touch of activeTouches.values()) {
-            if (touch.zone === 'left') {
-                fireActive = true;
-            }
+        // Check buttons
+        if (fireButton && fireButton.active) {
+            state.fire = true;
         }
 
-        state.fire = fireActive;
+        if (thrustButton && thrustButton.active) {
+            state.thrust = 1;
+        }
 
+        // Joystick only handles rotation now
         if (joystick && joystick.active) {
-            state.thrust = joystick.magnitude;
+            // state.thrust = joystick.magnitude; // Removed thrust from joystick
             state.targetAngle = joystick.angle;
         }
     }
@@ -52,14 +59,20 @@ export function createTouchInput(element: HTMLElement, state: KeyboardState, joy
             const x = touch.clientX - rect.left;
             const y = touch.clientY - rect.top;
 
-            // Try to pass to joystick first if on right side
-            // Actually, let's just check if joystick handles it
-            let handledByJoystick = false;
-            if (joystick) {
-                handledByJoystick = joystick.handleTouchStart(x, y, touch.identifier);
+            let handled = false;
+
+            // Try buttons first
+            if (fireButton && fireButton.handleTouchStart(x, y, touch.identifier)) {
+                handled = true;
+            } else if (thrustButton && thrustButton.handleTouchStart(x, y, touch.identifier)) {
+                handled = true;
+            }
+            // Then joystick
+            else if (joystick) {
+                handled = joystick.handleTouchStart(x, y, touch.identifier);
             }
 
-            if (!handledByJoystick) {
+            if (!handled) {
                 const zone = getTouchZone(touch.clientX);
                 activeTouches.set(touch.identifier, {
                     id: touch.identifier,
@@ -104,7 +117,11 @@ export function createTouchInput(element: HTMLElement, state: KeyboardState, joy
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
 
-            if (joystick && joystick.touchId === touch.identifier) {
+            if (fireButton && fireButton.touchId === touch.identifier) {
+                fireButton.handleTouchEnd(touch.identifier);
+            } else if (thrustButton && thrustButton.touchId === touch.identifier) {
+                thrustButton.handleTouchEnd(touch.identifier);
+            } else if (joystick && joystick.touchId === touch.identifier) {
                 joystick.handleTouchEnd(touch.identifier);
             } else {
                 activeTouches.delete(touch.identifier);
@@ -120,7 +137,11 @@ export function createTouchInput(element: HTMLElement, state: KeyboardState, joy
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
 
-            if (joystick && joystick.touchId === touch.identifier) {
+            if (fireButton && fireButton.touchId === touch.identifier) {
+                fireButton.handleTouchEnd(touch.identifier);
+            } else if (thrustButton && thrustButton.touchId === touch.identifier) {
+                thrustButton.handleTouchEnd(touch.identifier);
+            } else if (joystick && joystick.touchId === touch.identifier) {
                 joystick.handleTouchEnd(touch.identifier);
             } else {
                 activeTouches.delete(touch.identifier);

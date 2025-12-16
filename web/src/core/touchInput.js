@@ -1,4 +1,4 @@
-export function createTouchInput(element, state, joystick) {
+export function createTouchInput(element, state, joystick, fireButton, thrustButton) {
     const activeTouches = new Map();
     function getTouchZone(x) {
         const rect = element.getBoundingClientRect();
@@ -12,15 +12,16 @@ export function createTouchInput(element, state, joystick) {
         state.thrust = 0;
         state.rotate = 0;
         state.targetAngle = undefined;
-        let fireActive = false;
-        for (const touch of activeTouches.values()) {
-            if (touch.zone === 'left') {
-                fireActive = true;
-            }
+        // Check buttons
+        if (fireButton && fireButton.active) {
+            state.fire = true;
         }
-        state.fire = fireActive;
+        if (thrustButton && thrustButton.active) {
+            state.thrust = 1;
+        }
+        // Joystick only handles rotation now
         if (joystick && joystick.active) {
-            state.thrust = joystick.magnitude;
+            // state.thrust = joystick.magnitude; // Removed thrust from joystick
             state.targetAngle = joystick.angle;
         }
     }
@@ -31,13 +32,19 @@ export function createTouchInput(element, state, joystick) {
             const rect = element.getBoundingClientRect();
             const x = touch.clientX - rect.left;
             const y = touch.clientY - rect.top;
-            // Try to pass to joystick first if on right side
-            // Actually, let's just check if joystick handles it
-            let handledByJoystick = false;
-            if (joystick) {
-                handledByJoystick = joystick.handleTouchStart(x, y, touch.identifier);
+            let handled = false;
+            // Try buttons first
+            if (fireButton && fireButton.handleTouchStart(x, y, touch.identifier)) {
+                handled = true;
             }
-            if (!handledByJoystick) {
+            else if (thrustButton && thrustButton.handleTouchStart(x, y, touch.identifier)) {
+                handled = true;
+            }
+            // Then joystick
+            else if (joystick) {
+                handled = joystick.handleTouchStart(x, y, touch.identifier);
+            }
+            if (!handled) {
                 const zone = getTouchZone(touch.clientX);
                 activeTouches.set(touch.identifier, {
                     id: touch.identifier,
@@ -75,7 +82,13 @@ export function createTouchInput(element, state, joystick) {
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
-            if (joystick && joystick.touchId === touch.identifier) {
+            if (fireButton && fireButton.touchId === touch.identifier) {
+                fireButton.handleTouchEnd(touch.identifier);
+            }
+            else if (thrustButton && thrustButton.touchId === touch.identifier) {
+                thrustButton.handleTouchEnd(touch.identifier);
+            }
+            else if (joystick && joystick.touchId === touch.identifier) {
                 joystick.handleTouchEnd(touch.identifier);
             }
             else {
@@ -88,7 +101,13 @@ export function createTouchInput(element, state, joystick) {
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
-            if (joystick && joystick.touchId === touch.identifier) {
+            if (fireButton && fireButton.touchId === touch.identifier) {
+                fireButton.handleTouchEnd(touch.identifier);
+            }
+            else if (thrustButton && thrustButton.touchId === touch.identifier) {
+                thrustButton.handleTouchEnd(touch.identifier);
+            }
+            else if (joystick && joystick.touchId === touch.identifier) {
                 joystick.handleTouchEnd(touch.identifier);
             }
             else {

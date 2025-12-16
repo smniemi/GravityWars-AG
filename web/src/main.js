@@ -5,6 +5,7 @@ import { createShipSprites } from './render/shipSprites.js';
 import { WebGLRenderer } from './render/webgl/renderer.js';
 import { drawHUD } from './ui/hud.js';
 import { Joystick } from './ui/joystick.js';
+import { Button } from './ui/button.js';
 import { loadGravityWarsModule } from './core/wasmBridge.js';
 import { createShipStateReader } from './core/shipState.js';
 import { createGlobalStateReader } from './core/globalState.js';
@@ -43,6 +44,8 @@ root.appendChild(uiCanvas);
 const uiCtx = uiCanvas.getContext('2d');
 // Joystick
 const joystick = new Joystick();
+const fireButton = new Button('FIRE');
+const thrustButton = new Button('ACCEL');
 const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
 function resize() {
     renderer.resize();
@@ -55,7 +58,15 @@ function resize() {
         // 75% right, 80% down
         // Size: 2x ship size. Ship is 32px? Let's say 64px radius.
         const radius = 64;
-        joystick.setPosition(width * 0.75, height * 0.8, radius);
+        joystick.setPosition(width * 0.85, height * 0.8, radius);
+        // Buttons
+        // Left side
+        const btnRadius = 40;
+        const xLeft = width * 0.15;
+        // Fire button: upper left
+        fireButton.setPosition(xLeft, height * 0.65, btnRadius);
+        // Thrust button: lower left
+        thrustButton.setPosition(xLeft, height * 0.85, btnRadius);
     }
 }
 window.addEventListener('resize', resize);
@@ -80,7 +91,7 @@ let levelAdvancePending = false;
 // Initialize input system asynchronously
 let keyboard = null;
 (async () => {
-    keyboard = await createKeyboardInput(root, joystick);
+    keyboard = await createKeyboardInput(root, joystick, fireButton, thrustButton);
 })();
 const soundManager = new SoundManager();
 let controls = null;
@@ -542,6 +553,8 @@ const loop = new GameLoop(({ deltaMs }) => {
         // Render Joystick
         if (isMobile) {
             joystick.render(uiCtx);
+            fireButton.render(uiCtx);
+            thrustButton.render(uiCtx);
         }
         // Debug displays - toggleable with "0" key
         const showDebug = keyboard?.state.toggleDebug ?? false;
