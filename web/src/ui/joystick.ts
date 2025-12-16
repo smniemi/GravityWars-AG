@@ -16,8 +16,8 @@ export class Joystick {
     public magnitude: number = 0; // 0 to 1
 
     // Inertia
-    private currentAngle: number = 0;
-    private targetAngle: number = 0;
+    private currentAngle: number = -Math.PI / 2;
+    private targetAngle: number = -Math.PI / 2;
     private readonly SMOOTHING = 0.15;
 
     constructor() { }
