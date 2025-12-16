@@ -520,8 +520,7 @@ const loop = new GameLoop(({ deltaMs }) => {
         case 6: bgName = 'back_park.JPG'; break;
       }
 
-      const bgUrl = new URL(`../assets/backgrounds/${bgName}`, import.meta.url).href;
-      renderer.setBackgroundImage(bgUrl);
+      renderer.setBackgroundImage(`assets/backgrounds/${bgName}`);
 
       if (lastGlobals.dynamicBlocksChanged) {
         if (runtime?.runtime) {
