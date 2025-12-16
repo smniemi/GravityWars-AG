@@ -4,6 +4,9 @@ let lastSent = 0;
 const MIN_INTERVAL = 250;
 
 export function sendDebugSnapshot(snapshot: Snapshot) {
+  if (!import.meta.env.DEV) {
+    return;
+  }
   const now = performance.now();
   if (now - lastSent < MIN_INTERVAL) {
     return;
@@ -26,6 +29,6 @@ export function sendDebugSnapshot(snapshot: Snapshot) {
     headers: { 'Content-Type': 'application/json' },
     body: payload,
     keepalive: true
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
