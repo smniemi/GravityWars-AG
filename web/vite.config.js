@@ -1,5 +1,6 @@
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
+
 const debugPlugin = () => {
     let latestPayload = '{}';
     return {
@@ -29,8 +30,9 @@ const debugPlugin = () => {
         }
     };
 };
+
 export default defineConfig({
-    base: './',
+    base: '',
     server: {
         port: 4173,
         host: '0.0.0.0'
