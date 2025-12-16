@@ -520,6 +520,11 @@ const loop = new GameLoop(({ deltaMs }) => {
         case 6: bgName = 'back_park.JPG'; break;
       }
 
+      console.log(`[Main] Loading background: ${bgName} for level ${levelNum} (Index: ${bgIndex})`);
+      if (!bgName || bgName === 'undefined') {
+        console.error('[Main] Invalid bgName, falling back to space.jpg');
+        bgName = 'space.jpg';
+      }
       renderer.setBackgroundImage(`assets/backgrounds/${bgName}`);
 
       if (lastGlobals.dynamicBlocksChanged) {
