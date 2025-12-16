@@ -24,6 +24,9 @@ function createRoot(): HTMLElement {
   return el;
 }
 
+// Debug log to verify version
+console.log('[Main] App Version: 1.0.1 (Relative Paths Configured)');
+
 const canvas = document.createElement('canvas');
 canvas.width = 960;
 canvas.height = 540;
