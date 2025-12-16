@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+  <!-- PWA / Fullscreen Mode -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <title>GravityWars Web</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #020205;
+      font-family: 'Galactican', system-ui, sans-serif;
+      color: #fefefe;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      /* Prevent text selection and touch behaviors */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+  </style>
+  <script type="module" crossorigin src="./assets/index-DoHp-vby.js"></script>
+</head>
+
+<body>
+  <div id="app"></div>
+</body>
+
+</html>

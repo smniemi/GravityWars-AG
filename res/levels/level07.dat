@@ -1,0 +1,9 @@
+level 	"King's World"
+author	"P. Johannesson"
+comment "Float away..." 
+
+time	199
+fuel 	99	
+
+	x	y	start	stop	frame	speed
+-----------------------------------------------------

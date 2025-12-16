@@ -1,0 +1,9 @@
+level 	"The Arcade Hall"
+author	"P. Johannesson"
+comment "No Speed limit!" 
+
+time    199
+fuel 	99
+
+	x	y	start	stop	frame	speed
+-----------------------------------------------------
