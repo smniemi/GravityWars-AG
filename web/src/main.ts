@@ -646,9 +646,9 @@ const loop = new GameLoop(({ deltaMs }) => {
       drawShipFallback(uiCtx, lastShipState);
     }
 
-    if (levelMap) {
-      drawMiniMap(uiCtx, levelMap, lastGlobals);
-    }
+    // if (levelMap) {
+    //   drawMiniMap(uiCtx, levelMap, lastGlobals);
+    // }
 
     if (lastGlobals) {
       drawHUD(uiCtx, lastGlobals);
