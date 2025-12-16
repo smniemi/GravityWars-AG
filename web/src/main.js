@@ -21,6 +21,8 @@ function createRoot() {
     document.body.appendChild(el);
     return el;
 }
+// Debug log to verify version
+console.log('[Main] App Version: 1.0.1 (Relative Paths Configured)');
 const canvas = document.createElement('canvas');
 canvas.width = 960;
 canvas.height = 540;
@@ -549,9 +551,9 @@ const loop = new GameLoop(({ deltaMs }) => {
         if (!levelMap && lastShipState) {
             drawShipFallback(uiCtx, lastShipState);
         }
-        if (levelMap) {
-            drawMiniMap(uiCtx, levelMap, lastGlobals);
-        }
+        // if (levelMap) {
+        //   drawMiniMap(uiCtx, levelMap, lastGlobals);
+        // }
         if (lastGlobals) {
             drawHUD(uiCtx, lastGlobals);
         }

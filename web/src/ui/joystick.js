@@ -12,8 +12,8 @@ export class Joystick {
     angle = 0; // Radians
     magnitude = 0; // 0 to 1
     // Inertia
-    currentAngle = 0;
-    targetAngle = 0;
+    currentAngle = -Math.PI / 2;
+    targetAngle = -Math.PI / 2;
     SMOOTHING = 0.15;
     constructor() { }
     setPosition(x, y, radius) {

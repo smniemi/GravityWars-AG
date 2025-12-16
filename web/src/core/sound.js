@@ -27,28 +27,32 @@ export class SoundManager {
         'music/Gw5.m4r'
     ];
     constructor() {
-        // AudioContext must be initialized after user interaction
-        // iOS requires touch events specifically
-        window.addEventListener('click', () => this.init(), { once: true });
-        window.addEventListener('keydown', () => this.init(), { once: true });
-        window.addEventListener('touchstart', () => this.init(), { once: true });
+        // Initialize immediately
+        this.init();
+        // Resume on first interaction
+        const resume = () => {
+            if (this.context?.state === 'suspended') {
+                this.context.resume();
+                console.log('[SoundManager] AudioContext resumed by user interaction');
+            }
+        };
+        window.addEventListener('click', resume, { once: true });
+        window.addEventListener('keydown', resume, { once: true });
+        window.addEventListener('touchstart', resume, { once: true });
     }
     async init() {
         if (this.context)
             return;
         try {
+            // Create context immediately (likely suspended state)
             this.context = new AudioContext();
             this.musicGain = this.context.createGain();
-            this.musicGain.gain.value = 0.4; // Lower music volume
+            this.musicGain.gain.value = 0.4;
             this.musicGain.connect(this.context.destination);
             this.enabled = true;
-            // Resume context if suspended (iOS requirement)
-            if (this.context.state === 'suspended') {
-                await this.context.resume();
-            }
             await this.loadSounds();
             this.playMusic();
-            console.log('[SoundManager] Audio initialized');
+            console.log('[SoundManager] Audio initialized immediately');
         }
         catch (e) {
             console.error('[SoundManager] Failed to init audio', e);

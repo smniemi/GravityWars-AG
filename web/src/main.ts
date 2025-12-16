@@ -229,6 +229,7 @@ function drawShipFallback(context: CanvasRenderingContext2D, ship: ShipState) {
   context.fillText(`(${ship.x}, ${ship.y})`, px + 10, py - 10);
 }
 
+// @ts-ignore
 function drawMiniMap(
   context: CanvasRenderingContext2D,
   map: LevelMap,
