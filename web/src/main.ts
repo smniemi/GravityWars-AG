@@ -473,6 +473,7 @@ function handleLevelTransition() {
   }
 }
 
+let lastBgName = '';
 const loop = new GameLoop(({ deltaMs }) => {
 
 
@@ -509,10 +510,10 @@ const loop = new GameLoop(({ deltaMs }) => {
     if (globalsReader) {
       lastGlobals = globalsReader.read();
 
-      // Update background based on level
+      // Update background only when level changes or on initial load
       const levelNum = lastGlobals.levelnum;
       const bgIndex = levelNum % 7;
-      let bgName = 'space.jpg'; // Default/Fallback
+      let bgName = 'space.jpg';
 
       switch (bgIndex) {
         case 0: bgName = 'back5_park.JPG'; break;
@@ -524,12 +525,14 @@ const loop = new GameLoop(({ deltaMs }) => {
         case 6: bgName = 'back_park.JPG'; break;
       }
 
-      console.log(`[Main] Loading background: ${bgName} for level ${levelNum} (Index: ${bgIndex})`);
-      if (!bgName || bgName === 'undefined') {
-        console.error('[Main] Invalid bgName, falling back to space.jpg');
-        bgName = 'space.jpg';
+      if (bgName !== lastBgName) {
+        if (!bgName || bgName === 'undefined') {
+          bgName = 'space.jpg';
+        }
+        console.log(`[Main] Switching background to: ${bgName} for level ${levelNum}`);
+        renderer.setBackgroundImage(`assets/backgrounds/${bgName}`);
+        lastBgName = bgName;
       }
-      renderer.setBackgroundImage(`assets/backgrounds/${bgName}`);
 
       if (lastGlobals.dynamicBlocksChanged) {
         if (runtime?.runtime) {
