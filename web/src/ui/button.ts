@@ -47,7 +47,7 @@ export class Button {
 
         if (this.label) {
             ctx.fillStyle = '#fff';
-            ctx.font = '16px monospace';
+            ctx.font = '20px "Galactic", monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(this.label, this.x, this.y);

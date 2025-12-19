@@ -548,11 +548,11 @@ const loop = new GameLoop(({ deltaMs }) => {
     if (levelMap) {
         renderer.drawWorld(levelMap, lastGlobals, lastShipState, SHIP_BLOCK_MAP);
     }
-    if (levelMap) {
-        renderer.drawWorldForeground();
-    }
     if (lastGlobals && lastShipState) {
         renderer.drawShip(lastGlobals, lastShipState, SHIP_BLOCK_MAP);
+    }
+    if (levelMap) {
+        renderer.drawWorldForeground();
     }
     if (currentBullets.length) {
         renderer.drawBullets(currentBullets);

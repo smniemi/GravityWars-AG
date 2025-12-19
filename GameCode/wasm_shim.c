@@ -63,6 +63,7 @@ typedef struct {
   int32_t levelnum;
   int32_t sa;
   int32_t dynamicBlocksChangedFlag;
+  int32_t gameOver;
 } WasmGlobalState;
 
 static WasmGlobalState wasmGlobals;
@@ -81,7 +82,15 @@ void *get_global_state(void) {
   wasmGlobals.levelnum = levelnum;
   wasmGlobals.sa = sa;
   wasmGlobals.dynamicBlocksChangedFlag = dynamicBlocksChanged;
+  wasmGlobals.gameOver = gameOver;
   return &wasmGlobals;
+}
+
+const char *get_current_level_name(void) {
+  if (levelnum >= 0 && levelnum < 100) {
+    return level_name[levelnum];
+  }
+  return "Unknown";
 }
 
 void wasm_set_thrust(int value) { shipThrust = value; }
@@ -141,6 +150,18 @@ void wasm_prev_level(void) {
   if (levelnum < 0) {
     levelnum = TOTAL_NUMBER_OF_LEVELS - 1;
   }
+  gameOver = FALSE;
+  shipThrust = 0;
+  shipIsFiring = 0;
+  main_init();
+  shipState.state = SHIP_STATE_APPEARING;
+  shipState.animationPhase = 5 << 2;
+  dynamicBlocksChanged = 1;
+}
+
+void wasm_restart_level(void) {
+  main_end();
+  // Levelnum stays same
   gameOver = FALSE;
   shipThrust = 0;
   shipIsFiring = 0;

@@ -14,9 +14,10 @@ export interface GlobalState {
   levelnum: number;
   sa: number;
   dynamicBlocksChanged: number;
+  gameOver: number;
 }
 
-const STRUCT_SIZE = 56;
+const STRUCT_SIZE = 60;
 
 export function createGlobalStateReader(runtime: GravityWarsRuntime) {
   const getPtr = resolveFunction(runtime, 'get_global_state');
@@ -39,7 +40,8 @@ export function createGlobalStateReader(runtime: GravityWarsRuntime) {
         numKeys: view.getInt32(36, true),
         levelnum: view.getInt32(40, true),
         sa: view.getInt32(44, true),
-        dynamicBlocksChanged: view.getInt32(48, true)
+        dynamicBlocksChanged: view.getInt32(48, true),
+        gameOver: view.getInt32(52, true)
       };
     }
   };

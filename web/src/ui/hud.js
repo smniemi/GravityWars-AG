@@ -1,9 +1,9 @@
 export function drawHUD(ctx, globals) {
     const { width } = ctx.canvas;
     const padding = 20;
-    const fontSize = 20;
+    const fontSize = 30;
     ctx.save();
-    ctx.font = `bold ${fontSize}px monospace`;
+    ctx.font = `${fontSize}px 'Galactic', monospace`;
     ctx.textBaseline = 'top';
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = '#000000';

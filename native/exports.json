@@ -20,5 +20,7 @@
   "_wasm_clear_dynamic_blocks",
   "_wasm_advance_level",
   "_wasm_next_level",
-  "_wasm_prev_level"
+  "_wasm_prev_level",
+  "_wasm_restart_level",
+  "_get_current_level_name"
 ]
