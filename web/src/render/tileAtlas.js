@@ -32,7 +32,7 @@ export function createTileAtlas(runtime) {
             imageData.data[dest + 2] = scalePaletteComponent(b);
             // Legacy logic from EAGLView.m:
             // p[m+3] = (c!=0 && (c<176 || c>190 ))*255;
-            // This means indices 176-190 are transparent background.
+            // This means indices 176-190 are transparent background, along with index 0.
             const isTransparent = paletteIndex === 0 || (paletteIndex >= 176 && paletteIndex <= 190);
             imageData.data[dest + 3] = isTransparent ? 0 : 255;
         }

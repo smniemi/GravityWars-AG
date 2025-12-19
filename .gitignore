@@ -31,3 +31,6 @@ upscaled_block_*.png
 # OS
 .DS_Store
 Thumbs.db
+
+# Tools
+emsdk/

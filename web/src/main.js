@@ -1,3 +1,4 @@
+import './style.css';
 import { sendDebugSnapshot } from './debugger.js';
 import { createTileAtlas } from './render/tileAtlas.js';
 import { SoundManager } from './core/sound.js';
@@ -14,6 +15,7 @@ import { createBulletReader } from './core/bullets.js';
 import { createActionReader } from './core/actions.js';
 import { createKeyboardInput } from './core/input.js';
 import { GameLoop } from './core/index.js';
+import { StartScreen } from './ui/startScreen.js';
 const root = document.getElementById('app') ?? createRoot();
 function createRoot() {
     const el = document.createElement('div');
@@ -96,6 +98,13 @@ let keyboard = null;
     keyboard = await createKeyboardInput(root, joystick, fireButton, thrustButton);
 })();
 const soundManager = new SoundManager();
+// Initialize start screen
+let startScreen = null;
+let gameStarted = false;
+// Override controls to disable them until game starts
+// Override controls to disable them until game starts
+// Controls initially null until WASM loads
+// Removed duplicate soundManager
 let controls = null;
 const cachedExports = {};
 const OBJECT_COLORS = {
@@ -117,7 +126,7 @@ const BACKGROUND_TILE_COLOR = '#07090d';
 const MINIMAP_TILE_SIZE = 6;
 const GRID_LINE_COLOR = 'rgba(255, 255, 255, 0.06)';
 const TILE_PALETTE = {};
-const ANGLE_ADJUST_SPEED = 256; // 2x faster rotation
+const ANGLE_ADJUST_SPEED = 128; // Standard rotation speed
 const SHIP_IMAGE = {
     NO_THRUST: 0,
     THRUST: 1,
@@ -342,8 +351,7 @@ function createControls(runtime) {
         setFire: resolveVoidFunction(runtime, 'wasm_set_fire'),
         adjustAngle: resolveVoidFunction(runtime, 'wasm_adjust_sa'),
         nextLevel: resolveZeroArgFunction(runtime, 'wasm_next_level'),
-        prevLevel: resolveZeroArgFunction(runtime, 'wasm_prev_level'),
-        setLevel: resolveVoidFunction(runtime, 'wasm_set_level')
+        prevLevel: resolveZeroArgFunction(runtime, 'wasm_prev_level')
     };
 }
 function resolveVoidFunction(runtime, name) {
@@ -386,6 +394,7 @@ function handleLevelTransition() {
         levelAdvancePending = false;
     }
 }
+let lastBgName = '';
 const loop = new GameLoop(({ deltaMs }) => {
     if (levelMap && tileAtlas && !renderer.atlasTexture) {
         try {
@@ -418,10 +427,10 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
         if (globalsReader) {
             lastGlobals = globalsReader.read();
-            // Update background based on level
+            // Update background only when level changes or on initial load
             const levelNum = lastGlobals.levelnum;
             const bgIndex = levelNum % 7;
-            let bgName = 'space.jpg'; // Default/Fallback
+            let bgName = 'space.jpg';
             switch (bgIndex) {
                 case 0:
                     bgName = 'back5_park.JPG';
@@ -445,12 +454,14 @@ const loop = new GameLoop(({ deltaMs }) => {
                     bgName = 'back_park.JPG';
                     break;
             }
-            console.log(`[Main] Loading background: ${bgName} for level ${levelNum} (Index: ${bgIndex})`);
-            if (!bgName || bgName === 'undefined') {
-                console.error('[Main] Invalid bgName, falling back to space.jpg');
-                bgName = 'space.jpg';
+            if (bgName !== lastBgName) {
+                if (!bgName || bgName === 'undefined') {
+                    bgName = 'space.jpg';
+                }
+                console.log(`[Main] Switching background to: ${bgName} for level ${levelNum}`);
+                renderer.setBackgroundImage(`assets/backgrounds/${bgName}`);
+                lastBgName = bgName;
             }
-            renderer.setBackgroundImage(`assets/backgrounds/${bgName}`);
             if (lastGlobals.dynamicBlocksChanged) {
                 if (runtime?.runtime) {
                     tileAtlas = createTileAtlas(runtime.runtime);
@@ -476,35 +487,41 @@ const loop = new GameLoop(({ deltaMs }) => {
             // Mobile gets higher thrust to simulate lower gravity
             const thrustValue = isMobile ? 24 : 16;
             const angleSpeed = isMobile ? ANGLE_ADJUST_SPEED * 0.5 : ANGLE_ADJUST_SPEED; // 2x slower rotation on mobile
-            // Apply analog thrust if available (thrust is 0-1)
-            controls.setThrust(thrust * thrustValue);
-            controls.setFire(fire ? 1 : 0);
-            if (keyboard.state.targetAngle !== undefined && lastGlobals) {
-                // Analog steering
-                const targetRad = -keyboard.state.targetAngle - Math.PI / 2;
-                const currentRad = ((lastGlobals.sa % 16384) / 16384) * Math.PI * 2;
-                let diff = targetRad - currentRad;
-                while (diff > Math.PI)
-                    diff -= Math.PI * 2;
-                while (diff < -Math.PI)
-                    diff += Math.PI * 2;
-                const adjustment = diff * 0.1;
-                const adjustmentUnits = (adjustment / (Math.PI * 2)) * 16384;
-                controls.adjustAngle(adjustmentUnits);
+            if (gameStarted) {
+                // Apply analog thrust if available (thrust is 0-1)
+                controls.setThrust(thrust * thrustValue);
+                controls.setFire(fire ? 1 : 0);
+                if (keyboard.state.targetAngle !== undefined && lastGlobals) {
+                    // Analog steering
+                    const targetRad = -keyboard.state.targetAngle - Math.PI / 2;
+                    const currentRad = ((lastGlobals.sa % 16384) / 16384) * Math.PI * 2;
+                    let diff = targetRad - currentRad;
+                    while (diff > Math.PI)
+                        diff -= Math.PI * 2;
+                    while (diff < -Math.PI)
+                        diff += Math.PI * 2;
+                    const adjustment = diff * 0.1;
+                    const adjustmentUnits = (adjustment / (Math.PI * 2)) * 16384;
+                    controls.adjustAngle(adjustmentUnits);
+                }
+                else if (rotate !== 0) {
+                    controls.adjustAngle(-rotate * angleSpeed);
+                }
             }
-            else if (rotate !== 0) {
-                controls.adjustAngle(-rotate * angleSpeed);
-            }
-            // Handle level changes (debug keys)
-            if (nextLevel && keyboard) {
-                controls.nextLevel();
-                keyboard.state.nextLevel = false;
-                reloadLevel();
-            }
-            if (prevLevel && keyboard) {
-                controls.prevLevel();
-                keyboard.state.prevLevel = false;
-                reloadLevel();
+            // Allow level skipping ONLY if debug is allowed? Or just block it till start?
+            // For now, block it.
+            if (gameStarted) {
+                // Handle level changes (debug keys)
+                if (nextLevel && keyboard) {
+                    controls.nextLevel();
+                    keyboard.state.nextLevel = false;
+                    reloadLevel();
+                }
+                if (prevLevel && keyboard) {
+                    controls.prevLevel();
+                    keyboard.state.prevLevel = false;
+                    reloadLevel();
+                }
             }
         }
         handleLevelTransition();
@@ -529,18 +546,13 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
     }
     if (levelMap) {
-        renderer.drawWorld(levelMap, lastGlobals);
-    }
-    if (lastGlobals && lastShipState) {
-        // Shadow
-        if (lastShipState.state !== 2) { // Not exploding
-            renderer.drawShip(lastGlobals, lastShipState, SHIP_BLOCK_MAP, -4, 4, [0, 0, 0, 0.5]);
-        }
-        // Main ship
-        renderer.drawShip(lastGlobals, lastShipState, SHIP_BLOCK_MAP);
+        renderer.drawWorld(levelMap, lastGlobals, lastShipState, SHIP_BLOCK_MAP);
     }
     if (levelMap) {
         renderer.drawWorldForeground();
+    }
+    if (lastGlobals && lastShipState) {
+        renderer.drawShip(lastGlobals, lastShipState, SHIP_BLOCK_MAP);
     }
     if (currentBullets.length) {
         renderer.drawBullets(currentBullets);
@@ -559,7 +571,8 @@ const loop = new GameLoop(({ deltaMs }) => {
             drawHUD(uiCtx, lastGlobals);
         }
         // Render Joystick
-        if (isMobile) {
+        // Render Joystick
+        if (isMobile && gameStarted) {
             joystick.render(uiCtx);
             fireButton.render(uiCtx);
             thrustButton.render(uiCtx);
@@ -613,26 +626,58 @@ loadGravityWarsModule()
     actionReader = createActionReader(module.runtime);
     getExport('init_gw')();
     getExport('main_init')();
-    // Force start at Level 1
-    // We loop backwards until we hit level 1, OR forward if we are at 0
+    // Force start at Level 0 (Attractor)
+    // We loop backwards until we hit level 0
     let currentLevel = globalsReader.read().levelnum;
-    console.log(`[Main] Initial level: ${currentLevel}. Resetting to 1...`);
+    console.log(`[Main] Initial level: ${currentLevel}. Setting to 0 (Attractor)...`);
     let attempts = 0;
     const prevLevelFn = getExport('wasm_prev_level');
     const nextLevelFn = getExport('wasm_next_level');
-    // If we are at 0, go up to 1
-    while (currentLevel < 1 && attempts < 20) {
-        nextLevelFn();
-        currentLevel = globalsReader.read().levelnum;
-        attempts++;
-    }
-    // If we are > 1, go down to 1
-    while (currentLevel > 1 && attempts < 20) {
+    // If we are > 0, decrease level
+    while (currentLevel > 0 && attempts < 20) {
         prevLevelFn();
         currentLevel = globalsReader.read().levelnum;
         attempts++;
     }
+    // If we are < 0 (unlikely but possible with weird logic), increase
+    while (currentLevel < 0 && attempts < 20) {
+        nextLevelFn();
+        currentLevel = globalsReader.read().levelnum;
+        attempts++;
+    }
     console.log(`[Main] Level set to: ${currentLevel}`);
+    // Create Start Screen
+    if (!startScreen) {
+        startScreen = new StartScreen(root, (selectedLevel) => {
+            console.log(`[Main] Starting game at level ${selectedLevel}`);
+            gameStarted = true;
+            startScreen?.hide();
+            // Navigate to selected level
+            // Level 0 is the Attractor, so selected Level 1 maps to engine level 1
+            const targetLevel = selectedLevel;
+            console.log(`[Main] Navigating to level ${targetLevel} (user selected ${selectedLevel})...`);
+            // Get current level and navigate to target using next/prev level functions
+            // (wasm_set_level doesn't exist, so we must iterate)
+            let currentLevel = globalsReader?.read().levelnum ?? 0;
+            let attempts = 0;
+            const maxAttempts = 100;
+            while (currentLevel !== targetLevel && attempts < maxAttempts) {
+                if (currentLevel < targetLevel) {
+                    controls?.nextLevel();
+                }
+                else {
+                    controls?.prevLevel();
+                }
+                currentLevel = globalsReader?.read().levelnum ?? 0;
+                attempts++;
+            }
+            console.log(`[Main] Level navigation complete after ${attempts} iterations. Current Level: ${currentLevel}`);
+            reloadLevel();
+            // Ensure music for new level starts
+            soundManager.update(globalsReader.read(), [], levelMap);
+        });
+        startScreen.show();
+    }
     tileAtlas = createTileAtlas(module.runtime);
     console.log('DEBUG: TileAtlas created', tileAtlas);
     shipSprites = createShipSprites(module.runtime, SHIP_SPECIAL_BLOCK_IDS);

@@ -2,35 +2,56 @@ export class StartScreen {
     private element: HTMLElement;
     private levelSelector: HTMLElement;
     private selectedLevel: number = 1;
-    private totalLevels: number = 60; // Assuming 60 levels based on file listing
-    private isVisible: boolean = false;
-    private startX: number = 0;
-    private isDragging: boolean = false;
+    private totalLevels: number = 60;
 
     constructor(container: HTMLElement, private onPlay: (level: number) => void) {
         this.element = document.createElement('div');
         this.element.className = 'ui-screen hidden';
+        this.element.style.position = 'absolute';
+        this.element.style.top = '0';
+        this.element.style.left = '0';
+        this.element.style.width = '100%';
+        this.element.style.height = '100%';
+        this.element.style.display = 'flex';
+        this.element.style.flexDirection = 'column';
+        this.element.style.alignItems = 'center';
+        this.element.style.justifyContent = 'center';
+        this.element.style.background = 'rgba(0, 0, 0, 0.6)';
+        this.element.style.color = '#fff';
+        this.element.style.zIndex = '10';
+        this.element.style.backdropFilter = 'blur(2px)';
+
         this.element.innerHTML = `
-            <div class="title-container">
-                <h1>GRAVITY WARS</h1>
-                <h2>- THE BEGINNING -</h2>
+            <div class="title-container" style="text-align: center; margin-bottom: 40px;">
+                <h1 class="galactic-text" style="font-size: 64px; margin: 0; color: #0ff; text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);">GRAVITY WARS</h1>
+                <h2 style="font-size: 18px; color: #888; font-weight: normal; margin-top: 10px;">- THE BEGINNING -</h2>
             </div>
             
-            <div class="level-section">
-                <div class="level-label">LEVEL</div>
-                <div class="level-selector" id="level-selector">
-                    <!-- Levels will be injected here -->
+            <div class="level-section" style="text-align: center; margin-bottom: 40px;">
+                <div class="level-label" style="font-size: 14px; color: #aaa; margin-bottom: 15px; letter-spacing: 2px;">SELECT STARTING LEVEL</div>
+                <div class="level-selector-wrapper" style="width: 300px; overflow: hidden; position: relative; padding: 10px 0;">
+                    <div class="level-selector" id="level-selector" style="display: flex; gap: 20px; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); padding-left: 130px;">
+                        <!-- Levels injected here -->
+                    </div>
+                    <div class="selector-highlight" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; border: 2px solid #0ff; border-radius: 8px; box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); pointer-events: none;"></div>
                 </div>
             </div>
 
-            <div class="menu-buttons">
-                <button id="btn-play">PLAY</button>
-                <button id="btn-tutorial">TUTORIAL</button>
-                <button id="btn-credits">CREDITS</button>
+            <div class="menu-buttons" style="display: flex; flex-direction: column; gap: 15px; width: 240px;">
+                <button id="btn-play" style="background: rgba(0, 255, 255, 0.1); border: 1px solid #0ff; color: #0ff; padding: 15px; font-family: inherit; font-size: 18px; cursor: pointer; transition: all 0.2s; border-radius: 4px;">PLAY</button>
+                <div style="display: flex; gap: 15px;">
+                     <button id="btn-credits" style="flex: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid #444; color: #aaa; padding: 10px; cursor: pointer; font-family: inherit; border-radius: 4px;">CREDITS</button>
+                </div>
             </div>
 
-            <div class="footer-controls">
-                <button id="btn-music">MUSIC ON/OFF</button>
+            <div id="credits-modal" class="hidden" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; z-index: 20; display: none;">
+                <h2 class="galactic-text" style="color: #0ff; margin-bottom: 30px;">CREDITS</h2>
+                <div style="text-align: center; line-height: 1.6; color: #ccc;">
+                    <p>Created by <strong>Your Name / Team</strong></p>
+                    <p>Use Joystick / Touches to move</p>
+                    <p>Music by ...</p>
+                </div>
+                <button id="btn-close-credits" style="margin-top: 40px; background: none; border: 1px solid #666; color: #fff; padding: 8px 30px; cursor: pointer;">BACK</button>
             </div>
         `;
         container.appendChild(this.element);
@@ -39,13 +60,24 @@ export class StartScreen {
         this.renderLevels();
         this.setupInput();
         this.setupButtons();
+
+        // Add hover effects via JS since inline styles are used
+        const playBtn = this.element.querySelector('#btn-play') as HTMLElement;
+        playBtn.onmouseenter = () => { playBtn.style.background = 'rgba(0, 255, 255, 0.25)'; playBtn.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.4)'; };
+        playBtn.onmouseleave = () => { playBtn.style.background = 'rgba(0, 255, 255, 0.1)'; playBtn.style.boxShadow = 'none'; };
     }
 
     private renderLevels() {
         this.levelSelector.innerHTML = '';
         for (let i = 1; i <= this.totalLevels; i++) {
             const el = document.createElement('div');
-            el.className = `level-item ${i === this.selectedLevel ? 'selected' : ''}`;
+            el.className = 'level-item';
+            el.style.minWidth = '40px';
+            el.style.textAlign = 'center';
+            el.style.fontSize = '24px';
+            el.style.color = '#555';
+            el.style.cursor = 'pointer';
+            el.style.transition = 'all 0.3s';
             // Pad with zero if < 10
             el.textContent = i < 10 ? `0${i}` : `${i}`;
             el.dataset.level = i.toString();
@@ -60,68 +92,72 @@ export class StartScreen {
 
     private updateLevelSelection() {
         const items = Array.from(this.levelSelector.children) as HTMLElement[];
+        const itemWidth = 60; // 40px width + 20px gap
+
+        // Update visual styles
         items.forEach(item => {
             const level = parseInt(item.dataset.level || '0');
-            item.className = `level-item ${level === this.selectedLevel ? 'selected' : ''}`;
-
             if (level === this.selectedLevel) {
-                item.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+                item.style.color = '#fff';
+                item.style.transform = 'scale(1.2)';
+                item.style.textShadow = '0 0 10px #0ff';
+            } else {
+                item.style.color = '#555';
+                item.style.transform = 'scale(1)';
+                item.style.textShadow = 'none';
             }
         });
+
+        // Center the selected item
+        // Default left padding is 130px (half of 300px wrapper width approx)
+        // Position should be: -((index) * itemWidth)
+        const index = this.selectedLevel - 1;
+        this.levelSelector.style.transform = `translateX(${-index * itemWidth}px)`;
     }
 
     private setupInput() {
-        // Mouse Drag (Horizontal)
-        this.levelSelector.addEventListener('mousedown', (e) => {
-            this.isDragging = true;
-            this.startX = e.clientX;
-        });
+        // Simple drag logic for level selector
+        let isDown = false;
+        let startX = 0;
+        const wrapper = this.element.querySelector('.level-selector-wrapper') as HTMLElement;
 
-        window.addEventListener('mousemove', (e) => {
-            if (!this.isVisible || !this.isDragging) return;
-            const deltaX = e.clientX - this.startX;
-            if (Math.abs(deltaX) > 20) {
-                if (deltaX > 0) this.selectPrev();
-                else this.selectNext();
-                this.startX = e.clientX;
-            }
+        wrapper.addEventListener('mousedown', (e) => {
+            isDown = true;
+            startX = e.pageX;
         });
 
         window.addEventListener('mouseup', () => {
-            this.isDragging = false;
+            if (isDown) {
+                isDown = false;
+                // Snap to nearest
+            }
         });
 
-        // Touch Swipe (Horizontal)
-        this.levelSelector.addEventListener('touchstart', (e) => {
-            this.startX = e.touches[0].clientX;
+        window.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            const x = e.pageX;
+            const walk = (x - startX);
+            if (Math.abs(walk) > 40) {
+                if (walk > 0) this.selectPrev();
+                else this.selectNext();
+                startX = x;
+            }
+        });
+
+        // Touch support
+        wrapper.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].pageX;
         }, { passive: true });
 
-        this.levelSelector.addEventListener('touchmove', (e) => {
-            if (!this.isVisible) return;
-            const x = e.touches[0].clientX;
-            const deltaX = x - this.startX;
-            if (Math.abs(deltaX) > 30) {
-                if (deltaX > 0) this.selectPrev();
+        wrapper.addEventListener('touchmove', (e) => {
+            const x = e.touches[0].pageX;
+            const walk = (x - startX);
+            if (Math.abs(walk) > 40) {
+                if (walk > 0) this.selectPrev();
                 else this.selectNext();
-                this.startX = x;
+                startX = x;
             }
         }, { passive: true });
-
-        // Keyboard (Left/Right)
-        window.addEventListener('keydown', (e) => {
-            if (!this.isVisible) return;
-            if (e.key === 'ArrowLeft') this.selectPrev();
-            if (e.key === 'ArrowRight') this.selectNext();
-            if (e.key === 'Enter') this.onPlay(this.selectedLevel);
-        });
-
-        // Wheel (Horizontal)
-        this.levelSelector.addEventListener('wheel', (e) => {
-            if (!this.isVisible) return;
-            e.preventDefault();
-            if (e.deltaY < 0 || e.deltaX < 0) this.selectPrev();
-            else this.selectNext();
-        }, { passive: false });
     }
 
     private selectNext() {
@@ -139,25 +175,31 @@ export class StartScreen {
     }
 
     private setupButtons() {
+        // Play
         this.element.querySelector('#btn-play')?.addEventListener('click', () => {
             this.onPlay(this.selectedLevel);
         });
 
-        this.element.querySelector('#btn-tutorial')?.addEventListener('click', () => {
-            this.onPlay(0);
+        // Credits Modal
+        const creditsModal = this.element.querySelector('#credits-modal') as HTMLElement;
+        this.element.querySelector('#btn-credits')?.addEventListener('click', () => {
+            creditsModal.style.display = 'flex';
+            setTimeout(() => creditsModal.style.opacity = '1', 10);
         });
 
-        // TODO: Implement Credits and Music toggle
+        this.element.querySelector('#btn-close-credits')?.addEventListener('click', () => {
+            creditsModal.style.display = 'none';
+        });
     }
 
     public show() {
-        this.isVisible = true;
-        this.element.classList.remove('hidden');
-        setTimeout(() => this.updateLevelSelection(), 100);
+        this.element.style.display = 'flex';
+        // Reset to Level 1 visually or keep last selected?
+        // this.selectedLevel = 1; 
+        this.updateLevelSelection();
     }
 
     public hide() {
-        this.isVisible = false;
-        this.element.classList.add('hidden');
+        this.element.style.display = 'none';
     }
 }

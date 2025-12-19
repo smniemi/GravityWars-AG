@@ -1,13 +1,16 @@
 export class SoundManager {
     context = null;
     buffers = new Map();
+    musicBuffers = new Map();
     enabled = false;
     lastState = null;
     thrustSource = null;
     musicSource = null;
     musicGain = null;
+    currentTrack = null;
     activeActionIds = new Set();
     wasInWater = false;
+    lastWallHitTime = 0;
     SOUNDS = {
         key: 'sounds/key2.wav',
         cling: 'sounds/cling.wav',
@@ -27,13 +30,13 @@ export class SoundManager {
         'music/Gw5.m4r'
     ];
     constructor() {
-        // Initialize immediately
+        // Start initialization immediately
         this.init();
         // Resume on first interaction
         const resume = () => {
             if (this.context?.state === 'suspended') {
                 this.context.resume();
-                console.log('[SoundManager] AudioContext resumed by user interaction');
+                console.log('[SoundManager] AudioContext resumed');
             }
         };
         window.addEventListener('click', resume, { once: true });
@@ -44,15 +47,21 @@ export class SoundManager {
         if (this.context)
             return;
         try {
-            // Create context immediately (likely suspended state)
             this.context = new AudioContext();
             this.musicGain = this.context.createGain();
             this.musicGain.gain.value = 0.4;
             this.musicGain.connect(this.context.destination);
+            // Parallel loading of sounds and music
+            await Promise.all([
+                this.loadSounds(),
+                this.loadMusic()
+            ]);
             this.enabled = true;
-            await this.loadSounds();
-            this.playMusic();
-            console.log('[SoundManager] Audio initialized immediately');
+            console.log('[SoundManager] Audio initialized and pre-loaded');
+            // If update was already called, start music now
+            if (this.lastState) {
+                this.playMusic(this.lastState.levelnum);
+            }
         }
         catch (e) {
             console.error('[SoundManager] Failed to init audio', e);
@@ -61,37 +70,79 @@ export class SoundManager {
     async loadSounds() {
         if (!this.context)
             return;
-        for (const [name, url] of Object.entries(this.SOUNDS)) {
+        const tasks = Object.entries(this.SOUNDS).map(async ([name, url]) => {
             try {
-                const response = await fetch(url);
-                const arrayBuffer = await response.arrayBuffer();
-                const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
-                this.buffers.set(name, audioBuffer);
+                const buffer = await this.fetchAndDecode(url);
+                this.buffers.set(name, buffer);
             }
             catch (e) {
-                console.warn(`[SoundManager] Failed to load sound ${name} from ${url}`, e);
+                console.warn(`[SoundManager] Failed to load sound ${name}: ${url}`, e);
             }
-        }
+        });
+        await Promise.all(tasks);
     }
-    async playMusic(levelNum = 1) {
-        if (!this.context || !this.musicGain)
+    async loadMusic() {
+        if (!this.context)
             return;
-        // Map level 1..N to 0..4
+        const tasks = this.MUSIC.map(async (url) => {
+            try {
+                const buffer = await this.fetchAndDecode(url);
+                this.musicBuffers.set(url, buffer);
+            }
+            catch (e) {
+                console.warn(`[SoundManager] Failed to load music: ${url}`, e);
+            }
+        });
+        await Promise.all(tasks);
+    }
+    async fetchAndDecode(url) {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        return await this.context.decodeAudioData(arrayBuffer);
+    }
+    /**
+     * Internal async dispatcher for fire-and-forget sound effects.
+     * Prevents the main game loop from stalling on buffer source creation.
+     */
+    playEffect(name) {
+        if (!this.enabled || !this.context)
+            return;
+        // Dispatched to microtask to avoid stalling the current execution frame
+        Promise.resolve().then(() => {
+            // Throttle wall hits to avoid machine-gun effect stalling
+            if (name === 'wallhit') {
+                const now = performance.now();
+                if (now - this.lastWallHitTime < 50)
+                    return;
+                this.lastWallHitTime = now;
+            }
+            this.play(name);
+        });
+    }
+    playMusic(levelNum = 1) {
+        if (!this.enabled || !this.context || !this.musicGain)
+            return;
         const trackIndex = (levelNum - 1) % this.MUSIC.length;
         const track = this.MUSIC[trackIndex];
+        // Prevent restarting the same track
+        if (track === this.currentTrack)
+            return;
+        const buffer = this.musicBuffers.get(track);
+        if (!buffer) {
+            console.warn(`[SoundManager] Music buffer not ready for: ${track}`);
+            return;
+        }
         try {
-            const response = await fetch(track);
-            const arrayBuffer = await response.arrayBuffer();
-            const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
             if (this.musicSource) {
                 this.musicSource.stop();
             }
             this.musicSource = this.context.createBufferSource();
-            this.musicSource.buffer = audioBuffer;
+            this.musicSource.buffer = buffer;
             this.musicSource.loop = true;
             this.musicSource.connect(this.musicGain);
             this.musicSource.start();
-            console.log(`[SoundManager] Playing music: ${track} for level ${levelNum}`);
+            this.currentTrack = track;
+            console.log(`[SoundManager] Playing music: ${track}`);
         }
         catch (e) {
             console.warn(`[SoundManager] Failed to play music ${track}`, e);
@@ -100,7 +151,6 @@ export class SoundManager {
     play(name, loop = false) {
         if (!this.enabled || !this.context)
             return null;
-        // Resume context if suspended (iOS can suspend it)
         if (this.context.state === 'suspended') {
             this.context.resume();
         }
@@ -117,52 +167,50 @@ export class SoundManager {
     update(currentState, actions, levelMap) {
         if (!this.lastState) {
             this.lastState = { ...currentState };
-            if (this.enabled) {
-                this.playMusic(currentState.levelnum);
-            }
+            this.playMusic(currentState.levelnum);
             return;
         }
         // Key collected
         if (currentState.numKeys < this.lastState.numKeys) {
-            this.play('key');
+            this.playEffect('key');
         }
         // Score increased (Bonus/Fuel)
         if (currentState.shipScore > this.lastState.shipScore || currentState.shipFuel > this.lastState.shipFuel) {
             if (currentState.shipScore !== this.lastState.shipScore) {
-                this.play('cling');
+                this.playEffect('cling');
             }
         }
         // Explosion
         if (currentState.shipState === 2 && this.lastState.shipState !== 2) {
-            this.play('explode');
+            this.playEffect('explode');
         }
         // Level Complete
         if (currentState.levelnum !== this.lastState.levelnum) {
-            this.play('happy');
+            this.playEffect('happy');
             this.playMusic(currentState.levelnum);
         }
-        // Thrust Loop
+        // Thrust Loop (triggered once per state change)
         if (currentState.shipThrust > 0 && !this.thrustSource) {
             this.thrustSource = this.play('thrust', true);
         }
         else if (currentState.shipThrust === 0 && this.thrustSource) {
-            this.thrustSource.stop();
+            try {
+                this.thrustSource.stop();
+            }
+            catch (e) { }
             this.thrustSource = null;
         }
         // Ship Water Splash
         if (levelMap) {
-            // Convert ship coordinates (fixed point 10.5) to tile coordinates
-            // sx is >> 10 (pixel) + 16 (center) >> 5 (tile)
             const tileX = Math.floor(((currentState.sx >> 10) + 16) / 32);
             const tileY = Math.floor(((currentState.sy >> 10) + 16) / 32);
             if (tileX >= 0 && tileX < levelMap.width) {
                 const idx = tileY * levelMap.width + tileX;
                 if (idx < levelMap.objects.length) {
                     const obj = levelMap.objects[idx];
-                    // 'w' (119) or 'v' (118)
                     const isWater = obj === 119 || obj === 118;
                     if (isWater && !this.wasInWater) {
-                        this.play('splash');
+                        this.playEffect('splash');
                     }
                     this.wasInWater = isWater;
                 }
@@ -176,11 +224,11 @@ export class SoundManager {
                 if (!this.activeActionIds.has(action.id)) {
                     // Spark (Bullet hit wall) - Frame 48
                     if (action.start === 48) {
-                        this.play('wallhit');
+                        this.playEffect('wallhit');
                     }
                     // Splash (Bullet hit water) - Frame 113
                     else if (action.start === 113) {
-                        this.play('splash');
+                        this.playEffect('splash');
                     }
                 }
             }

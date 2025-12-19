@@ -112,73 +112,41 @@ export class WebGLRenderer {
     updateLevel(map, atlas) {
         this.buildLevel(map, atlas);
     }
-    drawWorldBackground(map) {
+    // Consolidated drawing to ensure correct Z-order:
+    // 1. Background Image (Parallax)
+    // 2. Wall Shadows
+    // 3. Ship Shadow
+    // 4. Walls
+    // 5. Ship (handled by caller currently, but can be moved later if needed, though Shadow is distinct)
+    // Actually, caller handles Main Ship. We handle Ship Shadow here.
+    drawWorld(map, globals, shipState, shipBlockMap) {
         if (!this.atlasTexture)
             return;
-        this.gl.clearColor(0.02, 0.024, 0.04, 1.0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-        this.drawBackground();
-        // Dynamic Shadow Calculation
-        // Light source is at the center of the map
-        const TILE_SIZE = 32;
-        const mapCenterX = (map.width * TILE_SIZE) / 2;
-        const mapCenterY = (map.height * TILE_SIZE) / 2;
-        const camCenterX = this.viewport.cameraX + (this.canvas.width / this.viewport.zoom) / 2;
-        const camCenterY = this.viewport.cameraY + (this.canvas.height / this.viewport.zoom) / 2;
-        // Vector from Center to Camera
-        const vecX = camCenterX - mapCenterX;
-        const vecY = camCenterY - mapCenterY;
-        // Scale factor for shadow offset
-        const shadowScale = 0.015;
-        const shadowX = vecX * shadowScale;
-        const shadowY = vecY * shadowScale;
-        const shadowAlpha = 0.5;
-        // Shadow: World (Background)
-        this.backgroundRenderer.setColor(0, 0, 0, shadowAlpha);
-        this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX - shadowX, this.viewport.cameraY - shadowY, this.viewport.zoom);
-        this.backgroundRenderer.setColor(1, 1, 1, 1); // Reset
-        this.foregroundRenderer.setColor(1, 1, 1, 1); // Reset
-        // Draw World (Background)
-        this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
-    }
-    drawWorldForeground() {
-        if (!this.atlasTexture)
-            return;
-        // Draw World (Foreground/Overlay)
-        this.foregroundRenderer.draw(this.atlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
-    }
-    // Legacy support if needed, or remove
-    drawWorld(map, globals) {
+        // Ensure state is correct
+        this.gl.enable(this.gl.BLEND);
+        this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+        this.gl.disable(this.gl.DEPTH_TEST); // 2D game, usually painter's algo
+        // 1. Setup Camera
         if (globals) {
-            // Calculate optimal zoom to fit viewport within level bounds
             const minZoom = this.calculateOptimalZoom(map.width, map.height);
-            // Detect mobile: use 2x zoom out (zoom=2.0) for mobile, 4.0 for desktop
             const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
             const baseZoom = isMobile ? 2.0 : 4.0;
             this.viewport.zoom = Math.max(baseZoom, minZoom);
-            // Clamp camera within bounds
-            // Only update camera if not exploding (shockwave active)
             if (!this.shockwaveActive) {
                 this.clampCamera(map.width, map.height, globals.sx, globals.sy);
             }
-            // Check for explosion trigger (transition to state 2)
             if (globals.shipState === 2 && this.lastShipState !== 2) {
                 this.shockwaveActive = true;
                 this.shockwaveStartTime = performance.now() / 1000;
-                // Calculate velocity from previous frame
                 const dx = globals.sx - this.lastSx;
                 const dy = globals.sy - this.lastSy;
                 const len = Math.sqrt(dx * dx + dy * dy);
                 let offsetX = 0;
                 let offsetY = 0;
-                // Offset center towards the wall (direction of movement)
                 if (len > 0) {
-                    // 16 pixels offset (half ship size)
                     offsetX = (dx / len) * 16;
                     offsetY = (dy / len) * 16;
                 }
-                // Convert fixed point to pixels and apply offset
-                // Note: globals.sx/sy are ALREADY in pixels (unlike bullets which are fixed point)
                 this.shockwaveCenter = {
                     x: (globals.sx + 16) + offsetX,
                     y: (globals.sy + 16) + offsetY
@@ -188,7 +156,6 @@ export class WebGLRenderer {
             this.lastSx = globals.sx;
             this.lastSy = globals.sy;
         }
-        // Update shockwave uniforms
         if (this.shockwaveActive) {
             const time = (performance.now() / 1000) - this.shockwaveStartTime;
             if (time > 2.0) {
@@ -201,8 +168,51 @@ export class WebGLRenderer {
                 this.foregroundRenderer.setShockwave(this.shockwaveCenter, time);
             }
         }
-        this.drawWorldBackground(map);
-        // Note: Ship and Foreground must be drawn manually after this in main loop
+        // 2. Clear
+        this.gl.clearColor(0.02, 0.024, 0.04, 1.0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        // 3. Draw Background (Parallax)
+        this.drawBackground();
+        // 4. Calculate Shadow Vector
+        const TILE_SIZE = 32;
+        const mapCenterX = (map.width * TILE_SIZE) / 2;
+        const mapCenterY = (map.height * TILE_SIZE) / 2;
+        const camCenterX = this.viewport.cameraX + (this.canvas.width / this.viewport.zoom) / 2;
+        const camCenterY = this.viewport.cameraY + (this.canvas.height / this.viewport.zoom) / 2;
+        const vecX = camCenterX - mapCenterX;
+        const vecY = camCenterY - mapCenterY;
+        const shadowScale = 0.015;
+        const shadowX = vecX * shadowScale;
+        const shadowY = vecY * shadowScale;
+        const shadowAlpha = 0.5;
+        // 5. Draw Wall Shadows
+        this.backgroundRenderer.setColor(0, 0, 0, shadowAlpha);
+        this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX - shadowX, this.viewport.cameraY - shadowY, this.viewport.zoom);
+        // 6. Draw Ship Shadow (Below Walls, Above Background)
+        if (globals && shipState && shipBlockMap && shipState.state !== 2) {
+            // Note: Wall shadows shift LAYERS by -shadowX (Shift Left).
+            // This creates a shadow to the RIGHT of the object (Outwards).
+            // For the ship, we draw the sprite at (ShipX + Offset).
+            // To match "Right" shadow, Offset must be Positive.
+            // Using same vecX * scale gives positive if cam is right.
+            const shipShadowOffX = shadowX;
+            const shipShadowOffY = shadowY;
+            this.drawShip(globals, shipState, shipBlockMap, shipShadowOffX, shipShadowOffY, [0, 0, 0, shadowAlpha]);
+        }
+        // 7. Draw Walls
+        this.backgroundRenderer.setColor(1, 1, 1, 1);
+        this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
+    }
+    // Deprecated / Internal helper
+    drawWorldBackground(map) {
+        // Redirect to drawWorld with no ship if called directly
+        this.drawWorld(map, null);
+    }
+    drawWorldForeground() {
+        if (!this.atlasTexture)
+            return;
+        // Draw World (Foreground/Overlay)
+        this.foregroundRenderer.draw(this.atlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
     }
     calculateOptimalZoom(mapWidth, mapHeight) {
         const TILE_SIZE = 32;
@@ -316,6 +326,14 @@ export class WebGLRenderer {
             // Let's try using action.frame as the block ID directly first.
             // If it's 0-based index into the atlas.
             const blockId = action.frame;
+            // Hotfix: WASM module has off-by-one error in animation ranges, 
+            // causing it to show the first frame of the *next* block sequence.
+            // Since we can't recompile WASM (missing emcc), we hide the bad frames here.
+            // Spark: 48-51 (51 is bad)
+            // Splash: 113-117 (117 is bad)
+            if (blockId === 51 || blockId === 117) {
+                continue;
+            }
             const pos = atlas.positions[blockId];
             if (pos) {
                 const atlasWidth = atlas.canvas.width;
@@ -325,8 +343,9 @@ export class WebGLRenderer {
                 const u1 = (pos.sx + 32) / atlasWidth;
                 const v1 = (pos.sy + 32) / atlasHeight;
                 // Actions are usually 32x32
-                this.spriteBatch.draw(this.atlasTexture, action.x, action.y, 1.0, 1.0, // 1 tile size
-                u0, v0, u1, v1, [1, 1, 1, 1]);
+                const TILE_SIZE = 32;
+                const HALF_SIZE = TILE_SIZE / 2;
+                this.spriteBatch.draw(this.atlasTexture, action.x - HALF_SIZE, action.y - HALF_SIZE, TILE_SIZE, TILE_SIZE, u0, v0, u1, v1, [1, 1, 1, 1]);
             }
         }
         this.spriteBatch.flush();
