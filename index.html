@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravity Wars - AntiGravity Port</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>Gravity Wars</h1>
+            <div class="subtitle">Port by AntiGravity</div>
+        </header>
+        
+        <div class="game-wrapper">
+            <div class="game-info">
+                <div class="player-info" id="player1-info">
+                    <h3>Player 1</h3>
+                    <div class="health-bar">
+                        <div class="health-fill" id="p1-health"></div>
+                    </div>
+                    <div class="health-text" id="p1-health-text">100 HP</div>
+                </div>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="angle">Angle:</label>
+                        <input type="range" id="angle" min="0" max="180" value="45">
+                        <span id="angle-value">45°</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="power">Power:</label>
+                        <input type="range" id="power" min="10" max="100" value="50">
+                        <span id="power-value">50%</span>
+                    </div>
+                    <button id="fire-btn" class="btn-fire">Fire!</button>
+                </div>
+                
+                <div class="player-info" id="player2-info">
+                    <h3>Player 2</h3>
+                    <div class="health-bar">
+                        <div class="health-fill" id="p2-health"></div>
+                    </div>
+                    <div class="health-text" id="p2-health-text">100 HP</div>
+                </div>
+            </div>
+            
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <div class="game-status">
+                <div id="turn-indicator">Player 1's Turn</div>
+                <button id="restart-btn" class="btn-restart" style="display: none;">New Game</button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>How to Play</h3>
+            <ul>
+                <li>Take turns firing projectiles at your opponent</li>
+                <li>Adjust angle and power to aim your shot</li>
+                <li>Projectiles are affected by gravity from planets</li>
+                <li>First player to reduce opponent's health to 0 wins!</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
