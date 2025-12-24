@@ -51,6 +51,12 @@ export function createTouchInput(
     }
 
     function handleTouchStart(e: TouchEvent) {
+        // Allow default behavior for buttons and UI elements (screens)
+        const target = e.target as HTMLElement;
+        if (target.closest('button') || target.closest('.ui-screen')) {
+            return;
+        }
+
         e.preventDefault();
 
         for (let i = 0; i < e.changedTouches.length; i++) {
@@ -62,6 +68,11 @@ export function createTouchInput(
             let handled = false;
 
             // Try buttons first
+            if (fireButton && fireButton.active) { // Handle multitouch on buttons?
+                // Actually we should check hit test again here? 
+                // fireButton.handleTouchStart checks magnitude.
+            }
+
             if (fireButton && fireButton.handleTouchStart(x, y, touch.identifier)) {
                 handled = true;
             } else if (thrustButton && thrustButton.handleTouchStart(x, y, touch.identifier)) {
@@ -89,6 +100,12 @@ export function createTouchInput(
     }
 
     function handleTouchMove(e: TouchEvent) {
+        // Allow default behavior for buttons and UI elements (screens)
+        const target = e.target as HTMLElement;
+        if (target.closest('button') || target.closest('.ui-screen')) {
+            return;
+        }
+
         e.preventDefault();
 
         for (let i = 0; i < e.changedTouches.length; i++) {
@@ -112,6 +129,12 @@ export function createTouchInput(
     }
 
     function handleTouchEnd(e: TouchEvent) {
+        // Allow default behavior for buttons and UI elements (screens)
+        const target = e.target as HTMLElement;
+        if (target.closest('button') || target.closest('.ui-screen')) {
+            return;
+        }
+
         e.preventDefault();
 
         for (let i = 0; i < e.changedTouches.length; i++) {
@@ -132,6 +155,12 @@ export function createTouchInput(
     }
 
     function handleTouchCancel(e: TouchEvent) {
+        // Allow default behavior for buttons and UI elements (screens)
+        const target = e.target as HTMLElement;
+        if (target.closest('button') || target.closest('.ui-screen')) {
+            return;
+        }
+
         e.preventDefault();
 
         for (let i = 0; i < e.changedTouches.length; i++) {

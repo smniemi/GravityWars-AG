@@ -6,11 +6,18 @@
 #include "GameFunctions.h"
 #include "config.h"
 #include "memory.h"
+#include "tutorial.h"
 
 __attribute__((constructor)) static void wasm_init_defaults(void) {
   gamename[0] = '\0';
   gamenamelen = 0;
 }
+
+int *get_demo_buffer(void) { return (int *)demo; }
+
+int get_demo_count(void) { return sizeof(demo) / (10 * sizeof(int)); }
+
+void wasm_set_sa(int value) { sa = value; }
 
 int frame_number = 0;
 

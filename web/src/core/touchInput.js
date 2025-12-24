@@ -26,6 +26,11 @@ export function createTouchInput(element, state, joystick, fireButton, thrustBut
         }
     }
     function handleTouchStart(e) {
+        // Allow default behavior for buttons and UI elements (screens)
+        const target = e.target;
+        if (target.closest('button') || target.closest('.ui-screen')) {
+            return;
+        }
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
@@ -34,6 +39,10 @@ export function createTouchInput(element, state, joystick, fireButton, thrustBut
             const y = touch.clientY - rect.top;
             let handled = false;
             // Try buttons first
+            if (fireButton && fireButton.active) { // Handle multitouch on buttons?
+                // Actually we should check hit test again here? 
+                // fireButton.handleTouchStart checks magnitude.
+            }
             if (fireButton && fireButton.handleTouchStart(x, y, touch.identifier)) {
                 handled = true;
             }
@@ -59,6 +68,11 @@ export function createTouchInput(element, state, joystick, fireButton, thrustBut
         updateState();
     }
     function handleTouchMove(e) {
+        // Allow default behavior for buttons and UI elements (screens)
+        const target = e.target;
+        if (target.closest('button') || target.closest('.ui-screen')) {
+            return;
+        }
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
@@ -79,6 +93,11 @@ export function createTouchInput(element, state, joystick, fireButton, thrustBut
         updateState();
     }
     function handleTouchEnd(e) {
+        // Allow default behavior for buttons and UI elements (screens)
+        const target = e.target;
+        if (target.closest('button') || target.closest('.ui-screen')) {
+            return;
+        }
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
@@ -98,6 +117,11 @@ export function createTouchInput(element, state, joystick, fireButton, thrustBut
         updateState();
     }
     function handleTouchCancel(e) {
+        // Allow default behavior for buttons and UI elements (screens)
+        const target = e.target;
+        if (target.closest('button') || target.closest('.ui-screen')) {
+            return;
+        }
         e.preventDefault();
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];

@@ -1,4 +1,4 @@
-const STRUCT_SIZE = 56;
+const STRUCT_SIZE = 60;
 export function createGlobalStateReader(runtime) {
     const getPtr = resolveFunction(runtime, 'get_global_state');
     return {
@@ -18,7 +18,8 @@ export function createGlobalStateReader(runtime) {
                 numKeys: view.getInt32(36, true),
                 levelnum: view.getInt32(40, true),
                 sa: view.getInt32(44, true),
-                dynamicBlocksChanged: view.getInt32(48, true)
+                dynamicBlocksChanged: view.getInt32(48, true),
+                gameOver: view.getInt32(52, true)
             };
         }
     };

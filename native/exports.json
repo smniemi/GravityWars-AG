@@ -22,5 +22,8 @@
   "_wasm_next_level",
   "_wasm_prev_level",
   "_wasm_restart_level",
-  "_get_current_level_name"
+  "_get_current_level_name",
+  "_get_demo_buffer",
+  "_get_demo_count",
+  "_wasm_set_sa"
 ]

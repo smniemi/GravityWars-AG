@@ -89,7 +89,7 @@ echo "[wasm] Linking WebAssembly module..."
   -s ENVIRONMENT=web \
   -s ALLOW_MEMORY_GROWTH=1 \
   -s EXPORTED_FUNCTIONS="$EXPORTS" \
-  -s EXPORTED_RUNTIME_METHODS='["cwrap","getValue","setValue","HEAPU8"]' \
+  -s EXPORTED_RUNTIME_METHODS='["cwrap","getValue","setValue","HEAPU8","HEAP32"]' \
   -s ASSERTIONS=1 \
   --preload-file "$ROOT_DIR/GameCode/data@/res/data" \
   --preload-file "$ROOT_DIR/GameCode/levels@/res/levels" \

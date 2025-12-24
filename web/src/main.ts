@@ -421,6 +421,9 @@ type ControlFns = {
   setThrust: (value: number) => void;
   setFire: (value: number) => void;
   adjustAngle: (delta: number) => void;
+  setSA: (value: number) => void;
+  getDemoBufferPtr: () => number;
+  getDemoCount: () => number;
   nextLevel: () => void;
   // Duplicate removed
   prevLevel: () => void;
@@ -432,6 +435,9 @@ function createControls(runtime: GravityWarsRuntime): ControlFns {
     setThrust: resolveVoidFunction(runtime, 'wasm_set_thrust'),
     setFire: resolveVoidFunction(runtime, 'wasm_set_fire'),
     adjustAngle: resolveVoidFunction(runtime, 'wasm_adjust_sa'),
+    setSA: resolveVoidFunction(runtime, 'wasm_set_sa'),
+    getDemoBufferPtr: resolveZeroArgReturningIntFunction(runtime, 'get_demo_buffer'),
+    getDemoCount: resolveZeroArgReturningIntFunction(runtime, 'get_demo_count'),
     nextLevel: resolveZeroArgFunction(runtime, 'wasm_next_level'),
     prevLevel: resolveZeroArgFunction(runtime, 'wasm_prev_level'),
     restartLevel: resolveZeroArgFunction(runtime, 'wasm_restart_level')
@@ -475,6 +481,24 @@ function resolveZeroArgFunction(runtime: GravityWarsRuntime, name: string) {
   throw new Error(`Unable to resolve wasm export ${name}`);
 }
 
+function resolveZeroArgReturningIntFunction(runtime: GravityWarsRuntime, name: string) {
+  const module = runtime as unknown as Record<string, unknown>;
+  const candidates = [name, `_${name}`];
+
+  for (const candidate of candidates) {
+    const fn = module[candidate];
+    if (typeof fn === 'function') {
+      return (fn as () => number).bind(module);
+    }
+  }
+
+  if (runtime.cwrap) {
+    return runtime.cwrap(name, 'number', []);
+  }
+
+  throw new Error(`Unable to resolve wasm export ${name}`);
+}
+
 function handleLevelTransition() {
   if (!advanceLevel || levelAdvancePending || !lastShipState) {
     return;
@@ -488,6 +512,10 @@ function handleLevelTransition() {
 }
 
 let lastBgName = '';
+let introDemoFrame = 0;
+let demoData: Int32Array | null = null;
+let demoCount = 0;
+
 const loop = new GameLoop(({ deltaMs }) => {
 
 
@@ -596,6 +624,36 @@ const loop = new GameLoop(({ deltaMs }) => {
 
         } else if (rotate !== 0) {
           controls.adjustAngle(-rotate * angleSpeed);
+        }
+      } else if (lastGlobals?.levelnum === 0) {
+        // Intro screen / Attractor mode: play demo path
+        if (!demoData && runtime?.runtime) {
+          const ptr = controls.getDemoBufferPtr();
+          demoCount = controls.getDemoCount();
+          if (ptr && demoCount > 0) {
+            // demo is int[count][10]
+            // We use the runtime's HEAP32 which should be an Int32Array view
+            // If it's not present, we can create one from buffer
+            const heap32 = (runtime.runtime as any).HEAP32 || new Int32Array(runtime.runtime.HEAPU8.buffer);
+            demoData = heap32.subarray(ptr >> 2, (ptr >> 2) + demoCount * 10);
+            console.log(`[Main] Intro demo loaded: ${demoCount} frames`);
+          }
+        }
+
+        if (demoData && demoCount > 0) {
+          const frameIdx = introDemoFrame % demoCount;
+          const offset = frameIdx * 10;
+
+          // demo structure: frame_number, left_x, left_y, left_on, right_x, right_y, right_on, thrust, fire, sa
+          const thrustVal = demoData[offset + 7];
+          const fireVal = demoData[offset + 8];
+          const saVal = demoData[offset + 9];
+
+          controls.setThrust(thrustVal);
+          controls.setFire(fireVal);
+          controls.setSA(saVal);
+
+          introDemoFrame++;
         }
       }
 

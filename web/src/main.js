@@ -16,6 +16,7 @@ import { createActionReader } from './core/actions.js';
 import { createKeyboardInput } from './core/input.js';
 import { GameLoop } from './core/index.js';
 import { StartScreen } from './ui/startScreen.js';
+import { GameOverScreen } from './ui/gameOverScreen.js';
 const root = document.getElementById('app') ?? createRoot();
 function createRoot() {
     const el = document.createElement('div');
@@ -100,6 +101,8 @@ let keyboard = null;
 const soundManager = new SoundManager();
 // Initialize start screen
 let startScreen = null;
+// Duplicate removed
+let gameOverScreen = null;
 let gameStarted = false;
 // Override controls to disable them until game starts
 // Override controls to disable them until game starts
@@ -351,7 +354,8 @@ function createControls(runtime) {
         setFire: resolveVoidFunction(runtime, 'wasm_set_fire'),
         adjustAngle: resolveVoidFunction(runtime, 'wasm_adjust_sa'),
         nextLevel: resolveZeroArgFunction(runtime, 'wasm_next_level'),
-        prevLevel: resolveZeroArgFunction(runtime, 'wasm_prev_level')
+        prevLevel: resolveZeroArgFunction(runtime, 'wasm_prev_level'),
+        restartLevel: resolveZeroArgFunction(runtime, 'wasm_restart_level')
     };
 }
 function resolveVoidFunction(runtime, name) {
@@ -524,24 +528,64 @@ const loop = new GameLoop(({ deltaMs }) => {
                 }
             }
         }
-        handleLevelTransition();
-        // Check for tile updates (animations)
-        if (levelMap && tileAtlas) {
-            if (!lastTiles || lastTiles.length !== levelMap.tiles.length) {
-                lastTiles = new Uint8Array(levelMap.tiles);
-            }
-            else {
-                const dirtyIndices = [];
-                // Scan for changes
-                for (let i = 0; i < levelMap.tiles.length; i++) {
-                    if (levelMap.tiles[i] !== lastTiles[i]) {
-                        dirtyIndices.push(i);
-                        lastTiles[i] = levelMap.tiles[i];
+        if (gameStarted && lastGlobals && lastGlobals.gameOver) {
+            if (!gameOverScreen) {
+                gameOverScreen = new GameOverScreen(root, 
+                // Replay
+                () => {
+                    controls?.restartLevel();
+                    reloadLevel();
+                }, 
+                // Menu
+                () => {
+                    gameStarted = false;
+                    startScreen?.show();
+                    if (globalsReader) {
+                        let current = globalsReader.read().levelnum;
+                        const prevFn = getExport('wasm_prev_level');
+                        let attempts = 0;
+                        while (current > 0 && attempts++ < 20) {
+                            prevFn();
+                            current = globalsReader.read().levelnum;
+                        }
+                        soundManager.update(globalsReader.read(), [], levelMap);
                     }
+                });
+            }
+            if (gameOverScreen && lastGlobals) {
+                const getLevelNamePtr = getExport('get_current_level_name');
+                // @ts-ignore
+                const readString = (ptr) => {
+                    // @ts-ignore
+                    const memory = runtime.runtime.HEAPU8;
+                    let end = ptr;
+                    while (memory[end] !== 0)
+                        end++;
+                    let str = new TextDecoder().decode(memory.subarray(ptr, end));
+                    return str.replace(/"/g, '');
+                };
+                const levelName = readString(getLevelNamePtr());
+                gameOverScreen.show(levelName, lastGlobals.shipScore);
+            }
+        }
+    }
+    handleLevelTransition();
+    // Check for tile updates (animations)
+    if (levelMap && tileAtlas) {
+        if (!lastTiles || lastTiles.length !== levelMap.tiles.length) {
+            lastTiles = new Uint8Array(levelMap.tiles);
+        }
+        else {
+            const dirtyIndices = [];
+            // Scan for changes
+            for (let i = 0; i < levelMap.tiles.length; i++) {
+                if (levelMap.tiles[i] !== lastTiles[i]) {
+                    dirtyIndices.push(i);
+                    lastTiles[i] = levelMap.tiles[i];
                 }
-                if (dirtyIndices.length > 0) {
-                    renderer.updateLevel(levelMap, tileAtlas);
-                }
+            }
+            if (dirtyIndices.length > 0) {
+                renderer.updateLevel(levelMap, tileAtlas);
             }
         }
     }
