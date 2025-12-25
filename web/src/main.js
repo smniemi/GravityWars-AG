@@ -19,6 +19,7 @@ import { StartScreen } from './ui/startScreen.js';
 import { GameOverScreen } from './ui/gameOverScreen.js';
 import { LevelIntroScreen } from './ui/levelIntroScreen.js';
 import { GameCompleteScreen } from './ui/gameCompleteScreen.js';
+import { LevelCompleteScreen } from './ui/levelComplete.js';
 const root = document.getElementById('app') ?? createRoot();
 function createRoot() {
     const el = document.createElement('div');
@@ -127,6 +128,7 @@ let startScreen = null;
 let gameOverScreen = null;
 let levelIntroScreen = null;
 let gameCompleteScreen = null;
+let levelCompleteScreen = null;
 let gameStarted = false;
 // Total number of levels in the game
 const TOTAL_LEVELS = 13;
@@ -389,7 +391,8 @@ function createControls(runtime) {
         prevLevel: resolveZeroArgFunction(runtime, 'wasm_prev_level'),
         restartLevel: resolveZeroArgFunction(runtime, 'wasm_restart_level'),
         toggleCheatMode: resolveZeroArgFunction(runtime, 'wasm_toggle_cheat_mode'),
-        getCheatMode: resolveZeroArgReturningIntFunction(runtime, 'wasm_get_cheat_mode')
+        getCheatMode: resolveZeroArgReturningIntFunction(runtime, 'wasm_get_cheat_mode'),
+        addScore: resolveVoidFunction(runtime, 'wasm_add_score')
     };
 }
 function resolveVoidFunction(runtime, name) {
@@ -452,6 +455,10 @@ function playLevelIntro() {
     levelIntroActive = true;
     gameStarted = true; // Ensure rendering happens
     reloadLevel();
+    // Capture start score for PB calculation
+    if (globalsReader) {
+        levelStartScore = globalsReader.read().shipScore;
+    }
     const getLevelNamePtr = getExport('get_current_level_name');
     const levelName = readWasmString(getLevelNamePtr(), runtime);
     levelIntroScreen.show(levelName, () => {
@@ -508,13 +515,59 @@ function handleLevelTransition() {
         }
         else {
             // Normal level transition
-            advanceLevel();
-            playLevelIntro();
+            // Show Level Complete Screen
+            // Show Level Complete Screen
+            // Fix for HMR stale instance: check if method exists
+            if (!levelCompleteScreen || typeof levelCompleteScreen.setOnContinue !== 'function') {
+                if (levelCompleteScreen) {
+                    // Cleanup old instance if it exists but is stale
+                    try {
+                        levelCompleteScreen.hide?.();
+                    }
+                    catch { }
+                    try {
+                        levelCompleteScreen.element?.remove();
+                    }
+                    catch { }
+                }
+                levelCompleteScreen = new LevelCompleteScreen(root, () => { });
+            }
+            // We need to capture the current stats before they are reset by advanceLevel
+            const bonusTime = lastGlobals.shipTime; // Assuming time is remaining
+            const bonusFuel = lastGlobals.shipFuel;
+            const timeBonus = Math.floor(bonusTime * 10);
+            const fuelBonus = Math.floor(bonusFuel);
+            const totalBonus = timeBonus + fuelBonus;
+            // Update callback for this specific level transition
+            levelCompleteScreen.setOnContinue(() => {
+                if (controls && advanceLevel) {
+                    controls.addScore(totalBonus);
+                    advanceLevel();
+                    // Reset level start score for the next level
+                    if (globalsReader) {
+                        const newState = globalsReader.read();
+                        levelStartScore = newState.shipScore;
+                    }
+                    playLevelIntro();
+                    console.log(`[LevelComplete] Added score: ${totalBonus} (Time: ${bonusTime.toFixed(1)}*10 + Fuel: ${bonusFuel})`);
+                }
+            });
+            const getLevelNamePtr = getExport('get_current_level_name');
+            const levelName = readWasmString(getLevelNamePtr(), runtime);
+            levelCompleteScreen.show({
+                levelName: levelName,
+                time: bonusTime,
+                fuel: bonusFuel,
+                currentScore: lastGlobals.shipScore, // This is current score BEFORE bonus
+                levelIndex: lastGlobals.levelnum,
+                levelStartScore: levelStartScore
+            });
         }
-        levelAdvancePending = false;
     }
+    levelAdvancePending = false;
 }
 let lastBgName = '';
+let levelStartScore = 0;
 let introDemoFrame = 0;
 let demoData = null;
 let demoCount = 0;

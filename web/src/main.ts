@@ -561,6 +561,11 @@ function playLevelIntro() {
 
   reloadLevel();
 
+  // Capture start score for PB calculation
+  if (globalsReader) {
+    levelStartScore = globalsReader.read().shipScore;
+  }
+
   const getLevelNamePtr = getExport('get_current_level_name') as () => number;
   const levelName = readWasmString(getLevelNamePtr(), runtime);
 
@@ -623,76 +628,60 @@ function handleLevelTransition() {
     } else {
       // Normal level transition
       // Show Level Complete Screen
-      if (!levelCompleteScreen) {
-        levelCompleteScreen = new LevelCompleteScreen(root, () => {
-          // This needs to be dynamic or we need to pass data to show() and handle continuation there
-          // But the constructor takes the callback.
-          // We can use a property on the class or just use the closure if we re-create it (wasteful)
-          // Better: Update LevelCompleteScreen to take callback in constructor but executed logic is:
-          // 1. Add score
-          // 2. Advance
-          // 3. Intro
-        });
+      // Show Level Complete Screen
+      // Fix for HMR stale instance: check if method exists
+      if (!levelCompleteScreen || typeof (levelCompleteScreen as any).setOnContinue !== 'function') {
+        if (levelCompleteScreen) {
+          // Cleanup old instance if it exists but is stale
+          try { (levelCompleteScreen as any).hide?.(); } catch { }
+          try { (levelCompleteScreen as any).element?.remove(); } catch { }
+        }
+        levelCompleteScreen = new LevelCompleteScreen(root, () => { });
       }
 
       // We need to capture the current stats before they are reset by advanceLevel
       const bonusTime = lastGlobals.shipTime; // Assuming time is remaining
       const bonusFuel = lastGlobals.shipFuel;
 
-      // Since LevelCompleteScreen is long-lived, we need a way to pass the specific 'next' action
-      // OR we can make the constructor callback generic.
-      // Let's destroy and recreate for simplicity or modification.
-      // Actually, let's just make the callback call a variable function OR
-      // Pass the callback to `show`? No, `show` takes stats. Constructor takes callback.
-
-      // Let's change the pattern: Instantiate once, but the callback executes a stored function or just hardcode the logic.
-      // The logic is ALWAYS: Add Score -> Advance -> Intro.
-      // But we need the values for adding score.
-      // We can capture them in a closure variable here?
-
       const timeBonus = Math.floor(bonusTime * 10);
       const fuelBonus = Math.floor(bonusFuel);
       const totalBonus = timeBonus + fuelBonus;
 
-      // Make sure we have the screen
-      if (levelCompleteScreen) {
-        // REMOVE existing listener if we re-create? No, let's just recreate it to be safe and simple closure-wise
-        // OR better: modify LevelCompleteScreen to accept onContinue in show() or setOnContinue()
-        // But I can't edit LevelCompleteScreen right now easily without another tool call.
-        // I will just re-instantiate it. It's a DOM element creation, not too expensive once per level.
-
-        // Actually, I can just hardcode the callback logic here since it depends on the variables 'totalBonus' which change.
-        // Wait, 'totalBonus' is calculated NOW. 
-
-        levelCompleteScreen = new LevelCompleteScreen(root, () => {
-          if (controls && advanceLevel) {
-            controls.addScore(totalBonus);
-            advanceLevel();
-            playLevelIntro();
-
-            // Also log persistence if needed
-            console.log(`[LevelComplete] Added score: ${totalBonus} (Time: ${bonusTime}*10 + Fuel: ${bonusFuel})`);
+      // Update callback for this specific level transition
+      levelCompleteScreen.setOnContinue(() => {
+        if (controls && advanceLevel) {
+          controls.addScore(totalBonus);
+          advanceLevel();
+          // Reset level start score for the next level
+          if (globalsReader) {
+            const newState = globalsReader.read();
+            levelStartScore = newState.shipScore;
           }
-        });
+          playLevelIntro();
+          console.log(`[LevelComplete] Added score: ${totalBonus} (Time: ${bonusTime.toFixed(1)}*10 + Fuel: ${bonusFuel})`);
+        }
+      });
 
-        const getLevelNamePtr = getExport('get_current_level_name') as () => number;
-        const levelName = readWasmString(getLevelNamePtr(), runtime);
+      const getLevelNamePtr = getExport('get_current_level_name') as () => number;
+      const levelName = readWasmString(getLevelNamePtr(), runtime);
 
-        levelCompleteScreen.show({
-          levelName: levelName,
-          time: bonusTime,
-          fuel: bonusFuel,
-          currentScore: lastGlobals.shipScore, // This is current score BEFORE bonus
-          levelIndex: lastGlobals.levelnum
-        });
-      }
+      levelCompleteScreen.show({
+        levelName: levelName,
+        time: bonusTime,
+        fuel: bonusFuel,
+        currentScore: lastGlobals.shipScore, // This is current score BEFORE bonus
+        levelIndex: lastGlobals.levelnum,
+        levelStartScore: levelStartScore
+      });
     }
-
-    levelAdvancePending = false;
   }
+
+  levelAdvancePending = false;
 }
 
+
 let lastBgName = '';
+let levelStartScore = 0;
 let introDemoFrame = 0;
 let demoData: Int32Array | null = null;
 let demoCount = 0;

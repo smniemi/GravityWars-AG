@@ -3,6 +3,7 @@ export class GameCompleteScreen {
     onMenu;
     element;
     isVisible = false;
+    focusIndex = 0; // 0: Play Again, 1: Back to Menu
     constructor(container, onReplay, onMenu) {
         this.onReplay = onReplay;
         this.onMenu = onMenu;
@@ -79,12 +80,16 @@ export class GameCompleteScreen {
             </div>
 
             <div class="menu-buttons" style="display: flex; flex-direction: column; gap: 15px; width: 220px; margin-top: 40px; position: relative; z-index: 10;">
-                <button id="gc-btn-replay" style="background: linear-gradient(180deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 140, 0, 0.2) 100%); border: 2px solid #ffd700; color: #ffd700; padding: 14px; font-family: inherit; font-size: 16px; cursor: pointer; transition: all 0.3s; border-radius: 6px; text-transform: uppercase; letter-spacing: 2px;">
+                <button id="gc-btn-replay" style="background: linear-gradient(180deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 140, 0, 0.2) 100%); border: 2px solid #ffd700; color: #ffd700; padding: 14px; font-family: inherit; font-size: 16px; cursor: pointer; transition: all 0.3s; border-radius: 6px; text-transform: uppercase; letter-spacing: 2px; outline: none;">
                     Play Again
                 </button>
-                <button id="gc-btn-menu" style="background: rgba(255, 255, 255, 0.05); border: 1px solid #666; color: #aaa; padding: 12px; cursor: pointer; font-family: inherit; font-size: 14px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;">
+                <button id="gc-btn-menu" style="background: rgba(255, 255, 255, 0.05); border: 1px solid #666; color: #aaa; padding: 12px; cursor: pointer; font-family: inherit; font-size: 14px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; outline: none;">
                     Back to Menu
                 </button>
+            </div>
+            
+            <div style="margin-top: 30px; font-size: 12px; color: #555; font-family: monospace; position: relative; z-index: 10;">
+                USE ARROW KEYS & ENTER
             </div>
         `;
         container.appendChild(this.element);
@@ -92,35 +97,65 @@ export class GameCompleteScreen {
     }
     setupButtons() {
         const replayBtn = this.element.querySelector('#gc-btn-replay');
+        const menuBtn = this.element.querySelector('#gc-btn-menu');
         replayBtn.addEventListener('click', () => {
             this.onReplay();
             this.hide();
         });
-        replayBtn.onmouseenter = () => {
-            replayBtn.style.background = 'linear-gradient(180deg, rgba(255, 215, 0, 0.4) 0%, rgba(255, 140, 0, 0.4) 100%)';
-            replayBtn.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.5)';
-            replayBtn.style.transform = 'scale(1.02)';
-        };
-        replayBtn.onmouseleave = () => {
-            replayBtn.style.background = 'linear-gradient(180deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 140, 0, 0.2) 100%)';
-            replayBtn.style.boxShadow = 'none';
-            replayBtn.style.transform = 'scale(1)';
-        };
-        const menuBtn = this.element.querySelector('#gc-btn-menu');
         menuBtn.addEventListener('click', () => {
             this.onMenu();
             this.hide();
         });
-        menuBtn.onmouseenter = () => {
+        // Hover handlers
+        replayBtn.onmouseenter = () => { this.focusIndex = 0; this.updateFocusVisuals(); };
+        menuBtn.onmouseenter = () => { this.focusIndex = 1; this.updateFocusVisuals(); };
+    }
+    handleKey = (e) => {
+        if (!this.isVisible)
+            return;
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter'].includes(e.key)) {
+            e.preventDefault();
+        }
+        switch (e.key) {
+            case 'ArrowUp':
+            case 'ArrowDown':
+                this.focusIndex = (this.focusIndex === 0) ? 1 : 0;
+                this.updateFocusVisuals();
+                break;
+            case 'Enter':
+            case ' ':
+                if (this.focusIndex === 0) {
+                    this.onReplay();
+                    this.hide();
+                }
+                else {
+                    this.onMenu();
+                    this.hide();
+                }
+                break;
+        }
+    };
+    updateFocusVisuals() {
+        const replayBtn = this.element.querySelector('#gc-btn-replay');
+        const menuBtn = this.element.querySelector('#gc-btn-menu');
+        // Reset Styles
+        replayBtn.style.background = 'linear-gradient(180deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 140, 0, 0.2) 100%)';
+        replayBtn.style.boxShadow = 'none';
+        replayBtn.style.transform = 'scale(1)';
+        menuBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+        menuBtn.style.borderColor = '#666';
+        menuBtn.style.color = '#aaa';
+        // Apply Focus
+        if (this.focusIndex === 0) {
+            replayBtn.style.background = 'linear-gradient(180deg, rgba(255, 215, 0, 0.4) 0%, rgba(255, 140, 0, 0.4) 100%)';
+            replayBtn.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.5)';
+            replayBtn.style.transform = 'scale(1.02)';
+        }
+        else {
             menuBtn.style.background = 'rgba(255, 255, 255, 0.1)';
             menuBtn.style.borderColor = '#aaa';
             menuBtn.style.color = '#fff';
-        };
-        menuBtn.onmouseleave = () => {
-            menuBtn.style.background = 'rgba(255, 255, 255, 0.05)';
-            menuBtn.style.borderColor = '#666';
-            menuBtn.style.color = '#aaa';
-        };
+        }
     }
     show(score) {
         if (this.isVisible)
@@ -130,6 +165,11 @@ export class GameCompleteScreen {
         if (scoreEl)
             scoreEl.textContent = score.toLocaleString();
         this.element.style.display = 'flex';
+        // Reset focus
+        this.focusIndex = 0;
+        this.updateFocusVisuals();
+        // Add listener
+        window.addEventListener('keydown', this.handleKey);
         // Animate in with fade and scale
         this.element.style.opacity = '0';
         this.element.style.transform = 'scale(0.95)';
@@ -141,6 +181,7 @@ export class GameCompleteScreen {
     }
     hide() {
         this.isVisible = false;
+        window.removeEventListener('keydown', this.handleKey);
         this.element.style.display = 'none';
         this.element.style.opacity = '0';
         this.element.style.transform = 'scale(0.95)';

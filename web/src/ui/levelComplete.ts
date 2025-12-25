@@ -1,10 +1,8 @@
-import { SoundManager } from '../core/sound';
 
 export class LevelCompleteScreen {
     private element: HTMLElement;
     private isVisible: boolean = false;
     private animationFrame: number | null = null;
-    private audio: SoundManager | null = null;
 
     constructor(container: HTMLElement, private onContinue: () => void) {
         this.element = document.createElement('div');
@@ -31,16 +29,19 @@ export class LevelCompleteScreen {
                 <h1 id="lc-level-name" class="galactic-text" style="color: #fff; font-size: 48px; margin: 0 0 5px 0; text-shadow: 0 0 20px #0af;">LEVEL X</h1>
                 <div class="galactic-text" style="color: #0f0; font-size: 32px; margin-bottom: 40px; text-shadow: 0 0 10px #0f0;">WELL DONE!</div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: right; max-width: 400px; margin: 0 auto; font-family: monospace; font-size: 18px; color: #ccc;">
-                    <div>TIME BONUS</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; max-width: 400px; margin: 0 auto; font-family: monospace; font-size: 18px; color: #ccc;">
+                    <div style="text-align: right;">SCORE</div>
+                    <div id="lc-base-score" style="color: #fff;">0</div>
+
+                    <div style="text-align: right;">TIME BONUS</div>
                     <div id="lc-time-bonus" style="color: #fff;">0</div>
                     
-                    <div>FUEL BONUS</div>
+                    <div style="text-align: right;">FUEL BONUS</div>
                     <div id="lc-fuel-bonus" style="color: #fff;">0</div>
                 </div>
 
                 <div style="margin-top: 30px; font-size: 24px; color: #fff; font-family: monospace;">
-                    SCORE: <span id="lc-score" style="color: #ff0; font-weight: bold;">0</span>
+                    TOTAL SCORE: <span id="lc-score" style="color: #ff0; font-weight: bold;">0</span>
                 </div>
 
                 <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 40px; font-size: 14px; font-family: monospace; color: #888;">
@@ -82,18 +83,27 @@ export class LevelCompleteScreen {
         }
     }
 
+    private handleKey = (e: KeyboardEvent) => {
+        if (!this.isVisible) return;
+        if (e.code === 'Space' || e.code === 'Enter' || e.key === ' ' || e.key === 'Enter') {
+            this.handleInput();
+        }
+    }
+
     public show(stats: {
         levelName: string,
         time: number,
         fuel: number,
         currentScore: number,
-        levelIndex: number
+        levelIndex: number,
+        levelStartScore: number
     }) {
         this.isVisible = true;
         this.element.style.display = 'flex';
         // Trigger reflow
         void this.element.offsetWidth;
         this.element.style.opacity = '1';
+        window.addEventListener('keydown', this.handleKey);
 
         const nameEl = this.element.querySelector('#lc-level-name');
         if (nameEl) nameEl.textContent = stats.levelName;
@@ -102,6 +112,7 @@ export class LevelCompleteScreen {
         const fuelBonus = Math.floor(stats.fuel);
         const totalBonus = timeBonus + fuelBonus;
         const finalScore = stats.currentScore + totalBonus;
+        const levelScore = finalScore - stats.levelStartScore;
 
         // Local Storage Handling
         const storageKey = `gw_pb_level_${stats.levelIndex}`;
@@ -109,15 +120,13 @@ export class LevelCompleteScreen {
         let pb = storedPb ? parseInt(storedPb, 10) : 0;
 
         // Update PB if new score is higher
-        if (finalScore > pb) {
-            pb = finalScore;
+        // PB tracks the score GAINED in the level, not total score
+        if (levelScore > pb) {
+            pb = levelScore;
             localStorage.setItem(storageKey, pb.toString());
         }
 
         // Mock High score (randomly slightly higher than PB or same)
-        // In a real app this would fetch from backend. For now we just show a consistent "high score"
-        // which matches PB if PB is high, or some fixed value.
-        // Let's just track a "local high score" which is the PB.
         const highScore = pb;
 
         const pbEl = this.element.querySelector('#lc-pb');
@@ -128,19 +137,37 @@ export class LevelCompleteScreen {
 
 
         // Animation
+        const baseScoreEl = this.element.querySelector('#lc-base-score');
         const timeBonusEl = this.element.querySelector('#lc-time-bonus');
         const fuelBonusEl = this.element.querySelector('#lc-fuel-bonus');
         const scoreEl = this.element.querySelector('#lc-score');
 
-        if (timeBonusEl) timeBonusEl.textContent = `Time x10: +${timeBonus}`;
-        if (fuelBonusEl) fuelBonusEl.textContent = `Fuel x1: +${fuelBonus}`;
+        if (baseScoreEl) baseScoreEl.textContent = stats.currentScore.toLocaleString();
+        if (timeBonusEl) timeBonusEl.textContent = `+${timeBonus}`;
+        if (fuelBonusEl) fuelBonusEl.textContent = `+${fuelBonus}`;
         if (scoreEl) scoreEl.textContent = stats.currentScore.toLocaleString();
 
-        let startTime = performance.now();
+        console.log('[LevelComplete] Starting animation:', {
+            currentScore: stats.currentScore,
+            timeBonus,
+            fuelBonus,
+            totalBonus,
+            finalScore
+        });
+
         const duration = 2000; // 2 seconds to count up
+        let startTime: number | null = null;
 
         const animate = (now: number) => {
-            if (!this.isVisible) return;
+            if (!this.isVisible) {
+                console.log('[LevelComplete] Animation stopped - not visible');
+                return;
+            }
+
+            // Capture start time on first frame
+            if (startTime === null) {
+                startTime = now;
+            }
 
             const elapsed = now - startTime;
             const progress = Math.min(elapsed / duration, 1.0);
@@ -149,27 +176,28 @@ export class LevelCompleteScreen {
             const ease = 1 - Math.pow(1 - progress, 3);
 
             const currentAdd = Math.floor(totalBonus * ease);
+            const displayScore = stats.currentScore + currentAdd;
 
-            if (scoreEl) scoreEl.textContent = (stats.currentScore + currentAdd).toLocaleString();
-
-            // Optional: Animate the bonus numbers decreasing? 
-            // The prompt says "adds the remaining time and fuel to the score".
-            // Visually it's often cool to see the bonus sources drain and score fill.
-            // But just showing them as static "+XXX" and animating the total score is also fine and cleaner.
-            // Let's stick to the static breakdown + animating total.
+            if (scoreEl) scoreEl.textContent = displayScore.toLocaleString();
 
             if (progress < 1.0) {
                 this.animationFrame = requestAnimationFrame(animate);
             } else {
                 if (scoreEl) scoreEl.textContent = finalScore.toLocaleString();
+                console.log('[LevelComplete] Animation complete, final score:', finalScore);
             }
         };
 
+        // Cancel any previous animation
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+        }
         this.animationFrame = requestAnimationFrame(animate);
     }
 
     public hide() {
         this.isVisible = false;
+        window.removeEventListener('keydown', this.handleKey);
         this.element.style.opacity = '0';
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
@@ -180,4 +208,3 @@ export class LevelCompleteScreen {
         }, 300);
     }
 }
-

@@ -67,21 +67,30 @@ export class WebGLRenderer {
         };
     }
     backgroundTexture = null;
-    drawBackground() {
+    drawBackground(mapWidth, mapHeight) {
         if (!this.backgroundTexture)
             return;
         // Parallax factor: 0.5 means background moves at half speed
-        const parallaxX = this.viewport.cameraX * 0.5;
-        const parallaxY = this.viewport.cameraY * 0.5;
+        const parallaxFactor = 0.5;
         const viewWidth = this.canvas.width / this.viewport.zoom;
         const viewHeight = this.canvas.height / this.viewport.zoom;
+        const TILE_SIZE = 32;
+        const worldWidth = mapWidth * TILE_SIZE;
+        const worldHeight = mapHeight * TILE_SIZE;
+        const maxCamX = Math.max(0, worldWidth - viewWidth);
+        const maxCamY = Math.max(0, worldHeight - viewHeight);
+        // Calculate background dimensions to fit exactly within the parallax traversal.
+        // This effectively "zooms out" the background maximally so that the texture covers 
+        // the entire traversable area without repeating (staying within 0-1 UV bounds).
+        const bgWidth = maxCamX * parallaxFactor + viewWidth;
+        const bgHeight = maxCamY * parallaxFactor + viewHeight;
         this.spriteBatch.begin(this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
-        const bgWidth = 1024; // Approx size of back1385.JPG
-        const bgHeight = 1024;
+        const parallaxX = this.viewport.cameraX * parallaxFactor;
+        const parallaxY = this.viewport.cameraY * parallaxFactor;
         const u0 = parallaxX / bgWidth;
         const v0 = parallaxY / bgHeight;
-        const u1 = u0 + viewWidth / bgWidth;
-        const v1 = v0 + viewHeight / bgHeight;
+        const u1 = (parallaxX + viewWidth) / bgWidth;
+        const v1 = (parallaxY + viewHeight) / bgHeight;
         this.spriteBatch.draw(this.backgroundTexture, this.viewport.cameraX, this.viewport.cameraY, viewWidth, viewHeight, u0, v0, u1, v1);
         this.spriteBatch.flush();
     }
@@ -176,7 +185,7 @@ export class WebGLRenderer {
         this.gl.clearColor(0.02, 0.024, 0.04, 1.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
         // 3. Draw Background (Parallax)
-        this.drawBackground();
+        this.drawBackground(map.width, map.height);
         // 4. Calculate Shadow Vector
         const TILE_SIZE = 32;
         const mapCenterX = (map.width * TILE_SIZE) / 2;

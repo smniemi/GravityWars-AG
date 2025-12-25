@@ -123,7 +123,11 @@ void wasm_clear_dynamic_blocks(void) { dynamicBlocksChanged = 0; }
 extern void main_end(void);
 extern void main_init(void);
 
+// Score checkpoint for retries
+static int lastLevelScore = 0;
+
 void wasm_advance_level(void) {
+  lastLevelScore = ShipScore; // Checkpoint score before next level
   main_end();
   levelnum++;
   if (levelnum >= TOTAL_NUMBER_OF_LEVELS) {
@@ -139,6 +143,7 @@ void wasm_advance_level(void) {
 }
 
 void wasm_next_level(void) {
+  lastLevelScore = ShipScore; // Checkpoint
   main_end();
   levelnum++;
   if (levelnum >= TOTAL_NUMBER_OF_LEVELS) {
@@ -163,6 +168,12 @@ void wasm_prev_level(void) {
   shipThrust = 0;
   shipIsFiring = 0;
   main_init();
+  ShipScore = 0; // Reset score when manually skipping? Or confusing? Let's
+                 // reset for now or keep 0.
+  // Actually, prev/next level are cheats/debug. Resetting score is safer to
+  // avoid confusion.
+  lastLevelScore = 0;
+
   shipState.state = SHIP_STATE_APPEARING;
   shipState.animationPhase = 5 << 2;
   dynamicBlocksChanged = 1;
@@ -175,6 +186,10 @@ void wasm_restart_level(void) {
   shipThrust = 0;
   shipIsFiring = 0;
   main_init();
+
+  // Restore score to what it was at start of level
+  ShipScore = lastLevelScore;
+
   shipState.state = SHIP_STATE_APPEARING;
   shipState.animationPhase = 5 << 2;
   dynamicBlocksChanged = 1;

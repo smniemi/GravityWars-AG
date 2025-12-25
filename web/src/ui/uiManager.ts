@@ -33,7 +33,14 @@ export class UIManager {
         this.startScreen.show();
     }
 
-    public showLevelComplete(stats: { level: number, time: number, bestTime: number, globalBest: number }) {
+    public showLevelComplete(stats: {
+        levelName: string,
+        time: number,
+        fuel: number,
+        currentScore: number,
+        levelIndex: number,
+        levelStartScore: number
+    }) {
         this.hideAll();
         this.currentScreen = 'levelComplete';
         this.levelCompleteScreen.show(stats);
