@@ -104,6 +104,8 @@ void wasm_set_thrust(int value) { shipThrust = value; }
 
 void wasm_set_fire(int value) { shipIsFiring = value != 0; }
 
+void wasm_add_score(int value) { ShipScore += value; }
+
 void wasm_adjust_sa(int delta) {
   if (shipState.state == SHIP_STATE_LANDED) {
     return;
@@ -177,3 +179,18 @@ void wasm_restart_level(void) {
   shipState.animationPhase = 5 << 2;
   dynamicBlocksChanged = 1;
 }
+
+// Cheat mode (debug) - toggle with 'd' key
+// Enables: no wall collisions, high fuel, high time
+void wasm_toggle_cheat_mode(void) {
+  trainer = !trainer;
+  if (trainer) {
+    // Set high fuel and time when enabling cheat mode
+    ShipFuel = 999 << 4; // Max fuel (same as level 00 format)
+    ShipTime = 999.0f;   // Max time
+    BaseFuel = 999 << 4; // Prevent fuel from capping low
+    BaseTime = 999.0f;   // Prevent time from capping low
+  }
+}
+
+int wasm_get_cheat_mode(void) { return trainer; }

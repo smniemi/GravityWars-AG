@@ -8,7 +8,9 @@ const KEY_BINDINGS = {
     Minus: 'prev-level',
     '-': 'prev-level',
     Digit0: 'toggle-debug',
-    '0': 'toggle-debug'
+    '0': 'toggle-debug',
+    KeyD: 'toggle-cheat',
+    'd': 'toggle-cheat'
 };
 export async function createKeyboardInput(touchElement, joystick, fireButton, thrustButton) {
     const state = {
@@ -17,7 +19,8 @@ export async function createKeyboardInput(touchElement, joystick, fireButton, th
         rotate: 0,
         nextLevel: false,
         prevLevel: false,
-        toggleDebug: false // Default: debug displays off
+        toggleDebug: false, // Default: debug displays off
+        toggleCheat: false
     };
     const downHandler = (event) => {
         const debugEl = document.getElementById('debug-log');
@@ -48,6 +51,9 @@ export async function createKeyboardInput(touchElement, joystick, fireButton, th
                 break;
             case 'toggle-debug':
                 state.toggleDebug = !state.toggleDebug; // Toggle on press
+                break;
+            case 'toggle-cheat':
+                state.toggleCheat = true;
                 break;
         }
         event.preventDefault();

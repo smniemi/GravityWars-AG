@@ -377,7 +377,7 @@ void moveShip(void) {
         shipState.state = SHIP_STATE_APPEARING;
         shipState.animationPhase = 5 << 2;
       }
-      break;
+      // break; // Fixed invalid break
     }
   }
 

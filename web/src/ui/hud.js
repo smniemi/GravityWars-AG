@@ -11,9 +11,14 @@ export function drawHUD(ctx, globals) {
     ctx.shadowOffsetX = 2;
     ctx.shadowOffsetY = 2;
     // Top Left: Level & Score
+    // Align labels left, values left at a fixed column for vertical alignment
+    const leftLabelX = padding;
+    const leftValueX = padding + ctx.measureText('Score: ').width; // Use longer label for column
     ctx.textAlign = 'left';
-    ctx.fillText(`Level: ${globals.levelnum}`, padding, padding);
-    ctx.fillText(`Score: ${globals.shipScore}`, padding, padding + fontSize * 1.5);
+    ctx.fillText('Level:', leftLabelX, padding);
+    ctx.fillText(`${globals.levelnum}`, leftValueX, padding);
+    ctx.fillText('Score:', leftLabelX, padding + fontSize * 1.5);
+    ctx.fillText(`${globals.shipScore}`, leftValueX, padding + fontSize * 1.5);
     const isMobile = width < 768;
     // Mobile: up 1 font size (from 1.5 -> 2.5)
     // Desktop: up another font size (from 1.5 -> 3.5 [or mobile + 1])
@@ -27,16 +32,15 @@ export function drawHUD(ctx, globals) {
     ctx.textAlign = 'left';
     ctx.fillText(timeStr, width / 2, height - padding - timeBottomOffset);
     // Top Right: Fuel & Lives
-    // Align labels and values to the left, but positioned relative to the right edge
-    // This ensures 'F' in Fuel and 'L' in Lives are vertically aligned.
-    // Reserve space for values (e.g. 4 digits)
-    const valueMaxWidth = 100;
-    // Reserve space for labels (Lives: is approx 5-6 chars)
-    const labelMaxWidth = 110;
-    // Position where the value number starts (left-aligned)
-    const valueX = width - padding - valueMaxWidth;
-    // Position where the label starts (left-aligned)
-    const labelX = valueX - labelMaxWidth;
+    // Align labels left (so F and L are vertically aligned), values right-aligned
+    // Measure the widest possible value (4 digits like "9999")
+    const valueColumnWidth = ctx.measureText('9999').width;
+    // The right edge of the value text (matching left margin)
+    const valueRightEdge = width - padding;
+    // Measure the longer label for consistent positioning
+    const rightLabelWidth = ctx.measureText('Lives:').width;
+    // The left edge where labels start (left-aligned)
+    const rightLabelX = valueRightEdge - valueColumnWidth - 10 - rightLabelWidth;
     // Fuel
     if (globals.shipFuel < 500) {
         ctx.fillStyle = '#ff0000';
@@ -45,11 +49,14 @@ export function drawHUD(ctx, globals) {
         ctx.fillStyle = '#ffffff';
     }
     ctx.textAlign = 'left';
-    ctx.fillText('Fuel:', labelX, padding);
-    ctx.fillText(`${globals.shipFuel}`, valueX, padding);
+    ctx.fillText('Fuel:', rightLabelX, padding);
+    ctx.textAlign = 'right';
+    ctx.fillText(`${globals.shipFuel}`, valueRightEdge, padding);
     // Lives
     ctx.fillStyle = '#ffffff';
-    ctx.fillText('Lives:', labelX, padding + fontSize * 1.5);
-    ctx.fillText(`${globals.shipLife}`, valueX, padding + fontSize * 1.5);
+    ctx.textAlign = 'left';
+    ctx.fillText('Lives:', rightLabelX, padding + fontSize * 1.5);
+    ctx.textAlign = 'right';
+    ctx.fillText(`${globals.shipLife}`, valueRightEdge, padding + fontSize * 1.5);
     ctx.restore();
 }

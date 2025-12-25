@@ -1,6 +1,7 @@
 export class LevelIntroScreen {
     element;
     nameElement;
+    subTextElement;
     isPlaying = false;
     constructor(container) {
         this.element = document.createElement('div');
@@ -27,15 +28,15 @@ export class LevelIntroScreen {
         this.nameElement.style.margin = '0';
         this.nameElement.style.letterSpacing = '4px';
         this.nameElement.style.textTransform = 'uppercase';
-        const subText = document.createElement('div');
-        subText.textContent = 'MISSION START';
-        subText.style.fontSize = '14px';
-        subText.style.color = 'rgba(255, 255, 255, 0.7)';
-        subText.style.marginTop = '10px';
-        subText.style.letterSpacing = '8px';
-        subText.style.fontFamily = 'monospace';
+        this.subTextElement = document.createElement('div');
+        this.subTextElement.textContent = 'MISSION START';
+        this.subTextElement.style.fontSize = '14px';
+        this.subTextElement.style.color = 'rgba(255, 255, 255, 0.7)';
+        this.subTextElement.style.marginTop = '10px';
+        this.subTextElement.style.letterSpacing = '8px';
+        this.subTextElement.style.fontFamily = 'monospace';
         content.appendChild(this.nameElement);
-        content.appendChild(subText);
+        content.appendChild(this.subTextElement);
         this.element.appendChild(content);
         container.appendChild(this.element);
     }
@@ -44,6 +45,10 @@ export class LevelIntroScreen {
             return;
         this.isPlaying = true;
         this.nameElement.textContent = levelName || 'UNKNOWN SECTOR';
+        this.subTextElement.textContent = 'MISSION START';
+        // Level intro uses cyan styling
+        this.nameElement.style.color = '#0ff';
+        this.nameElement.style.textShadow = '0 0 20px rgba(0, 255, 255, 0.8)';
         // Reset styles
         this.element.style.display = 'flex';
         this.element.style.opacity = '0';
@@ -67,6 +72,42 @@ export class LevelIntroScreen {
             this.element.style.display = 'none';
             this.isPlaying = false;
             onComplete();
+        }, 2500);
+    }
+    /**
+     * Show a custom message with the same animation as level intro.
+     * Used for events like "PORTAL ACTIVATED" when all keys are collected.
+     */
+    showMessage(message, subtitle = '', onComplete) {
+        if (this.isPlaying)
+            return;
+        this.isPlaying = true;
+        this.nameElement.textContent = message;
+        this.subTextElement.textContent = subtitle;
+        // Custom messages use green styling for portal activation
+        this.nameElement.style.color = '#0f0';
+        this.nameElement.style.textShadow = '0 0 20px rgba(0, 255, 0, 0.8)';
+        // Reset styles
+        this.element.style.display = 'flex';
+        this.element.style.opacity = '0';
+        this.element.style.transform = 'scale(0.9)';
+        this.element.style.transition = 'opacity 0.5s ease-out, transform 2.5s ease-out';
+        // Force reflow
+        void this.element.offsetWidth;
+        // Animate In
+        requestAnimationFrame(() => {
+            this.element.style.opacity = '1';
+            this.element.style.transform = 'scale(1.05)'; // Slow grow
+        });
+        // Hold then fade out
+        setTimeout(() => {
+            this.element.style.opacity = '0';
+        }, 2000);
+        // Cleanup
+        setTimeout(() => {
+            this.element.style.display = 'none';
+            this.isPlaying = false;
+            onComplete?.();
         }, 2500);
     }
 }

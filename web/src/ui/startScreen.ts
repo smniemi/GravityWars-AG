@@ -4,6 +4,10 @@ export class StartScreen {
     private selectedLevel: number = 1;
     private totalLevels: number = 60;
 
+    // Navigation state
+    private focusIndex: number = 0; // 0: Levels, 1: Play, 2: Credits
+    private readonly SHIP_BLUE = '#2e9afe'; // A nice ship-like blue
+
     constructor(container: HTMLElement, private onPlay: (level: number) => void) {
         this.element = document.createElement('div');
         this.element.className = 'ui-screen hidden';
@@ -22,30 +26,75 @@ export class StartScreen {
         this.element.style.backdropFilter = 'blur(2px)';
 
         this.element.innerHTML = `
-            <div class="title-container" style="text-align: center; margin-bottom: 40px;">
-                <h1 class="galactic-text" style="font-size: 64px; margin: 0; color: #0ff; text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);">GRAVITY WARS</h1>
-                <h2 style="font-size: 18px; color: #888; font-weight: normal; margin-top: 10px;">- THE BEGINNING -</h2>
-            </div>
-            
-            <div class="level-section" style="text-align: center; margin-bottom: 40px;">
-                <div class="level-label" style="font-size: 14px; color: #aaa; margin-bottom: 15px; letter-spacing: 2px;">SELECT STARTING LEVEL</div>
-                <div class="level-selector-wrapper" style="width: 300px; overflow: hidden; position: relative; padding: 10px 0;">
-                    <div class="level-selector" id="level-selector" style="display: flex; gap: 20px; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); padding-left: 130px;">
-                        <!-- Levels injected here -->
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+                <div class="title-container" style="text-align: center; margin-bottom: 40px;">
+                    <h1 class="galactic-text" style="font-size: 64px; margin: 0; color: ${this.SHIP_BLUE}; text-shadow: 0 0 20px rgba(46, 154, 254, 0.5);">GRAVITY WARS</h1>
+                    <h2 style="font-size: 18px; color: #888; font-weight: normal; margin-top: 10px;">- THE BEGINNING -</h2>
+                </div>
+                
+                <div class="level-section" style="text-align: center; margin-bottom: 30px;">
+                    <div class="level-label" style="font-size: 14px; color: #aaa; margin-bottom: 15px; letter-spacing: 2px;">SELECT STARTING LEVEL</div>
+                    <div class="level-selector-wrapper" style="width: 300px; overflow: hidden; position: relative; padding: 10px 0;">
+                        <div class="level-selector" id="level-selector" style="display: flex; gap: 20px; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); padding-left: 130px;">
+                            <!-- Levels injected here -->
+                        </div>
+                        <div class="selector-highlight" style="
+                            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); 
+                            width: 50px; height: 50px; 
+                            border: 2px solid ${this.SHIP_BLUE}; 
+                            border-radius: 8px; 
+                            box-shadow: 0 0 15px rgba(46, 154, 254, 0.3); 
+                            pointer-events: none;
+                            transition: all 0.2s;
+                        "></div>
                     </div>
-                    <div class="selector-highlight" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; border: 2px solid #0ff; border-radius: 8px; box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); pointer-events: none;"></div>
+                </div>
+
+                <div class="menu-buttons" style="display: flex; flex-direction: column; gap: 15px; width: 240px;">
+                    <button id="btn-play" style="
+                        background: rgba(46, 154, 254, 0.1); 
+                        border: 1px solid ${this.SHIP_BLUE}; 
+                        color: ${this.SHIP_BLUE}; 
+                        padding: 15px; 
+                        font-family: inherit; 
+                        font-size: 18px; 
+                        cursor: pointer; 
+                        transition: all 0.2s; 
+                        border-radius: 4px;
+                        outline: none;
+                    ">PLAY</button>
+                    <div style="display: flex; gap: 15px;">
+                         <button id="btn-credits" style="
+                            flex: 1; 
+                            background: rgba(255, 255, 255, 0.05); 
+                            border: 1px solid rgba(46, 154, 254, 0.5); 
+                            color: #aaa; 
+                            padding: 10px; 
+                            cursor: pointer; 
+                            font-family: inherit; 
+                            border-radius: 4px;
+                            outline: none;
+                            transition: all 0.2s;
+                        ">CREDITS</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="menu-buttons" style="display: flex; flex-direction: column; gap: 15px; width: 240px;">
-                <button id="btn-play" style="background: rgba(0, 255, 255, 0.1); border: 1px solid #0ff; color: #0ff; padding: 15px; font-family: inherit; font-size: 18px; cursor: pointer; transition: all 0.2s; border-radius: 4px;">PLAY</button>
-                <div style="display: flex; gap: 15px;">
-                     <button id="btn-credits" style="flex: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid #444; color: #aaa; padding: 10px; cursor: pointer; font-family: inherit; border-radius: 4px;">CREDITS</button>
-                </div>
+            <div class="desktop-controls-hint" style="
+                margin-bottom: 30px; 
+                font-size: 13px; 
+                color: #666; 
+                text-align: center; 
+                line-height: 1.6; 
+                font-family: monospace; 
+                letter-spacing: 1px;
+            ">
+                <div style="margin-bottom: 4px;">STEER WITH <span style="color: ${this.SHIP_BLUE};">ARROW KEYS</span></div>
+                <div>FIRE WITH <span style="color: ${this.SHIP_BLUE};">SPACE BAR</span></div>
             </div>
 
             <div id="credits-modal" class="hidden" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; z-index: 20; display: none;">
-                <h2 class="galactic-text" style="color: #0ff; margin-bottom: 30px;">CREDITS</h2>
+                <h2 class="galactic-text" style="color: ${this.SHIP_BLUE}; margin-bottom: 30px;">CREDITS</h2>
                 <div style="text-align: center; line-height: 1.6; color: #ccc;">
                     <p>Created by <strong>Your Name / Team</strong></p>
                     <p>Use Joystick / Touches to move</p>
@@ -60,11 +109,14 @@ export class StartScreen {
         this.renderLevels();
         this.setupInput();
         this.setupButtons();
+        this.updateFocusVisuals();
 
-        // Add hover effects via JS since inline styles are used
+        // Mouse hover interactions updates focus state
         const playBtn = this.element.querySelector('#btn-play') as HTMLElement;
-        playBtn.onmouseenter = () => { playBtn.style.background = 'rgba(0, 255, 255, 0.25)'; playBtn.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.4)'; };
-        playBtn.onmouseleave = () => { playBtn.style.background = 'rgba(0, 255, 255, 0.1)'; playBtn.style.boxShadow = 'none'; };
+        playBtn.onmouseenter = () => { this.focusIndex = 1; this.updateFocusVisuals(); };
+
+        const creditsBtn = this.element.querySelector('#btn-credits') as HTMLElement;
+        creditsBtn.onmouseenter = () => { this.focusIndex = 2; this.updateFocusVisuals(); };
     }
 
     private renderLevels() {
@@ -83,7 +135,9 @@ export class StartScreen {
             el.dataset.level = i.toString();
             el.onclick = () => {
                 this.selectedLevel = i;
+                this.focusIndex = 0;
                 this.updateLevelSelection();
+                this.updateFocusVisuals();
             };
             this.levelSelector.appendChild(el);
         }
@@ -100,7 +154,7 @@ export class StartScreen {
             if (level === this.selectedLevel) {
                 item.style.color = '#fff';
                 item.style.transform = 'scale(1.2)';
-                item.style.textShadow = '0 0 10px #0ff';
+                item.style.textShadow = `0 0 10px ${this.SHIP_BLUE}`;
             } else {
                 item.style.color = '#555';
                 item.style.transform = 'scale(1)';
@@ -109,10 +163,40 @@ export class StartScreen {
         });
 
         // Center the selected item
-        // Default left padding is 130px (half of 300px wrapper width approx)
-        // Position should be: -((index) * itemWidth)
         const index = this.selectedLevel - 1;
         this.levelSelector.style.transform = `translateX(${-index * itemWidth}px)`;
+    }
+
+    private updateFocusVisuals() {
+        const highlight = this.element.querySelector('.selector-highlight') as HTMLElement;
+        const playBtn = this.element.querySelector('#btn-play') as HTMLElement;
+        const creditsBtn = this.element.querySelector('#btn-credits') as HTMLElement;
+
+        // Reset
+        highlight.style.opacity = '0.3';
+        highlight.style.borderColor = '#444';
+
+        playBtn.style.background = 'rgba(46, 154, 254, 0.1)';
+        playBtn.style.boxShadow = 'none';
+
+        creditsBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+        creditsBtn.style.color = '#aaa';
+
+        switch (this.focusIndex) {
+            case 0: // Levels
+                highlight.style.opacity = '1';
+                highlight.style.borderColor = this.SHIP_BLUE;
+                highlight.style.boxShadow = `0 0 15px rgba(46, 154, 254, 0.3)`;
+                break;
+            case 1: // Play
+                playBtn.style.background = 'rgba(46, 154, 254, 0.3)';
+                playBtn.style.boxShadow = `0 0 20px rgba(46, 154, 254, 0.4)`;
+                break;
+            case 2: // Credits
+                creditsBtn.style.background = 'rgba(46, 154, 254, 0.2)';
+                creditsBtn.style.color = '#fff';
+                break;
+        }
     }
 
     private setupInput() {
@@ -124,13 +208,12 @@ export class StartScreen {
         wrapper.addEventListener('mousedown', (e) => {
             isDown = true;
             startX = e.pageX;
+            this.focusIndex = 0;
+            this.updateFocusVisuals();
         });
 
         window.addEventListener('mouseup', () => {
-            if (isDown) {
-                isDown = false;
-                // Snap to nearest
-            }
+            isDown = false;
         });
 
         window.addEventListener('mousemove', (e) => {
@@ -144,9 +227,43 @@ export class StartScreen {
             }
         });
 
+        // Keyboard support
+        window.addEventListener('keydown', (e) => {
+            // Only handle inputs if screen is visible
+            if (this.element.style.display === 'none') return;
+
+            // Allow arrow keys to control UI
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter'].includes(e.key)) {
+                e.preventDefault();
+            }
+
+            switch (e.key) {
+                case 'ArrowUp':
+                    this.focusIndex = (this.focusIndex - 1 + 3) % 3;
+                    this.updateFocusVisuals();
+                    break;
+                case 'ArrowDown':
+                    this.focusIndex = (this.focusIndex + 1) % 3;
+                    this.updateFocusVisuals();
+                    break;
+                case 'ArrowLeft':
+                    if (this.focusIndex === 0) this.selectPrev();
+                    break;
+                case 'ArrowRight':
+                    if (this.focusIndex === 0) this.selectNext();
+                    break;
+                case 'Enter':
+                case ' ':
+                    this.triggerSelection();
+                    break;
+            }
+        });
+
         // Touch support
         wrapper.addEventListener('touchstart', (e) => {
             startX = e.touches[0].pageX;
+            this.focusIndex = 0;
+            this.updateFocusVisuals();
         }, { passive: true });
 
         wrapper.addEventListener('touchmove', (e) => {
@@ -158,6 +275,18 @@ export class StartScreen {
                 startX = x;
             }
         }, { passive: true });
+    }
+
+    private triggerSelection() {
+        if (this.focusIndex === 0 || this.focusIndex === 1) {
+            // Play (Levels or Play button both start game)
+            this.onPlay(this.selectedLevel);
+        } else if (this.focusIndex === 2) {
+            // Credits
+            const creditsModal = this.element.querySelector('#credits-modal') as HTMLElement;
+            creditsModal.style.display = 'flex';
+            setTimeout(() => creditsModal.style.opacity = '1', 10);
+        }
     }
 
     private selectNext() {
@@ -197,6 +326,8 @@ export class StartScreen {
         // Reset to Level 1 visually or keep last selected?
         // this.selectedLevel = 1; 
         this.updateLevelSelection();
+        this.focusIndex = 0; // Reset focus to levels on show
+        this.updateFocusVisuals();
     }
 
     public hide() {

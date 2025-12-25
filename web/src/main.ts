@@ -18,6 +18,8 @@ import { GameLoop } from './core/index.js';
 import { StartScreen } from './ui/startScreen.js';
 import { GameOverScreen } from './ui/gameOverScreen.js';
 import { LevelIntroScreen } from './ui/levelIntroScreen.js';
+import { GameCompleteScreen } from './ui/gameCompleteScreen.js';
+import { LevelCompleteScreen } from './ui/levelComplete.js';
 
 const root = document.getElementById('app') ?? createRoot();
 
@@ -150,15 +152,21 @@ soundManager.setSfxVolume(0.5); // Default to 50% for intro
 let startScreen: StartScreen | null = null;
 let gameOverScreen: GameOverScreen | null = null;
 let levelIntroScreen: LevelIntroScreen | null = null;
+let gameCompleteScreen: GameCompleteScreen | null = null;
+let levelCompleteScreen: LevelCompleteScreen | null = null;
 let gameStarted = false;
+
+// Total number of levels in the game
+const TOTAL_LEVELS = 13;
 let levelIntroActive = false;
+let previousNumKeys = -1; // Track previous key count to detect when portal activates
 
 // Override controls to disable them until game starts
 // Override controls to disable them until game starts
 // Controls initially null until WASM loads
 // Removed duplicate soundManager
 let controls: ControlFns | null = null;
-type ExportName = 'init_gw' | 'main_init' | 'control' | 'animate' | 'wasm_next_level' | 'wasm_prev_level' | 'wasm_restart_level' | 'get_current_level_name';
+type ExportName = 'init_gw' | 'main_init' | 'control' | 'animate' | 'wasm_next_level' | 'wasm_prev_level' | 'wasm_restart_level' | 'get_current_level_name' | 'wasm_add_score';
 
 const cachedExports: Partial<Record<ExportName, () => void>> = {};
 
@@ -408,9 +416,11 @@ function drawDebugPanel(
   context: CanvasRenderingContext2D,
   ship: ShipState,
   globals: GlobalState | null,
-  input: KeyboardState
+  input: KeyboardState,
+  cheatMode: boolean
 ) {
   const lines = [
+    `CHEAT MODE: ${cheatMode ? 'ON' : 'OFF'}`,
     `Ship state: ${ship.state}`,
     `Pos: (${ship.x}, ${ship.y})`,
     `Thrust value: ${ship.thrust}`,
@@ -454,6 +464,9 @@ type ControlFns = {
   // Duplicate removed
   prevLevel: () => void;
   restartLevel: () => void;
+  toggleCheatMode: () => void;
+  getCheatMode: () => number; // Returns int (0 or 1)
+  addScore: (value: number) => void;
 };
 
 function createControls(runtime: GravityWarsRuntime): ControlFns {
@@ -466,7 +479,10 @@ function createControls(runtime: GravityWarsRuntime): ControlFns {
     getDemoCount: resolveZeroArgReturningIntFunction(runtime, 'get_demo_count'),
     nextLevel: resolveZeroArgFunction(runtime, 'wasm_next_level'),
     prevLevel: resolveZeroArgFunction(runtime, 'wasm_prev_level'),
-    restartLevel: resolveZeroArgFunction(runtime, 'wasm_restart_level')
+    restartLevel: resolveZeroArgFunction(runtime, 'wasm_restart_level'),
+    toggleCheatMode: resolveZeroArgFunction(runtime, 'wasm_toggle_cheat_mode'),
+    getCheatMode: resolveZeroArgReturningIntFunction(runtime, 'wasm_get_cheat_mode'),
+    addScore: resolveVoidFunction(runtime, 'wasm_add_score')
   };
 }
 
@@ -554,13 +570,124 @@ function playLevelIntro() {
 }
 
 function handleLevelTransition() {
-  if (!advanceLevel || levelAdvancePending || !lastShipState) {
+  if (!advanceLevel || levelAdvancePending || !lastShipState || !lastGlobals) {
     return;
   }
   if (lastShipState.state === SHIP_STATE.DISAPPEARING && lastShipState.animationPhase <= 0) {
     levelAdvancePending = true;
-    advanceLevel();
-    playLevelIntro();
+
+    // Check if this is the last level (level 60)
+    const currentLevelNum = lastGlobals.levelnum;
+
+    if (currentLevelNum >= TOTAL_LEVELS) {
+      // Game complete! Show congratulations screen
+      if (!gameCompleteScreen) {
+        gameCompleteScreen = new GameCompleteScreen(root,
+          // Play Again - start from level 1
+          () => {
+            // Navigate back to level 1
+            if (controls && globalsReader) {
+              let current = globalsReader.read().levelnum;
+              while (current > 1) {
+                controls.prevLevel();
+                current = globalsReader.read().levelnum;
+              }
+              while (current < 1) {
+                controls.nextLevel();
+                current = globalsReader.read().levelnum;
+              }
+              reloadLevel();
+              playLevelIntro();
+            }
+          },
+          // Back to Menu
+          () => {
+            gameStarted = false;
+            soundManager.setSfxVolume(0.5);
+            startScreen?.show();
+            if (globalsReader) {
+              let current = globalsReader.read().levelnum;
+              const prevFn = getExport('wasm_prev_level');
+              let attempts = 0;
+              while (current > 0 && attempts++ < 70) {
+                prevFn();
+                current = globalsReader.read().levelnum;
+              }
+              soundManager.update(globalsReader.read(), [], levelMap);
+            }
+          }
+        );
+      }
+
+      gameCompleteScreen.show(lastGlobals.shipScore);
+    } else {
+      // Normal level transition
+      // Show Level Complete Screen
+      if (!levelCompleteScreen) {
+        levelCompleteScreen = new LevelCompleteScreen(root, () => {
+          // This needs to be dynamic or we need to pass data to show() and handle continuation there
+          // But the constructor takes the callback.
+          // We can use a property on the class or just use the closure if we re-create it (wasteful)
+          // Better: Update LevelCompleteScreen to take callback in constructor but executed logic is:
+          // 1. Add score
+          // 2. Advance
+          // 3. Intro
+        });
+      }
+
+      // We need to capture the current stats before they are reset by advanceLevel
+      const bonusTime = lastGlobals.shipTime; // Assuming time is remaining
+      const bonusFuel = lastGlobals.shipFuel;
+
+      // Since LevelCompleteScreen is long-lived, we need a way to pass the specific 'next' action
+      // OR we can make the constructor callback generic.
+      // Let's destroy and recreate for simplicity or modification.
+      // Actually, let's just make the callback call a variable function OR
+      // Pass the callback to `show`? No, `show` takes stats. Constructor takes callback.
+
+      // Let's change the pattern: Instantiate once, but the callback executes a stored function or just hardcode the logic.
+      // The logic is ALWAYS: Add Score -> Advance -> Intro.
+      // But we need the values for adding score.
+      // We can capture them in a closure variable here?
+
+      const timeBonus = Math.floor(bonusTime * 10);
+      const fuelBonus = Math.floor(bonusFuel);
+      const totalBonus = timeBonus + fuelBonus;
+
+      // Make sure we have the screen
+      if (levelCompleteScreen) {
+        // REMOVE existing listener if we re-create? No, let's just recreate it to be safe and simple closure-wise
+        // OR better: modify LevelCompleteScreen to accept onContinue in show() or setOnContinue()
+        // But I can't edit LevelCompleteScreen right now easily without another tool call.
+        // I will just re-instantiate it. It's a DOM element creation, not too expensive once per level.
+
+        // Actually, I can just hardcode the callback logic here since it depends on the variables 'totalBonus' which change.
+        // Wait, 'totalBonus' is calculated NOW. 
+
+        levelCompleteScreen = new LevelCompleteScreen(root, () => {
+          if (controls && advanceLevel) {
+            controls.addScore(totalBonus);
+            advanceLevel();
+            playLevelIntro();
+
+            // Also log persistence if needed
+            console.log(`[LevelComplete] Added score: ${totalBonus} (Time: ${bonusTime}*10 + Fuel: ${bonusFuel})`);
+          }
+        });
+
+        const getLevelNamePtr = getExport('get_current_level_name') as () => number;
+        const levelName = readWasmString(getLevelNamePtr(), runtime);
+
+        levelCompleteScreen.show({
+          levelName: levelName,
+          time: bonusTime,
+          fuel: bonusFuel,
+          currentScore: lastGlobals.shipScore, // This is current score BEFORE bonus
+          levelIndex: lastGlobals.levelnum
+        });
+      }
+    }
+
     levelAdvancePending = false;
   }
 }
@@ -644,6 +771,19 @@ const loop = new GameLoop(({ deltaMs }) => {
         clearDynamicBlocks?.();
       }
       soundManager.update(lastGlobals, actionStates, levelMap);
+
+      // Check if all keys were just collected (portal activated)
+      // NumKeys goes from positive to 0 when last key is collected
+      // After that it becomes -1, so we check for the transition to 0
+      if (gameStarted && previousNumKeys > 0 && lastGlobals.numKeys <= 0) {
+        // Last key was collected - show portal activated message
+        if (!levelIntroScreen) {
+          levelIntroScreen = new LevelIntroScreen(root);
+        }
+        levelIntroScreen.showMessage('PORTAL ACTIVATED', '');
+        console.log('[Main] Portal activated - all keys collected');
+      }
+      previousNumKeys = lastGlobals.numKeys;
     }
     if (bulletReader) {
       currentBullets = bulletReader.read().filter((bullet) => bullet.active);
@@ -656,7 +796,6 @@ const loop = new GameLoop(({ deltaMs }) => {
 
       // Mobile gets higher thrust to simulate lower gravity
       const thrustValue = isMobile ? 24 : 16;
-      const angleSpeed = isMobile ? ANGLE_ADJUST_SPEED * 0.5 : ANGLE_ADJUST_SPEED; // 2x slower rotation on mobile
 
       if (gameStarted && !levelIntroActive) {
         // Apply analog thrust if available (thrust is 0-1)
@@ -685,8 +824,8 @@ const loop = new GameLoop(({ deltaMs }) => {
           }
           const holdDuration = now - rotationHoldStart;
 
-          // Speed tiers: 0-200ms = 1x, 200ms+ = 2x
-          const speedMultiplier = holdDuration > 200 ? 2 : 1;
+          // Speed tiers: tap (0-200ms) = 0.5x precision, long press (200ms+) = 2x fast
+          const speedMultiplier = holdDuration > 200 ? 2 : 0.5;
 
           controls.adjustAngle(-rotate * ANGLE_ADJUST_SPEED * speedMultiplier);
         } else {
@@ -761,6 +900,14 @@ const loop = new GameLoop(({ deltaMs }) => {
           controls.prevLevel();
           keyboard.state.prevLevel = false;
           reloadLevel();
+        }
+
+        // Handle cheat mode toggle (press 'd')
+        if (keyboard.state.toggleCheat) {
+          controls.toggleCheatMode();
+          keyboard.state.toggleCheat = false;
+          const isCheatOn = controls.getCheatMode();
+          console.log(`[Main] Cheat mode ${isCheatOn ? 'ENABLED' : 'DISABLED'}: No wall collision, high fuel/time`);
         }
       }
     }
@@ -882,7 +1029,8 @@ const loop = new GameLoop(({ deltaMs }) => {
 
     if (showDebug) {
       if (lastShipState) {
-        drawDebugPanel(uiCtx, lastShipState, lastGlobals, keyboard?.state ?? { thrust: 0, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false });
+        const isCheatOn = controls ? controls.getCheatMode() : 0;
+        drawDebugPanel(uiCtx, lastShipState, lastGlobals, keyboard?.state ?? { thrust: 0, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false, toggleCheat: false }, !!isCheatOn);
       }
 
       uiCtx.fillStyle = '#0ff';
@@ -916,6 +1064,7 @@ function reloadLevel() {
     }
   }
   currentBullets = [];
+  previousNumKeys = -1; // Reset key tracking for new level
 }
 
 loop.start();

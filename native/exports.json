@@ -25,5 +25,8 @@
   "_get_current_level_name",
   "_get_demo_buffer",
   "_get_demo_count",
-  "_wasm_set_sa"
+  "_wasm_set_sa",
+  "_wasm_toggle_cheat_mode",
+  "_wasm_get_cheat_mode",
+  "_wasm_add_score"
 ]
