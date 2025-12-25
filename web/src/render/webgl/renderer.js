@@ -132,9 +132,7 @@ export class WebGLRenderer {
             const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
             const baseZoom = isMobile ? 2.0 : 4.0;
             this.viewport.zoom = Math.max(baseZoom, minZoom);
-            if (!this.shockwaveActive) {
-                this.clampCamera(map.width, map.height, globals.sx, globals.sy);
-            }
+            this.clampCamera(map.width, map.height, globals.sx, globals.sy);
             if (globals.shipState === 2 && this.lastShipState !== 2) {
                 this.shockwaveActive = true;
                 this.shockwaveStartTime = performance.now() / 1000;
@@ -151,6 +149,12 @@ export class WebGLRenderer {
                     x: (globals.sx + 16) + offsetX,
                     y: (globals.sy + 16) + offsetY
                 };
+            }
+            else if (globals.shipState === 3 && this.shockwaveActive) {
+                // Force stop shockwave on respawn
+                this.shockwaveActive = false;
+                this.backgroundRenderer.setShockwave({ x: 0, y: 0 }, 0);
+                this.foregroundRenderer.setShockwave({ x: 0, y: 0 }, 0);
             }
             this.lastShipState = globals.shipState;
             this.lastSx = globals.sx;
@@ -186,8 +190,9 @@ export class WebGLRenderer {
         const shadowY = vecY * shadowScale;
         const shadowAlpha = 0.5;
         // 5. Draw Wall Shadows
+        const time = performance.now() / 1000.0;
         this.backgroundRenderer.setColor(0, 0, 0, shadowAlpha);
-        this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX - shadowX, this.viewport.cameraY - shadowY, this.viewport.zoom);
+        this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX - shadowX, this.viewport.cameraY - shadowY, this.viewport.zoom, time);
         // 6. Draw Ship Shadow (Below Walls, Above Background)
         if (globals && shipState && shipBlockMap && shipState.state !== 2) {
             // Note: Wall shadows shift LAYERS by -shadowX (Shift Left).
@@ -201,7 +206,7 @@ export class WebGLRenderer {
         }
         // 7. Draw Walls
         this.backgroundRenderer.setColor(1, 1, 1, 1);
-        this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
+        this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom, time);
     }
     // Deprecated / Internal helper
     drawWorldBackground(map) {
@@ -212,7 +217,7 @@ export class WebGLRenderer {
         if (!this.atlasTexture)
             return;
         // Draw World (Foreground/Overlay)
-        this.foregroundRenderer.draw(this.atlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
+        this.foregroundRenderer.draw(this.atlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom, performance.now() / 1000.0);
     }
     calculateOptimalZoom(mapWidth, mapHeight) {
         const TILE_SIZE = 32;

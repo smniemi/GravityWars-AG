@@ -17,6 +17,7 @@ import { createKeyboardInput, type KeyboardState } from './core/input.js';
 import { GameLoop } from './core/index.js';
 import { StartScreen } from './ui/startScreen.js';
 import { GameOverScreen } from './ui/gameOverScreen.js';
+import { LevelIntroScreen } from './ui/levelIntroScreen.js';
 
 const root = document.getElementById('app') ?? createRoot();
 
@@ -42,6 +43,17 @@ canvas.style.outline = 'none'; // Remove focus outline
 
 root.appendChild(canvas);
 canvas.focus();
+
+// Toggle fullscreen on double click
+root.addEventListener('dblclick', () => {
+  if (!document.fullscreenElement) {
+    root.requestFullscreen().catch((err) => {
+      console.error(`Error attempting to enable fullscreen: ${err.message}`);
+    });
+  } else {
+    document.exitFullscreen();
+  }
+});
 
 const renderer = new WebGLRenderer(canvas);
 
@@ -72,22 +84,34 @@ function resize() {
     uiCanvas.width = width;
     uiCanvas.height = height;
 
-    // Update joystick position
-    // 75% right, 80% down
-    // Size: 2x ship size. Ship is 32px? Let's say 64px radius.
-    const radius = 64;
-    joystick.setPosition(width * 0.85, height * 0.8, radius);
+    // Common margin matching HUD padding
+    const margin = 20;
 
-    // Buttons
-    // Left side
-    const btnRadius = 40;
-    const xLeft = width * 0.15;
+    // Button radius
+    const btnRadius = 60;
+    // Joystick radius
+    const joystickRadius = 64;
 
-    // Fire button: upper left
-    fireButton.setPosition(xLeft, height * 0.65, btnRadius);
+    // Button spacing (vertical gap between FIRE and ACCEL centers = 2 * btnRadius + gap)
+    const buttonGap = 20; // Gap between button edges
+    const buttonSpacing = btnRadius * 2 + buttonGap;
 
-    // Thrust button: lower left
-    thrustButton.setPosition(xLeft, height * 0.85, btnRadius);
+    // Left side buttons: center X is margin + btnRadius from left edge
+    const xLeft = margin + btnRadius;
+
+    // ACCEL button near bottom: center Y is margin + btnRadius from bottom
+    const accelY = height - margin - btnRadius;
+    // FIRE button above ACCEL
+    const fireY = accelY - buttonSpacing;
+
+    fireButton.setPosition(xLeft, fireY, btnRadius);
+    thrustButton.setPosition(xLeft, accelY, btnRadius);
+
+    // Joystick on right side: center X is margin + radius from right edge
+    const xRight = width - margin - joystickRadius;
+    // Center Y same as average of buttons, or slightly above bottom
+    const joystickY = height - margin - joystickRadius;
+    joystick.setPosition(xRight, joystickY, joystickRadius);
   }
 }
 
@@ -120,12 +144,14 @@ let keyboard: Awaited<ReturnType<typeof createKeyboardInput>> | null = null;
   keyboard = await createKeyboardInput(root, joystick, fireButton, thrustButton);
 })();
 const soundManager = new SoundManager();
+soundManager.setSfxVolume(0.5); // Default to 50% for intro
 
 // Initialize start screen
 let startScreen: StartScreen | null = null;
-// Duplicate removed
 let gameOverScreen: GameOverScreen | null = null;
+let levelIntroScreen: LevelIntroScreen | null = null;
 let gameStarted = false;
+let levelIntroActive = false;
 
 // Override controls to disable them until game starts
 // Override controls to disable them until game starts
@@ -499,6 +525,34 @@ function resolveZeroArgReturningIntFunction(runtime: GravityWarsRuntime, name: s
   throw new Error(`Unable to resolve wasm export ${name}`);
 }
 
+function readWasmString(ptr: number, runtime: any) {
+  const memory = (runtime.runtime as any).HEAPU8;
+  let end = ptr;
+  while (memory[end] !== 0) end++;
+  let str = new TextDecoder().decode(memory.subarray(ptr, end));
+  return str.replace(/"/g, '');
+}
+
+function playLevelIntro() {
+  if (!runtime || !controls) return;
+
+  if (!levelIntroScreen) {
+    levelIntroScreen = new LevelIntroScreen(root);
+  }
+
+  levelIntroActive = true;
+  gameStarted = true; // Ensure rendering happens
+
+  reloadLevel();
+
+  const getLevelNamePtr = getExport('get_current_level_name') as () => number;
+  const levelName = readWasmString(getLevelNamePtr(), runtime);
+
+  levelIntroScreen.show(levelName, () => {
+    levelIntroActive = false;
+  });
+}
+
 function handleLevelTransition() {
   if (!advanceLevel || levelAdvancePending || !lastShipState) {
     return;
@@ -506,7 +560,7 @@ function handleLevelTransition() {
   if (lastShipState.state === SHIP_STATE.DISAPPEARING && lastShipState.animationPhase <= 0) {
     levelAdvancePending = true;
     advanceLevel();
-    reloadLevel();
+    playLevelIntro();
     levelAdvancePending = false;
   }
 }
@@ -515,6 +569,7 @@ let lastBgName = '';
 let introDemoFrame = 0;
 let demoData: Int32Array | null = null;
 let demoCount = 0;
+let rotationHoldStart = 0; // Track when rotation key was first pressed
 
 const loop = new GameLoop(({ deltaMs }) => {
 
@@ -603,7 +658,7 @@ const loop = new GameLoop(({ deltaMs }) => {
       const thrustValue = isMobile ? 24 : 16;
       const angleSpeed = isMobile ? ANGLE_ADJUST_SPEED * 0.5 : ANGLE_ADJUST_SPEED; // 2x slower rotation on mobile
 
-      if (gameStarted) {
+      if (gameStarted && !levelIntroActive) {
         // Apply analog thrust if available (thrust is 0-1)
         controls.setThrust(thrust * thrustValue);
         controls.setFire(fire ? 1 : 0);
@@ -623,7 +678,20 @@ const loop = new GameLoop(({ deltaMs }) => {
           controls.adjustAngle(adjustmentUnits);
 
         } else if (rotate !== 0) {
-          controls.adjustAngle(-rotate * angleSpeed);
+          // Dynamic rotation speed based on hold duration
+          const now = performance.now();
+          if (rotationHoldStart === 0) {
+            rotationHoldStart = now;
+          }
+          const holdDuration = now - rotationHoldStart;
+
+          // Speed tiers: 0-200ms = 1x, 200ms+ = 2x
+          const speedMultiplier = holdDuration > 200 ? 2 : 1;
+
+          controls.adjustAngle(-rotate * ANGLE_ADJUST_SPEED * speedMultiplier);
+        } else {
+          // Reset hold timer when rotation stops
+          rotationHoldStart = 0;
         }
       } else if (lastGlobals?.levelnum === 0) {
         // Intro screen / Attractor mode: play demo path
@@ -641,6 +709,23 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
 
         if (demoData && demoCount > 0) {
+          if (introDemoFrame === 0) {
+            // Fast forward to 13.7s
+            const SKIP_SECONDS = 13.7;
+            const FPS = 60;
+            const skipFrames = Math.floor(SKIP_SECONDS * FPS);
+
+            for (let i = 0; i < skipFrames; i++) {
+              if (i >= demoCount) break;
+              const off = i * 10;
+              controls.setThrust(demoData[off + 7]);
+              controls.setFire(demoData[off + 8]);
+              controls.setSA(demoData[off + 9]);
+              getExport('control')(); // Physics step
+            }
+            introDemoFrame = skipFrames;
+          }
+
           const frameIdx = introDemoFrame % demoCount;
           const offset = frameIdx * 10;
 
@@ -654,6 +739,11 @@ const loop = new GameLoop(({ deltaMs }) => {
           controls.setSA(saVal);
 
           introDemoFrame++;
+
+          if (introDemoFrame >= demoCount) {
+            controls.restartLevel();
+            introDemoFrame = 0;
+          }
         }
       }
 
@@ -675,6 +765,8 @@ const loop = new GameLoop(({ deltaMs }) => {
       }
     }
 
+
+
     if (gameStarted && lastGlobals && lastGlobals.gameOver) {
       if (!gameOverScreen) {
 
@@ -688,6 +780,7 @@ const loop = new GameLoop(({ deltaMs }) => {
           // Menu
           () => {
             gameStarted = false;
+            soundManager.setSfxVolume(0.5);
             startScreen?.show();
             if (globalsReader) {
               let current = globalsReader.read().levelnum;
@@ -772,7 +865,7 @@ const loop = new GameLoop(({ deltaMs }) => {
     //   drawMiniMap(uiCtx, levelMap, lastGlobals);
     // }
 
-    if (lastGlobals) {
+    if (lastGlobals && gameStarted) {
       drawHUD(uiCtx, lastGlobals);
     }
 
@@ -869,7 +962,7 @@ loadGravityWarsModule()
     if (!startScreen) {
       startScreen = new StartScreen(root, (selectedLevel) => {
         console.log(`[Main] Starting game at level ${selectedLevel}`);
-        gameStarted = true;
+        soundManager.setSfxVolume(1.0);
         startScreen?.hide();
 
         // Navigate to selected level
@@ -895,7 +988,7 @@ loadGravityWarsModule()
 
         console.log(`[Main] Level navigation complete after ${attempts} iterations. Current Level: ${currentLevel}`);
 
-        reloadLevel();
+        playLevelIntro();
 
         // Ensure music for new level starts
         soundManager.update(globalsReader!.read(), [], levelMap);

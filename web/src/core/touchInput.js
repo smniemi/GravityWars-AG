@@ -82,6 +82,18 @@ export function createTouchInput(element, state, joystick, fireButton, thrustBut
             if (joystick && joystick.touchId === touch.identifier) {
                 joystick.handleTouchMove(x, y, touch.identifier);
             }
+            else if (fireButton && fireButton.touchId === touch.identifier) {
+                // Check if swiped to thrust button
+                if (thrustButton && thrustButton.handleTouchStart(x, y, touch.identifier)) {
+                    fireButton.handleTouchEnd(touch.identifier);
+                }
+            }
+            else if (thrustButton && thrustButton.touchId === touch.identifier) {
+                // Check if swiped to fire button
+                if (fireButton && fireButton.handleTouchStart(x, y, touch.identifier)) {
+                    thrustButton.handleTouchEnd(touch.identifier);
+                }
+            }
             else {
                 const info = activeTouches.get(touch.identifier);
                 if (info) {

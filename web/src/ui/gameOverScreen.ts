@@ -56,6 +56,8 @@ export class GameOverScreen {
     }
 
     public show(levelName: string, score: number) {
+        if (this.element.style.display === 'flex') return;
+
         const nameEl = this.element.querySelector('#go-level-name');
         if (nameEl) nameEl.textContent = levelName || 'UNKNOWN SECTOR';
 

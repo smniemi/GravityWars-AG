@@ -282,7 +282,7 @@ void moveShip(void) {
       frame_number = 0; // resets frame caounter to case explotion effect
       displayMessage(SHIP_MESSAGE_CRASHED);
       shipState.state = SHIP_STATE_EXPLOADING;
-      shipState.animationPhase = 5 << 2;
+      shipState.animationPhase = 30 << 2;
     }
 
     if (shipState.state == SHIP_STATE_FLYING && ShipFuel > 0) {
@@ -324,23 +324,28 @@ void moveShip(void) {
     if (shipState.animationPhase < 0)
       shipState.animationPhase = 0;
 
-    switch (shipState.animationPhase >> 2) {
-    case 5:
-      shipState.image = SHIP_IMAGE_EXPLODE_1of5;
-      break;
-    case 4:
-      shipState.image = SHIP_IMAGE_EXPLODE_2of5;
-      break;
-    case 3:
-      shipState.image = SHIP_IMAGE_EXPLODE_3of5;
-      break;
-    case 2:
-      shipState.image = SHIP_IMAGE_EXPLODE_4of5;
-      break;
-    case 1:
-      shipState.image = SHIP_IMAGE_EXPLODE_5of5;
-      break;
-    case 0:
+    int phase = shipState.animationPhase >> 2;
+    if (phase > 25) {
+      switch (phase - 25) {
+      case 5:
+        shipState.image = SHIP_IMAGE_EXPLODE_1of5;
+        break;
+      case 4:
+        shipState.image = SHIP_IMAGE_EXPLODE_2of5;
+        break;
+      case 3:
+        shipState.image = SHIP_IMAGE_EXPLODE_3of5;
+        break;
+      case 2:
+        shipState.image = SHIP_IMAGE_EXPLODE_4of5;
+        break;
+      case 1:
+        shipState.image = SHIP_IMAGE_EXPLODE_5of5;
+        break;
+      }
+    } else if (phase > 0) {
+      shipState.image = 99; // Invisible
+    } else {
 
       sa = 0;
       sVx = sVy = sVg = 1; // Shouldn't ever be Zero ??
@@ -349,9 +354,15 @@ void moveShip(void) {
       setDefaultAirValues();
 
       ShipLife--;
-      if (ShipLife <= 0)
+      if (ShipLife <= 0) {
         gameOver = TRUE;
-      else {
+        // Ship is dead, do not respawn.
+        // We set active to 0 to make it disappear/disable control
+        shipState.active = 0;
+        shipState.state =
+            99; // Invalid state to stop further processing in moveShip
+        shipState.image = SHIP_IMAGE_NO_THRUST;
+      } else {
 
         // Put ship into start position
         sx = Lsx;
@@ -360,11 +371,12 @@ void moveShip(void) {
         // Fill him up
         ShipTime = BaseTime;
         ShipFuel = BaseFuel;
-      }
 
-      shipState.image = SHIP_IMAGE_APPEAR_1of5;
-      shipState.state = SHIP_STATE_APPEARING;
-      shipState.animationPhase = 5 << 2;
+        // Respawn animation
+        shipState.image = SHIP_IMAGE_APPEAR_1of5;
+        shipState.state = SHIP_STATE_APPEARING;
+        shipState.animationPhase = 5 << 2;
+      }
       break;
     }
   }

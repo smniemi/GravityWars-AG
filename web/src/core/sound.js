@@ -29,19 +29,28 @@ export class SoundManager {
         'music/Gw4.m4r',
         'music/Gw5.m4r'
     ];
+    sfxGain = null;
     constructor() {
         // Start initialization immediately
         this.init();
-        // Resume on first interaction
+        this.bindResumeEvents();
+    }
+    bindResumeEvents() {
         const resume = () => {
             if (this.context?.state === 'suspended') {
-                this.context.resume();
-                console.log('[SoundManager] AudioContext resumed');
+                this.context.resume().then(() => {
+                    console.log('[SoundManager] AudioContext resumed successfully');
+                }).catch(err => {
+                    console.warn('[SoundManager] AudioContext resume failed:', err);
+                });
             }
         };
-        window.addEventListener('click', resume, { once: true });
-        window.addEventListener('keydown', resume, { once: true });
-        window.addEventListener('touchstart', resume, { once: true });
+        // Bind to all possible interaction events
+        // We do *not* use {once: true} aggressively because sometimes 
+        // focus loss can suspend it again.
+        ['click', 'keydown', 'touchstart', 'touchend', 'mousedown'].forEach(event => {
+            window.addEventListener(event, resume, { passive: true });
+        });
     }
     async init() {
         if (this.context)
@@ -51,6 +60,9 @@ export class SoundManager {
             this.musicGain = this.context.createGain();
             this.musicGain.gain.value = 0.4;
             this.musicGain.connect(this.context.destination);
+            this.sfxGain = this.context.createGain();
+            this.sfxGain.gain.value = 1.0;
+            this.sfxGain.connect(this.context.destination);
             // Parallel loading of sounds and music
             await Promise.all([
                 this.loadSounds(),
@@ -95,6 +107,11 @@ export class SoundManager {
         });
         await Promise.all(tasks);
     }
+    setSfxVolume(volume) {
+        if (this.sfxGain) {
+            this.sfxGain.gain.setTargetAtTime(volume, this.context.currentTime, 0.1);
+        }
+    }
     async fetchAndDecode(url) {
         const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
@@ -122,8 +139,15 @@ export class SoundManager {
     playMusic(levelNum = 1) {
         if (!this.enabled || !this.context || !this.musicGain)
             return;
-        const trackIndex = (levelNum - 1) % this.MUSIC.length;
+        // Auto-resume if needed (browser policy permitting)
+        if (this.context.state === 'suspended') {
+            this.context.resume().catch(() => { });
+        }
+        // Map Level 0 (Intro) to Level 10 music (Gw5), or handle wrapping
+        const effectiveLevel = levelNum <= 0 ? 10 : levelNum;
+        const trackIndex = (effectiveLevel - 1) % this.MUSIC.length;
         const track = this.MUSIC[trackIndex];
+        console.log(`[SoundManager] playMusic requested for level: ${levelNum}. Effective: ${effectiveLevel}. Track: ${track}`);
         // Prevent restarting the same track
         if (track === this.currentTrack)
             return;
@@ -160,7 +184,7 @@ export class SoundManager {
         const source = this.context.createBufferSource();
         source.buffer = buffer;
         source.loop = loop;
-        source.connect(this.context.destination);
+        source.connect(this.sfxGain || this.context.destination);
         source.start();
         return source;
     }

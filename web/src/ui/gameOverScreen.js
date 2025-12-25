@@ -53,6 +53,8 @@ export class GameOverScreen {
         menuBtn.onmouseleave = () => { menuBtn.style.background = 'rgba(255, 255, 255, 0.05)'; menuBtn.style.borderColor = '#666'; menuBtn.style.color = '#aaa'; };
     }
     show(levelName, score) {
+        if (this.element.style.display === 'flex')
+            return;
         const nameEl = this.element.querySelector('#go-level-name');
         if (nameEl)
             nameEl.textContent = levelName || 'UNKNOWN SECTOR';

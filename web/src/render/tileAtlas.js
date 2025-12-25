@@ -34,7 +34,23 @@ export function createTileAtlas(runtime) {
             // p[m+3] = (c!=0 && (c<176 || c>190 ))*255;
             // This means indices 176-190 are transparent background, along with index 0.
             const isTransparent = paletteIndex === 0 || (paletteIndex >= 176 && paletteIndex <= 190);
-            imageData.data[dest + 3] = isTransparent ? 0 : 255;
+            // Marker logic for Shader Masks:
+            // Red Door: Colors 192, 193, 194 -> Alpha 254
+            // Green Portal: Color 196 -> Alpha 253
+            const isRedDoor = (paletteIndex >= 192 && paletteIndex <= 194);
+            const isGreenPortal = (paletteIndex === 196);
+            if (isTransparent) {
+                imageData.data[dest + 3] = 0;
+            }
+            else if (isRedDoor) {
+                imageData.data[dest + 3] = 254; // Marker for Red
+            }
+            else if (isGreenPortal) {
+                imageData.data[dest + 3] = 253; // Marker for Green
+            }
+            else {
+                imageData.data[dest + 3] = 255;
+            }
         }
         const col = blockIndex % ATLAS_COLUMNS;
         const row = Math.floor(blockIndex / ATLAS_COLUMNS);
