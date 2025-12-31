@@ -34,17 +34,37 @@
       touch-action: none;
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-BDTA_gMp.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-Cl07LOQo.css">
+  <script type="module" crossorigin src="./assets/index-DsKzhiA5.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-D6bNOc4V.css">
 </head>
 
 <body>
   <div id="loading-overlay">
     <div class="loader"></div>
-    <div class="loading-text">INITIALIZING SYSTEMS...</div>
+    <div id="loading-text" class="loading-text">INITIALIZING SYSTEMS...</div>
   </div>
   <div id="app"></div>
   <script>
+    // Fun Loading Messages
+    const messages = [
+      "CALIBRATING GRAVITY SENSORS...",
+      "FUELING THRUSTERS...",
+      "LOADING STAR MAPS...",
+      "ESTABLISHING NEURAL LINK...",
+      "WARMING UP ENGINES...",
+      "SCANNING FOR HOSTILES...",
+      "GENERATING TERRAIN...",
+      "SYNCHRONIZING ORBITS..."
+    ];
+    let msgIndex = 0;
+    const textEl = document.getElementById('loading-text');
+    if (textEl) {
+      setInterval(() => {
+        msgIndex = (msgIndex + 1) % messages.length;
+        textEl.innerText = messages[msgIndex];
+      }, 800);
+    }
+
     // Mobile Debug Error Handler
     window.addEventListener('error', function (event) {
       const overlay = document.getElementById('loading-overlay');
