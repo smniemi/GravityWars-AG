@@ -34,12 +34,46 @@
       touch-action: none;
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-DrJtS24t.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BTJjXyLI.css">
+  <script type="module" crossorigin src="./assets/index-BDTA_gMp.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Cl07LOQo.css">
 </head>
 
 <body>
+  <div id="loading-overlay">
+    <div class="loader"></div>
+    <div class="loading-text">INITIALIZING SYSTEMS...</div>
+  </div>
   <div id="app"></div>
+  <script>
+    // Mobile Debug Error Handler
+    window.addEventListener('error', function (event) {
+      const overlay = document.getElementById('loading-overlay');
+      if (overlay) {
+        const errDiv = document.createElement('div');
+        errDiv.style.color = '#f33';
+        errDiv.style.marginTop = '20px';
+        errDiv.style.padding = '10px';
+        errDiv.style.textAlign = 'center';
+        errDiv.style.fontFamily = 'monospace';
+        errDiv.innerText = 'ERROR: ' + event.message;
+        overlay.appendChild(errDiv);
+      }
+      console.error(event.error);
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+      const overlay = document.getElementById('loading-overlay');
+      if (overlay) {
+        const errDiv = document.createElement('div');
+        errDiv.style.color = '#f33';
+        errDiv.style.marginTop = '20px';
+        errDiv.style.padding = '10px';
+        errDiv.style.textAlign = 'center';
+        errDiv.style.fontFamily = 'monospace';
+        errDiv.innerText = 'PROMISE ERROR: ' + (event.reason ? event.reason.message || event.reason : 'Unknown');
+        overlay.appendChild(errDiv);
+      }
+    });
+  </script>
 </body>
 
 </html>
