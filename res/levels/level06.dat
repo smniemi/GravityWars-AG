@@ -2,8 +2,8 @@ level 	"The Bambu Labyrinth"
 author	"P. Johannesson"
 comment "There's a limited time.." 
 
-time  	120		
-fuel 	45	
+time  	33	
+fuel 	99	
 
 	x	y	start	stop	frame	speed
 -----------------------------------------------------
