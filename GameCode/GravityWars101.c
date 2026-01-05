@@ -88,7 +88,7 @@ void main_init() {
   moveShip();
 
   anim_frame = 0;
-  // ShipScore=0; // Removed to allow score to persist across levels
+  ShipScore = 0; // Reset score at start of each level (per-level scoring)
   ShipLife = 5;
   gameOver = FALSE;
 }

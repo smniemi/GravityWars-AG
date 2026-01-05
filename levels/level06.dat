@@ -1,9 +1,9 @@
-level 	"The Bambu Labyrinth"
-author	"Pär Johannesson"
+level 	"The Bambu Labyrinth 2"
+author	"Pï¿½r Johannesson"
 comment "" 
 
 time  	33		
-fuel 	99	
+fuel 	199	
 
 	x	y	start	stop	frame	speed
 -----------------------------------------------------

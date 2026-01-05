@@ -1,5 +1,4 @@
 import './style.css';
-import { sendDebugSnapshot } from './debugger.js';
 import { createTileAtlas, type TileAtlas } from './render/tileAtlas.js';
 import { SoundManager } from './core/sound.js';
 import { createShipSprites, type ShipSprites } from './render/shipSprites.js';
@@ -578,6 +577,12 @@ function handleLevelTransition() {
   if (!advanceLevel || levelAdvancePending || !lastShipState || !lastGlobals) {
     return;
   }
+
+  // Skip level transition handling during intro/attractor mode (level 0)
+  // The intro demo should just loop - not trigger level complete screen
+  if (lastGlobals.levelnum === 0 || !gameStarted) {
+    return;
+  }
   if (lastShipState.state === SHIP_STATE.DISAPPEARING && lastShipState.animationPhase <= 0) {
     levelAdvancePending = true;
 
@@ -651,6 +656,11 @@ function handleLevelTransition() {
       levelCompleteScreen.setOnContinue(() => {
         if (controls && advanceLevel) {
           controls.addScore(totalBonus);
+
+          // Unlock the next level before advancing
+          const nextLevel = currentLevelNum + 1;
+          startScreen?.unlockLevel(nextLevel);
+
           advanceLevel();
           // Reset level start score for the next level
           if (globalsReader) {
@@ -658,7 +668,7 @@ function handleLevelTransition() {
             levelStartScore = newState.shipScore;
           }
           playLevelIntro();
-          console.log(`[LevelComplete] Added score: ${totalBonus} (Time: ${bonusTime.toFixed(1)}*10 + Fuel: ${bonusFuel})`);
+          console.log(`[LevelComplete] Added score: ${totalBonus} (Time: ${bonusTime.toFixed(1)}*10 + Fuel: ${bonusFuel}). Level ${nextLevel} unlocked.`);
         }
       });
 
@@ -783,8 +793,8 @@ const loop = new GameLoop(({ deltaMs }) => {
     if (controls && keyboard) {
       const { thrust, fire, rotate, nextLevel, prevLevel } = keyboard.state;
 
-      // Mobile gets higher thrust to simulate lower gravity
-      const thrustValue = isMobile ? 24 : 16;
+      // Use same thrust value for both mobile and desktop for consistent physics
+      const thrustValue = 24;
 
       if (gameStarted && !levelIntroActive) {
         // Apply analog thrust if available (thrust is 0-1)
@@ -1030,14 +1040,7 @@ const loop = new GameLoop(({ deltaMs }) => {
     }
   }
 
-  if (runtime) {
-    sendDebugSnapshot({
-      wasmStatus,
-      ship: lastShipState,
-      globals: lastGlobals,
-      input: keyboard?.state ?? { thrust: 0, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false }
-    });
-  }
+
 });
 
 
@@ -1096,10 +1099,23 @@ loadGravityWarsModule()
 
     console.log(`[Main] Level set to: ${currentLevel}`);
 
+    // Hide loading overlay now that everything is ready
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+      loadingOverlay.style.transition = 'opacity 0.4s ease-out';
+      loadingOverlay.style.opacity = '0';
+      setTimeout(() => {
+        loadingOverlay.style.display = 'none';
+      }, 400);
+      console.log('[Main] Loading overlay hidden - game ready');
+    }
+
     // Create Start Screen
     if (!startScreen) {
       startScreen = new StartScreen(root, (selectedLevel) => {
         console.log(`[Main] Starting game at level ${selectedLevel}`);
+        // CRITICAL: Unlock audio on mobile - must be called during user gesture
+        soundManager.unlock();
         soundManager.setSfxVolume(1.0);
         startScreen?.hide();
 

@@ -20,12 +20,15 @@
   font-style: normal;
 }
 
+html {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  padding: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background: #000;
   touch-action: none;
@@ -33,8 +36,13 @@ body {
 
 #app {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   position: relative;
+  /* Prevent text selection and touch behaviors */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 canvas {
@@ -47,4 +55,69 @@ canvas {
 h1.galactic-text {
   font-family: 'Galactic', sans-serif;
   letter-spacing: 2px;
+}
+
+/* Hide desktop controls hint on mobile devices */
+@media (max-width: 768px) {
+  .desktop-controls-hint {
+    display: none !important;
+  }
+}
+
+/* Loading Screen */
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #020205;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease-out;
+}
+
+.loader {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #0f9;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.loading-text {
+  font-family: 'Galactican', system-ui, sans-serif;
+  color: #0f9;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }

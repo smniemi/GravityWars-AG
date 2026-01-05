@@ -127,7 +127,7 @@ extern void main_init(void);
 static int lastLevelScore = 0;
 
 void wasm_advance_level(void) {
-  lastLevelScore = ShipScore; // Checkpoint score before next level
+  lastLevelScore = 0; // Checkpoint score is 0 for per-level scoring
   main_end();
   levelnum++;
   if (levelnum >= TOTAL_NUMBER_OF_LEVELS) {
@@ -143,7 +143,7 @@ void wasm_advance_level(void) {
 }
 
 void wasm_next_level(void) {
-  lastLevelScore = ShipScore; // Checkpoint
+  lastLevelScore = 0; // Checkpoint score is 0 for per-level scoring
   main_end();
   levelnum++;
   if (levelnum >= TOTAL_NUMBER_OF_LEVELS) {
@@ -180,7 +180,9 @@ void wasm_prev_level(void) {
 }
 
 void wasm_restart_level(void) {
+  int current_level = levelnum;
   main_end();
+  levelnum = current_level;
   // Levelnum stays same
   gameOver = FALSE;
   shipThrust = 0;

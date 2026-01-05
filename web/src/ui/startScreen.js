@@ -3,12 +3,23 @@ export class StartScreen {
     element;
     levelSelector;
     selectedLevel = 1;
-    totalLevels = 60;
+    totalLevels = 13;
+    // Level progression state
+    unlockedLevels = 5; // Initially unlock first 5 levels
+    allUnlockedCheat = false; // Session-based cheat mode
+    // Cheat code tracking (5 taps on title within 2 seconds)
+    titleTapTimes = [];
+    CHEAT_TAP_COUNT = 5;
+    CHEAT_TIME_WINDOW_MS = 2000;
     // Navigation state
     focusIndex = 0; // 0: Levels, 1: Play, 2: Credits
     SHIP_BLUE = '#2e9afe'; // A nice ship-like blue
+    // Storage key for level progression
+    STORAGE_KEY = 'gravitywars_unlocked_levels';
     constructor(container, onPlay) {
         this.onPlay = onPlay;
+        // Load saved progression from localStorage
+        this.loadProgress();
         this.element = document.createElement('div');
         this.element.className = 'ui-screen hidden';
         this.element.style.position = 'absolute';
@@ -27,7 +38,7 @@ export class StartScreen {
         this.element.innerHTML = `
             <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
                 <div class="title-container" style="text-align: center; margin-bottom: 40px;">
-                    <h1 class="galactic-text" style="font-size: 64px; margin: 0; color: ${this.SHIP_BLUE}; text-shadow: 0 0 20px rgba(46, 154, 254, 0.5);">GRAVITY WARS</h1>
+                    <h1 id="title-text" class="galactic-text" style="font-size: 64px; margin: 0; color: ${this.SHIP_BLUE}; text-shadow: 0 0 20px rgba(46, 154, 254, 0.5); cursor: pointer; user-select: none;">GRAVITY WARS</h1>
                     <h2 style="font-size: 18px; color: #888; font-weight: normal; margin-top: 10px;">- THE BEGINNING -</h2>
                 </div>
                 
@@ -94,10 +105,14 @@ export class StartScreen {
 
             <div id="credits-modal" class="hidden" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; z-index: 20; display: none;">
                 <h2 class="galactic-text" style="color: ${this.SHIP_BLUE}; margin-bottom: 30px;">CREDITS</h2>
-                <div style="text-align: center; line-height: 1.6; color: #ccc;">
-                    <p>Created by <strong>Your Name / Team</strong></p>
-                    <p>Use Joystick / Touches to move</p>
-                    <p>Music by ...</p>
+                <div style="text-align: center; line-height: 2; color: #ccc;">
+                    <p><span style="color: #888;">Game development:</span> <strong>Sami Niemi</strong> <span style="color: ${this.SHIP_BLUE};">@smniemi</span></p>
+                    <p><span style="color: #888;">Game graphics:</span> <strong>Pär Johannesson</strong></p>
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
+                        <p style="margin: 8px 0;"><span style="color: ${this.SHIP_BLUE};">1995</span> <span style="color: #666;">—</span> Linux</p>
+                        <p style="margin: 8px 0;"><span style="color: ${this.SHIP_BLUE};">2019</span> <span style="color: #666;">—</span> iPhone</p>
+                        <p style="margin: 8px 0;"><span style="color: ${this.SHIP_BLUE};">2025</span> <span style="color: #666;">—</span> Web</p>
+                    </div>
                 </div>
                 <button id="btn-close-credits" style="margin-top: 40px; background: none; border: 1px solid #666; color: #fff; padding: 8px 30px; cursor: pointer;">BACK</button>
             </div>
@@ -117,23 +132,42 @@ export class StartScreen {
     renderLevels() {
         this.levelSelector.innerHTML = '';
         for (let i = 1; i <= this.totalLevels; i++) {
+            const isUnlocked = this.isLevelUnlocked(i);
             const el = document.createElement('div');
             el.className = 'level-item';
             el.style.minWidth = '40px';
             el.style.textAlign = 'center';
             el.style.fontSize = '24px';
-            el.style.color = '#555';
-            el.style.cursor = 'pointer';
             el.style.transition = 'all 0.3s';
-            // Pad with zero if < 10
-            el.textContent = i < 10 ? `0${i}` : `${i}`;
             el.dataset.level = i.toString();
-            el.onclick = () => {
-                this.selectedLevel = i;
-                this.focusIndex = 0;
-                this.updateLevelSelection();
-                this.updateFocusVisuals();
-            };
+            if (isUnlocked) {
+                el.style.color = '#555';
+                el.style.cursor = 'pointer';
+                el.textContent = i < 10 ? `0${i}` : `${i}`;
+                el.onclick = () => {
+                    this.selectedLevel = i;
+                    this.focusIndex = 0;
+                    this.updateLevelSelection();
+                    this.updateFocusVisuals();
+                };
+            }
+            else {
+                // Locked level styling
+                el.style.color = '#333';
+                el.style.cursor = 'not-allowed';
+                el.style.opacity = '0.4';
+                el.innerHTML = `<span style="position: relative;">
+                    ${i < 10 ? `0${i}` : `${i}`}
+                    <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px;">🔒</span>
+                </span>`;
+                el.onclick = () => {
+                    // Do nothing for locked levels, but give visual feedback
+                    el.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        el.style.transform = 'scale(1)';
+                    }, 100);
+                };
+            }
             this.levelSelector.appendChild(el);
         }
         this.updateLevelSelection();
@@ -144,15 +178,22 @@ export class StartScreen {
         // Update visual styles
         items.forEach(item => {
             const level = parseInt(item.dataset.level || '0');
+            const isUnlocked = this.isLevelUnlocked(level);
+            if (!isUnlocked) {
+                // Keep locked styling - don't modify
+                return;
+            }
             if (level === this.selectedLevel) {
                 item.style.color = '#fff';
                 item.style.transform = 'scale(1.2)';
                 item.style.textShadow = `0 0 10px ${this.SHIP_BLUE}`;
+                item.style.opacity = '1';
             }
             else {
                 item.style.color = '#555';
                 item.style.transform = 'scale(1)';
                 item.style.textShadow = 'none';
+                item.style.opacity = '1';
             }
         });
         // Center the selected item
@@ -266,7 +307,10 @@ export class StartScreen {
     triggerSelection() {
         if (this.focusIndex === 0 || this.focusIndex === 1) {
             // Play (Levels or Play button both start game)
-            this.onPlay(this.selectedLevel);
+            // Only allow if level is unlocked
+            if (this.isLevelUnlocked(this.selectedLevel)) {
+                this.onPlay(this.selectedLevel);
+            }
         }
         else if (this.focusIndex === 2) {
             // Credits
@@ -276,7 +320,8 @@ export class StartScreen {
         }
     }
     selectNext() {
-        if (this.selectedLevel < this.totalLevels) {
+        // Only allow selecting unlocked levels
+        if (this.selectedLevel < this.totalLevels && this.isLevelUnlocked(this.selectedLevel + 1)) {
             this.selectedLevel++;
             this.updateLevelSelection();
         }
@@ -288,9 +333,11 @@ export class StartScreen {
         }
     }
     setupButtons() {
-        // Play
+        // Play - verify level is unlocked before starting
         this.element.querySelector('#btn-play')?.addEventListener('click', () => {
-            this.onPlay(this.selectedLevel);
+            if (this.isLevelUnlocked(this.selectedLevel)) {
+                this.onPlay(this.selectedLevel);
+            }
         });
         // Credits Modal
         const creditsModal = this.element.querySelector('#credits-modal');
@@ -301,16 +348,109 @@ export class StartScreen {
         this.element.querySelector('#btn-close-credits')?.addEventListener('click', () => {
             creditsModal.style.display = 'none';
         });
+        // Cheat code: Tap title 5 times within 2 seconds to unlock all levels
+        const titleText = this.element.querySelector('#title-text');
+        if (titleText) {
+            const handleTitleTap = () => {
+                const now = Date.now();
+                this.titleTapTimes.push(now);
+                // Remove taps older than the time window
+                this.titleTapTimes = this.titleTapTimes.filter(t => now - t < this.CHEAT_TIME_WINDOW_MS);
+                // Check if we have enough taps
+                if (this.titleTapTimes.length >= this.CHEAT_TAP_COUNT) {
+                    this.activateCheatMode();
+                    this.titleTapTimes = []; // Reset
+                }
+            };
+            titleText.addEventListener('click', handleTitleTap);
+            titleText.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handleTitleTap();
+            });
+        }
     }
     show() {
         this.element.style.display = 'flex';
-        // Reset to Level 1 visually or keep last selected?
-        // this.selectedLevel = 1; 
+        // Re-render levels in case progression changed
+        this.renderLevels();
         this.updateLevelSelection();
         this.focusIndex = 0; // Reset focus to levels on show
         this.updateFocusVisuals();
     }
     hide() {
         this.element.style.display = 'none';
+    }
+    // ========== Level Progression Methods ==========
+    /**
+     * Load saved progression from localStorage
+     */
+    loadProgress() {
+        try {
+            const saved = localStorage.getItem(this.STORAGE_KEY);
+            if (saved) {
+                const parsed = parseInt(saved, 10);
+                if (!isNaN(parsed) && parsed >= 5) {
+                    this.unlockedLevels = Math.min(parsed, this.totalLevels);
+                }
+            }
+        }
+        catch (e) {
+            console.warn('[StartScreen] Could not load progress from localStorage:', e);
+        }
+    }
+    /**
+     * Save progression to localStorage
+     */
+    saveProgress() {
+        try {
+            localStorage.setItem(this.STORAGE_KEY, this.unlockedLevels.toString());
+        }
+        catch (e) {
+            console.warn('[StartScreen] Could not save progress to localStorage:', e);
+        }
+    }
+    /**
+     * Check if a level is unlocked
+     */
+    isLevelUnlocked(level) {
+        if (this.allUnlockedCheat) {
+            return true;
+        }
+        return level <= this.unlockedLevels;
+    }
+    /**
+     * Unlock a specific level (and all before it)
+     * Called when a level is completed
+     */
+    unlockLevel(level) {
+        if (level > this.unlockedLevels) {
+            this.unlockedLevels = Math.min(level, this.totalLevels);
+            this.saveProgress();
+            console.log(`[StartScreen] Level ${level} unlocked! Total unlocked: ${this.unlockedLevels}`);
+        }
+    }
+    /**
+     * Activate cheat mode - unlock all levels for this session
+     */
+    activateCheatMode() {
+        this.allUnlockedCheat = true;
+        console.log('[StartScreen] 🎮 CHEAT MODE ACTIVATED! All levels unlocked for this session.');
+        // Flash the title to indicate cheat activation
+        const titleText = this.element.querySelector('#title-text');
+        if (titleText) {
+            const originalColor = titleText.style.color;
+            titleText.style.color = '#ff0';
+            titleText.style.textShadow = '0 0 30px #ff0, 0 0 60px #ff0';
+            setTimeout(() => {
+                titleText.style.color = '#0f0';
+                titleText.style.textShadow = '0 0 30px #0f0, 0 0 60px #0f0';
+                setTimeout(() => {
+                    titleText.style.color = originalColor;
+                    titleText.style.textShadow = `0 0 20px rgba(46, 154, 254, 0.5)`;
+                }, 200);
+            }, 200);
+        }
+        // Re-render levels to show all as unlocked
+        this.renderLevels();
     }
 }

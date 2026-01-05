@@ -1,10 +1,13 @@
 
+
 export class LevelCompleteScreen {
     private element: HTMLElement;
     private isVisible: boolean = false;
     private animationFrame: number | null = null;
+    private onContinue: () => void = () => { };
 
-    constructor(container: HTMLElement, private onContinue: () => void) {
+    constructor(container: HTMLElement, onContinueCallback: () => void) {
+        this.onContinue = onContinueCallback;
         this.element = document.createElement('div');
         this.element.className = 'level-complete-screen';
         this.element.style.position = 'absolute';
@@ -46,12 +49,14 @@ export class LevelCompleteScreen {
 
                 <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 40px; font-size: 14px; font-family: monospace; color: #888;">
                     <div style="text-align: right;">
+                        <div style="color: #0f0; font-size: 12px; margin-bottom: 2px; opacity: 0; transition: opacity 0.5s;" id="lc-new-pb-label">NEW RECORD!</div>
                         <div>PERSONAL BEST</div>
-                        <div id="lc-pb" style="color: #fff; font-size: 18px; margin-top: 5px;">0</div>
+                        <div id="lc-pb" style="color: #fff; font-size: 18px; margin-top: 2px;">0</div>
                     </div>
                     <div style="text-align: left;">
+                        <div style="color: #0f0; font-size: 12px; margin-bottom: 2px; opacity: 0; transition: opacity 0.5s;" id="lc-new-high-label">NEW RECORD!</div>
                         <div>HIGH SCORE</div>
-                        <div id="lc-high" style="color: #fff; font-size: 18px; margin-top: 5px;">0</div>
+                        <div id="lc-high" style="color: #fff; font-size: 18px; margin-top: 2px;">0</div>
                     </div>
                 </div>
 
@@ -65,11 +70,44 @@ export class LevelCompleteScreen {
                     50% { opacity: 1; }
                     100% { opacity: 0.5; }
                 }
+                @keyframes rainbow { 
+                    0%{color: orange;} 	
+                    10%{color: purple;} 	
+                    20%{color: red;} 
+                    30%{color: CadetBlue;} 
+                    40%{color: yellow;} 
+                    50%{color: coral;} 
+                    60%{color: green;} 
+                    70%{color: cyan;} 
+                    80%{color: DeepPink;} 
+                    90%{color: DodgerBlue;} 
+                    100%{color: orange;} 
+                }
+                .record-pulse {
+                    animation: pulse 0.5s infinite alternate;
+                    color: yellow !important;
+                    font-weight: bold;
+                    text-shadow: 0 0 10px yellow;
+                }
             </style>
         `;
         container.appendChild(this.element);
 
-        this.element.addEventListener('click', () => this.handleInput());
+        // Click for desktop
+        this.element.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[LevelComplete] Click detected');
+            this.handleInput();
+        });
+
+        // Touchend for mobile (more reliable than click on touch devices)
+        this.element.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[LevelComplete] Touch detected');
+            this.handleInput();
+        });
     }
 
     public setOnContinue(callback: () => void) {
@@ -77,7 +115,9 @@ export class LevelCompleteScreen {
     }
 
     private handleInput() {
+        console.log('[LevelComplete] handleInput called, isVisible:', this.isVisible);
         if (this.isVisible) {
+            console.log('[LevelComplete] Calling hide and onContinue');
             this.hide();
             this.onContinue();
         }
@@ -111,32 +151,46 @@ export class LevelCompleteScreen {
         const timeBonus = Math.floor(stats.time * 10);
         const fuelBonus = Math.floor(stats.fuel);
         const totalBonus = timeBonus + fuelBonus;
-        const finalScore = stats.currentScore + totalBonus;
-        const levelScore = finalScore - stats.levelStartScore;
+
+        // Level Score = Points collected in level + Time Bonus + Fuel Bonus
+        // Since we reset ShipScore at level start now, currentScore IS the points collected.
+        // Wait, currentScore is shipScore from WASM. If we reset at start, it is just score obtained.
+        // So Final Score for this level = currentScore + bonuses.
+        const levelTotalScore = stats.currentScore + totalBonus;
 
         // Local Storage Handling
         const storageKey = `gw_pb_level_${stats.levelIndex}`;
-        const storedPb = localStorage.getItem(storageKey);
-        let pb = storedPb ? parseInt(storedPb, 10) : 0;
+        const storedPbStr = localStorage.getItem(storageKey);
+        const storedPb = storedPbStr ? parseInt(storedPbStr, 10) : 0;
 
-        // Update PB if new score is higher
-        // PB tracks the score GAINED in the level, not total score
-        if (levelScore > pb) {
-            pb = levelScore;
-            localStorage.setItem(storageKey, pb.toString());
+        const isNewRecord = levelTotalScore > storedPb;
+        const previousBest = storedPb;
+
+        // Update stored record
+        if (isNewRecord) {
+            localStorage.setItem(storageKey, levelTotalScore.toString());
         }
 
-        // Mock High score (randomly slightly higher than PB or same)
-        const highScore = pb;
+        // --- Mock High Score Logic ---
+        // For simplicity, High Score = Personal Best in this local-only version.
+        const storedHigh = previousBest;
+        // const isNewHigh = isNewRecord;
 
+        // Initial UI State (Before Animation)
         const pbEl = this.element.querySelector('#lc-pb');
-        if (pbEl) pbEl.textContent = pb.toLocaleString();
-
         const highEl = this.element.querySelector('#lc-high');
-        if (highEl) highEl.textContent = highScore.toLocaleString();
+        const pbLabelEl = this.element.querySelector('#lc-new-pb-label') as HTMLElement;
+        const highLabelEl = this.element.querySelector('#lc-new-high-label') as HTMLElement;
 
+        if (pbEl) pbEl.textContent = previousBest.toLocaleString();
+        if (highEl) highEl.textContent = storedHigh.toLocaleString();
 
-        // Animation
+        if (pbLabelEl) pbLabelEl.style.opacity = '0';
+        if (highLabelEl) highLabelEl.style.opacity = '0';
+        if (pbEl) pbEl.classList.remove('record-pulse');
+        if (highEl) highEl.classList.remove('record-pulse');
+
+        // Main Animation Setup
         const baseScoreEl = this.element.querySelector('#lc-base-score');
         const timeBonusEl = this.element.querySelector('#lc-time-bonus');
         const fuelBonusEl = this.element.querySelector('#lc-fuel-bonus');
@@ -145,54 +199,99 @@ export class LevelCompleteScreen {
         if (baseScoreEl) baseScoreEl.textContent = stats.currentScore.toLocaleString();
         if (timeBonusEl) timeBonusEl.textContent = `+${timeBonus}`;
         if (fuelBonusEl) fuelBonusEl.textContent = `+${fuelBonus}`;
-        if (scoreEl) scoreEl.textContent = stats.currentScore.toLocaleString();
+        if (scoreEl) scoreEl.textContent = stats.currentScore.toLocaleString(); // Start at base score
 
         console.log('[LevelComplete] Starting animation:', {
             currentScore: stats.currentScore,
-            timeBonus,
-            fuelBonus,
             totalBonus,
-            finalScore
+            finalScore: levelTotalScore,
+            previousBest,
+            isNewRecord
         });
 
-        const duration = 2000; // 2 seconds to count up
+        const duration = 2000; // 2 seconds to count up total score
         let startTime: number | null = null;
+        let pbAnimationTriggered = false;
 
         const animate = (now: number) => {
-            if (!this.isVisible) {
-                console.log('[LevelComplete] Animation stopped - not visible');
-                return;
-            }
+            if (!this.isVisible) return;
 
-            // Capture start time on first frame
-            if (startTime === null) {
-                startTime = now;
-            }
-
+            if (startTime === null) startTime = now;
             const elapsed = now - startTime;
             const progress = Math.min(elapsed / duration, 1.0);
 
             // Ease out cubic
             const ease = 1 - Math.pow(1 - progress, 3);
-
             const currentAdd = Math.floor(totalBonus * ease);
-            const displayScore = stats.currentScore + currentAdd;
+            const currentDisplayedScore = stats.currentScore + currentAdd;
 
-            if (scoreEl) scoreEl.textContent = displayScore.toLocaleString();
+            if (scoreEl) scoreEl.textContent = currentDisplayedScore.toLocaleString();
 
-            if (progress < 1.0) {
+            // Trigger "New Record" animations once the main score has finished counting up
+            // Or maybe animate them in parallel? Let's do it after main counter finishes for drama.
+            if (progress >= 1.0 && !pbAnimationTriggered && isNewRecord) {
+                pbAnimationTriggered = true;
+                this.animateRecordUpdate(previousBest, levelTotalScore, pbEl, pbLabelEl);
+                this.animateRecordUpdate(storedHigh, levelTotalScore, highEl, highLabelEl);
+            }
+
+            if (progress < 1.0 || (isNewRecord && !pbAnimationDone)) {
+                // Keep loop running if main animation not done OR record animation running
                 this.animationFrame = requestAnimationFrame(animate);
             } else {
-                if (scoreEl) scoreEl.textContent = finalScore.toLocaleString();
-                console.log('[LevelComplete] Animation complete, final score:', finalScore);
+                if (!isNewRecord) {
+                    console.log('[LevelComplete] Animation complete (No new record)');
+                }
             }
         };
 
-        // Cancel any previous animation
-        if (this.animationFrame) {
-            cancelAnimationFrame(this.animationFrame);
-        }
+        // Track record animation state separately if needed, but a simple fire-and-forget 
+        // secondary animation loop is easier.
+        let pbAnimationDone = !isNewRecord;
+
+        // Reset animation frame
+        if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
         this.animationFrame = requestAnimationFrame(animate);
+    }
+
+    private animateRecordUpdate(startValue: number, endValue: number, element: Element | null, labelElement: HTMLElement | null) {
+        if (!element) return;
+
+        // Delay slightly for effect
+        setTimeout(() => {
+            if (!this.isVisible) return;
+
+            // Show "NEW RECORD!" label
+            if (labelElement) {
+                labelElement.style.opacity = '1';
+                labelElement.style.animation = 'rainbow 0.5s infinite'; // Flashy
+            }
+
+            // Pulse the number
+            element.classList.add('record-pulse');
+
+            // Count up
+            const duration = 1000;
+            const startTime = performance.now();
+
+            const animatePb = (now: number) => {
+                if (!this.isVisible) return;
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1.0);
+                const ease = 1 - Math.pow(1 - progress, 3);
+
+                const val = Math.floor(startValue + (endValue - startValue) * ease);
+                element.textContent = val.toLocaleString();
+
+                if (progress < 1.0) {
+                    requestAnimationFrame(animatePb);
+                } else {
+                    element.textContent = endValue.toLocaleString();
+                }
+            };
+            requestAnimationFrame(animatePb);
+
+        }, 500); // 0.5s delay after main score finishes
     }
 
     public hide() {

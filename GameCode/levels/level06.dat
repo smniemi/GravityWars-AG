@@ -3,7 +3,7 @@ author	"P. Johannesson"
 comment "There's a limited time.." 
 
 time  	120		
-fuel 	45	
+fuel 	70	
 
 	x	y	start	stop	frame	speed
 -----------------------------------------------------

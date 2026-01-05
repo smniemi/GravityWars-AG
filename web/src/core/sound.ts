@@ -36,37 +36,92 @@ export class SoundManager {
     ];
 
     private sfxGain: GainNode | null = null;
+    private initPromise: Promise<void> | null = null;
+    private unlocked = false;
 
     constructor() {
-        // Start initialization immediately
-        this.init();
+        // Do NOT init here - wait for user gesture
         this.bindResumeEvents();
     }
 
-    private bindResumeEvents() {
-        const resume = () => {
-            if (this.context?.state === 'suspended') {
-                this.context.resume().then(() => {
-                    console.log('[SoundManager] AudioContext resumed successfully');
-                }).catch(err => {
-                    console.warn('[SoundManager] AudioContext resume failed:', err);
-                });
+    /**
+     * Call this from a user gesture (click/touch handler) to unlock audio on mobile.
+     * This creates the AudioContext during the gesture, which is required on iOS.
+     */
+    public async unlock(): Promise<void> {
+        if (this.unlocked && this.context?.state === 'running') {
+            return; // Already unlocked
+        }
+
+        console.log('[SoundManager] unlock() called');
+
+        // Create context if needed
+        if (!this.context) {
+            try {
+                const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+                this.context = new AudioContextClass();
+                console.log('[SoundManager] AudioContext created in unlock(), state:', this.context.state);
+            } catch (e) {
+                console.error('[SoundManager] Failed to create AudioContext:', e);
+                return;
             }
+        }
+
+        // Resume if suspended
+        if (this.context.state === 'suspended') {
+            try {
+                await this.context.resume();
+                console.log('[SoundManager] AudioContext resumed, state:', this.context.state);
+            } catch (e) {
+                console.error('[SoundManager] Failed to resume AudioContext:', e);
+            }
+        }
+
+        // Play a silent buffer to fully unlock on iOS
+        if (!this.unlocked && this.context.state === 'running') {
+            try {
+                const silentBuffer = this.context.createBuffer(1, 1, 22050);
+                const source = this.context.createBufferSource();
+                source.buffer = silentBuffer;
+                source.connect(this.context.destination);
+                source.start(0);
+                source.stop(0.001);
+                this.unlocked = true;
+                console.log('[SoundManager] Audio unlocked with silent buffer');
+            } catch (e) {
+                console.warn('[SoundManager] Silent buffer unlock failed:', e);
+            }
+        }
+
+        // Now initialize if not already done
+        if (!this.initPromise) {
+            this.initPromise = this.init();
+        }
+        await this.initPromise;
+    }
+
+    private bindResumeEvents() {
+        const tryUnlock = () => {
+            // Try to unlock on any user interaction
+            this.unlock().catch(() => { });
         };
 
         // Bind to all possible interaction events
-        // We do *not* use {once: true} aggressively because sometimes 
-        // focus loss can suspend it again.
-        ['click', 'keydown', 'touchstart', 'touchend', 'mousedown'].forEach(event => {
-            window.addEventListener(event, resume, { passive: true });
+        ['click', 'keydown', 'touchstart', 'touchend', 'mousedown', 'pointerdown'].forEach(event => {
+            window.addEventListener(event, tryUnlock, { passive: true });
         });
     }
 
     private async init() {
-        if (this.context) return;
+        if (this.enabled) return;
+        if (!this.context) {
+            console.warn('[SoundManager] init() called but no context - call unlock() first');
+            return;
+        }
 
         try {
-            this.context = new AudioContext();
+            console.log('[SoundManager] Initializing audio system...');
+
             this.musicGain = this.context.createGain();
             this.musicGain.gain.value = 0.4;
             this.musicGain.connect(this.context.destination);
@@ -82,7 +137,7 @@ export class SoundManager {
             ]);
 
             this.enabled = true;
-            console.log('[SoundManager] Audio initialized and pre-loaded');
+            console.log('[SoundManager] Audio initialized. Buffers:', this.buffers.size, 'sounds,', this.musicBuffers.size, 'music');
 
             // If update was already called, start music now
             if (this.lastState) {

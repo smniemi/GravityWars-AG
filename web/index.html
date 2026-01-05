@@ -37,7 +37,61 @@
 </head>
 
 <body>
+  <div id="loading-overlay">
+    <div class="loader"></div>
+    <div id="loading-text" class="loading-text">INITIALIZING SYSTEMS...</div>
+  </div>
   <div id="app"></div>
+  <script>
+    // Fun Loading Messages
+    const messages = [
+      "CALIBRATING GRAVITY SENSORS...",
+      "FUELING THRUSTERS...",
+      "LOADING STAR MAPS...",
+      "ESTABLISHING NEURAL LINK...",
+      "WARMING UP ENGINES...",
+      "SCANNING FOR HOSTILES...",
+      "GENERATING TERRAIN...",
+      "SYNCHRONIZING ORBITS..."
+    ];
+    let msgIndex = 0;
+    const textEl = document.getElementById('loading-text');
+    if (textEl) {
+      setInterval(() => {
+        msgIndex = (msgIndex + 1) % messages.length;
+        textEl.innerText = messages[msgIndex];
+      }, 800);
+    }
+
+    // Mobile Debug Error Handler
+    window.addEventListener('error', function (event) {
+      const overlay = document.getElementById('loading-overlay');
+      if (overlay) {
+        const errDiv = document.createElement('div');
+        errDiv.style.color = '#f33';
+        errDiv.style.marginTop = '20px';
+        errDiv.style.padding = '10px';
+        errDiv.style.textAlign = 'center';
+        errDiv.style.fontFamily = 'monospace';
+        errDiv.innerText = 'ERROR: ' + event.message;
+        overlay.appendChild(errDiv);
+      }
+      console.error(event.error);
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+      const overlay = document.getElementById('loading-overlay');
+      if (overlay) {
+        const errDiv = document.createElement('div');
+        errDiv.style.color = '#f33';
+        errDiv.style.marginTop = '20px';
+        errDiv.style.padding = '10px';
+        errDiv.style.textAlign = 'center';
+        errDiv.style.fontFamily = 'monospace';
+        errDiv.innerText = 'PROMISE ERROR: ' + (event.reason ? event.reason.message || event.reason : 'Unknown');
+        overlay.appendChild(errDiv);
+      }
+    });
+  </script>
   <script type="module" src="/src/main.ts"></script>
 </body>
 

@@ -1,4 +1,4 @@
 {
   "exports": [  "_init_gw",  "_main_init",  "_main_end",  "_control",  "_animate",  "_get_ship_state",  "_get_global_state",  "_get_level_buffer",  "_get_objects_buffer",  "_get_block_buffer",  "_get_palette_buffer",  "_get_ship_buffer",  "_get_bullets_buffer",  "_get_action_buffer",  "_get_scans_buffer",  "_wasm_set_thrust",  "_wasm_set_fire",  "_wasm_adjust_sa",  "_wasm_clear_dynamic_blocks",  "_wasm_advance_level",  "_wasm_next_level",  "_wasm_prev_level",  "_wasm_restart_level",  "_get_current_level_name",  "_get_demo_buffer",  "_get_demo_count",  "_wasm_set_sa",  "_wasm_toggle_cheat_mode",  "_wasm_get_cheat_mode",  "_wasm_add_score"],
-  "generatedAt": "2025-12-25T15:34:16+03:00"
+  "generatedAt": "2026-01-04T11:08:58+03:00"
 }

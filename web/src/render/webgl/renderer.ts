@@ -74,26 +74,72 @@ export class WebGLRenderer {
     }
 
     private currentBackgroundUrl: string | null = null;
+    private static backgroundCache: Map<string, HTMLImageElement> = new Map();
 
-    setBackgroundImage(url: string) {
-        if (this.currentBackgroundUrl === url) return;
+    /**
+     * Preload a background image into cache without setting it as current.
+     * Returns a Promise that resolves when the image is loaded.
+     */
+    static preloadBackgroundImage(url: string): Promise<void> {
+        if (WebGLRenderer.backgroundCache.has(url)) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                WebGLRenderer.backgroundCache.set(url, img);
+                resolve();
+            };
+            img.onerror = reject;
+            img.src = url;
+        });
+    }
+
+    /**
+     * Set the background image. If already cached, applies immediately.
+     * Returns a Promise that resolves when the image is ready.
+     */
+    setBackgroundImage(url: string): Promise<void> {
+        if (this.currentBackgroundUrl === url) {
+            return Promise.resolve();
+        }
         this.currentBackgroundUrl = url;
 
-        const img = new Image();
-        img.src = url;
-        img.onload = () => {
-            if (this.currentBackgroundUrl === url) {
-                if (this.backgroundTexture) {
-                    this.backgroundTexture.dispose();
-                }
-                this.backgroundTexture = new Texture(this.gl);
-                this.backgroundTexture.setImage(img);
+        const cachedImg = WebGLRenderer.backgroundCache.get(url);
+        if (cachedImg) {
+            // Use cached image immediately
+            this.applyBackgroundTexture(cachedImg, url);
+            return Promise.resolve();
+        }
 
-                this.gl.bindTexture(this.gl.TEXTURE_2D, this.backgroundTexture.texture);
-                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
-                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
-            }
-        };
+        // Load new image
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                WebGLRenderer.backgroundCache.set(url, img);
+                if (this.currentBackgroundUrl === url) {
+                    this.applyBackgroundTexture(img, url);
+                }
+                resolve();
+            };
+            img.onerror = reject;
+            img.src = url;
+        });
+    }
+
+    private applyBackgroundTexture(img: HTMLImageElement, url: string) {
+        if (this.currentBackgroundUrl !== url) return;
+
+        if (this.backgroundTexture) {
+            this.backgroundTexture.dispose();
+        }
+        this.backgroundTexture = new Texture(this.gl);
+        this.backgroundTexture.setImage(img);
+
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.backgroundTexture.texture);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
     }
 
     private backgroundTexture: Texture | null = null;
