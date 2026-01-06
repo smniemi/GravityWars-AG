@@ -6,10 +6,11 @@ export type KeyboardState = {
   prevLevel: boolean;
   toggleDebug: boolean;
   toggleCheat: boolean;
+  triggerComplete: boolean;
   targetAngle?: number; // Optional target angle in radians for analog steering
 };
 
-const KEY_BINDINGS: Record<string, keyof KeyboardState | 'rotate-left' | 'rotate-right' | 'next-level' | 'prev-level' | 'toggle-debug' | 'toggle-cheat'> = {
+const KEY_BINDINGS: Record<string, keyof KeyboardState | 'rotate-left' | 'rotate-right' | 'next-level' | 'prev-level' | 'toggle-debug' | 'toggle-cheat' | 'trigger-complete'> = {
   ArrowUp: 'thrust',
   ArrowLeft: 'rotate-left',
   ArrowRight: 'rotate-right',
@@ -21,7 +22,9 @@ const KEY_BINDINGS: Record<string, keyof KeyboardState | 'rotate-left' | 'rotate
   Digit0: 'toggle-debug',
   '0': 'toggle-debug',
   KeyD: 'toggle-cheat',
-  'd': 'toggle-cheat'
+  'd': 'toggle-cheat',
+  KeyC: 'trigger-complete',
+  'c': 'trigger-complete'
 };
 
 import type { Joystick } from '../ui/joystick.js';
@@ -41,7 +44,8 @@ export async function createKeyboardInput(
     nextLevel: false,
     prevLevel: false,
     toggleDebug: false, // Default: debug displays off
-    toggleCheat: false
+    toggleCheat: false,
+    triggerComplete: false
   };
 
   const downHandler = (event: KeyboardEvent) => {
@@ -76,6 +80,9 @@ export async function createKeyboardInput(
       case 'toggle-cheat':
         state.toggleCheat = true;
         break;
+      case 'trigger-complete':
+        state.triggerComplete = true;
+        break;
     }
     event.preventDefault();
   };
@@ -101,6 +108,9 @@ export async function createKeyboardInput(
         break;
       case 'prev-level':
         state.prevLevel = false;
+        break;
+      case 'trigger-complete':
+        state.triggerComplete = false;
         break;
     }
     event.preventDefault();

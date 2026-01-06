@@ -1,0 +1,114 @@
+/**
+ * Game Statistics Tracking Module
+ * 
+ * Tracks game events and sends them to Supabase for analytics.
+ * Each event is stored as a new row for later SQL aggregation.
+ */
+
+import { supabase } from './supabase';
+
+const STORAGE_KEY = 'gravitywars_player_id';
+
+/**
+ * Generate a UUID-like string that works in all browsers
+ */
+function generateUUID(): string {
+    // Use crypto.randomUUID if available (secure context only)
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    // Fallback for older browsers or non-secure contexts
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+/**
+ * Get or create a persistent player ID.
+ * This generates a UUID-like ID stored in localStorage.
+ */
+export function getPlayerId(): string {
+    let playerId = localStorage.getItem(STORAGE_KEY);
+
+    if (!playerId) {
+        // Generate a simple UUID-like ID
+        playerId = 'gw-' + generateUUID();
+        localStorage.setItem(STORAGE_KEY, playerId);
+        console.log('[GameStats] New player ID created:', playerId);
+    }
+
+    return playerId;
+}
+
+/**
+ * Event types that can be tracked
+ */
+export type GameEventType = 'game_start' | 'level_start' | 'level_complete';
+
+/**
+ * Track a game start event (when player starts from menu)
+ */
+export async function trackGameStart(): Promise<void> {
+    const playerId = getPlayerId();
+
+    const { error } = await supabase.from('game_stats').insert({
+        player_id: playerId,
+        event_type: 'game_start' as GameEventType,
+    });
+
+    if (error) {
+        console.error('[GameStats] Failed to track game_start:', error);
+    } else {
+        console.log('[GameStats] Tracked: game_start');
+    }
+}
+
+/**
+ * Track when a level is started
+ */
+export async function trackLevelStart(levelId: number): Promise<void> {
+    const playerId = getPlayerId();
+
+    const { error } = await supabase.from('game_stats').insert({
+        player_id: playerId,
+        event_type: 'level_start' as GameEventType,
+        level_id: levelId,
+    });
+
+    if (error) {
+        console.error('[GameStats] Failed to track level_start:', error);
+    } else {
+        console.log(`[GameStats] Tracked: level_start (level ${levelId})`);
+    }
+}
+
+/**
+ * Track when a level is completed
+ */
+export async function trackLevelComplete(
+    levelId: number,
+    score: number,
+    timeRemaining: number,
+    fuelRemaining: number,
+    livesRemaining: number
+): Promise<void> {
+    const playerId = getPlayerId();
+
+    const { error } = await supabase.from('game_stats').insert({
+        player_id: playerId,
+        event_type: 'level_complete' as GameEventType,
+        level_id: levelId,
+        score: score,
+        time_remaining: Math.floor(timeRemaining),
+        fuel_remaining: Math.floor(fuelRemaining),
+        lives_remaining: livesRemaining,
+    });
+
+    if (error) {
+        console.error('[GameStats] Failed to track level_complete:', error);
+    } else {
+        console.log(`[GameStats] Tracked: level_complete (level ${levelId}, score ${score})`);
+    }
+}

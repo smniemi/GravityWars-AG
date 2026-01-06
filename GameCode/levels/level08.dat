@@ -3,7 +3,7 @@ author	"P. Fritzsche"
 comment "Be patient.." 
 
 time	199
-fuel 	99	
+fuel 	120	
 
 	x	y	start	stop	frame	speed
 -----------------------------------------------------

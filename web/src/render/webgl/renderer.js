@@ -9,8 +9,10 @@ export class WebGLRenderer {
     gl;
     spriteBatch;
     backgroundRenderer;
+    dynamicBackgroundRenderer;
     foregroundRenderer;
     atlasTexture = null;
+    dynamicAtlasTexture = null;
     shipTextures = null;
     viewport = { cameraX: 0, cameraY: 0, zoom: 4.0 };
     // Shockwave state
@@ -25,6 +27,7 @@ export class WebGLRenderer {
         this.gl = createWebGLContext(canvas);
         this.spriteBatch = new SpriteBatch(this.gl);
         this.backgroundRenderer = new TilemapRenderer(this.gl);
+        this.dynamicBackgroundRenderer = new TilemapRenderer(this.gl);
         this.foregroundRenderer = new TilemapRenderer(this.gl);
         // Enable blending
         this.gl.enable(this.gl.BLEND);
@@ -40,18 +43,51 @@ export class WebGLRenderer {
         }
     }
     setTileAtlas(atlas) {
-        if (this.atlasTexture) {
-            this.atlasTexture.dispose();
+        // 1. Static Atlas (High-Res or Low-Res Base)
+        if (this.atlasTexture && this.atlasTexture.lastSource === atlas.canvas) {
+            this.atlasTexture.isHighRes = atlas.isHighRes;
         }
-        this.atlasTexture = new Texture(this.gl);
-        this.atlasTexture.setImage(atlas.canvas);
+        else {
+            if (this.atlasTexture) {
+                this.atlasTexture.dispose();
+            }
+            this.atlasTexture = new Texture(this.gl);
+            this.atlasTexture.setImage(atlas.canvas);
+            this.atlasTexture.lastSource = atlas.canvas;
+            this.atlasTexture.isHighRes = atlas.isHighRes;
+        }
+        // 2. Dynamic Atlas (Low-Res subset)
+        if (atlas.lowRes) {
+            const lowCanvas = atlas.lowRes.canvas;
+            if (this.dynamicAtlasTexture && this.dynamicAtlasTexture.lastSource === lowCanvas) {
+                // Already set
+            }
+            else {
+                if (this.dynamicAtlasTexture)
+                    this.dynamicAtlasTexture.dispose();
+                this.dynamicAtlasTexture = new Texture(this.gl);
+                this.dynamicAtlasTexture.setImage(lowCanvas);
+                this.dynamicAtlasTexture.lastSource = lowCanvas;
+            }
+        }
+    }
+    /**
+     * Updates the dynamic atlas texture from the low-res canvas.
+     * Call this when updateDynamicBlocks returns true.
+     */
+    syncDynamicAtlas(atlas) {
+        if (this.dynamicAtlasTexture && atlas.lowRes) {
+            this.dynamicAtlasTexture.setImage(atlas.lowRes.canvas);
+        }
+    }
+    // Keeping legacy method for compatibility/completeness, though mostly unused now
+    syncTileAtlas(atlas) {
+        if (this.atlasTexture && this.atlasTexture.lastSource === atlas.canvas) {
+            this.atlasTexture.setImage(atlas.canvas);
+        }
     }
     currentBackgroundUrl = null;
     static backgroundCache = new Map();
-    /**
-     * Preload a background image into cache without setting it as current.
-     * Returns a Promise that resolves when the image is loaded.
-     */
     static preloadBackgroundImage(url) {
         if (WebGLRenderer.backgroundCache.has(url)) {
             return Promise.resolve();
@@ -66,10 +102,6 @@ export class WebGLRenderer {
             img.src = url;
         });
     }
-    /**
-     * Set the background image. If already cached, applies immediately.
-     * Returns a Promise that resolves when the image is ready.
-     */
     setBackgroundImage(url) {
         if (this.currentBackgroundUrl === url) {
             return Promise.resolve();
@@ -77,11 +109,9 @@ export class WebGLRenderer {
         this.currentBackgroundUrl = url;
         const cachedImg = WebGLRenderer.backgroundCache.get(url);
         if (cachedImg) {
-            // Use cached image immediately
             this.applyBackgroundTexture(cachedImg, url);
             return Promise.resolve();
         }
-        // Load new image
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
@@ -111,7 +141,6 @@ export class WebGLRenderer {
     drawBackground(mapWidth, mapHeight) {
         if (!this.backgroundTexture)
             return;
-        // Parallax factor: 0.5 means background moves at half speed
         const parallaxFactor = 0.5;
         const viewWidth = this.canvas.width / this.viewport.zoom;
         const viewHeight = this.canvas.height / this.viewport.zoom;
@@ -120,9 +149,6 @@ export class WebGLRenderer {
         const worldHeight = mapHeight * TILE_SIZE;
         const maxCamX = Math.max(0, worldWidth - viewWidth);
         const maxCamY = Math.max(0, worldHeight - viewHeight);
-        // Calculate background dimensions to fit exactly within the parallax traversal.
-        // This effectively "zooms out" the background maximally so that the texture covers 
-        // the entire traversable area without repeating (staying within 0-1 UV bounds).
         const bgWidth = maxCamX * parallaxFactor + viewWidth;
         const bgHeight = maxCamY * parallaxFactor + viewHeight;
         this.spriteBatch.begin(this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
@@ -136,6 +162,17 @@ export class WebGLRenderer {
         this.spriteBatch.flush();
     }
     setShipSprites(sprites) {
+        if (this.shipTextures && this.shipTextures.lastSource === sprites &&
+            this.shipTextures.isHighRes === !!sprites.isHighRes) {
+            return;
+        }
+        if (this.shipTextures) {
+            this.shipTextures.thrust.forEach(t => t.dispose());
+            this.shipTextures.noThrust.forEach(t => t.dispose());
+            Object.values(this.shipTextures.specials).forEach(t => t.dispose());
+            this.shipTextures.thrustBase?.dispose();
+            this.shipTextures.noThrustBase?.dispose();
+        }
         this.shipTextures = {
             thrust: sprites.thrust.map((img) => {
                 const tex = new Texture(this.gl);
@@ -151,54 +188,56 @@ export class WebGLRenderer {
             noThrustBase: null,
             thrustBase: null
         };
+        this.shipTextures.lastSource = sprites;
+        this.shipTextures.isHighRes = !!sprites.isHighRes;
         for (const [id, img] of Object.entries(sprites.specials)) {
             const tex = new Texture(this.gl);
             tex.setImage(img);
             this.shipTextures.specials[Number(id)] = tex;
         }
         if (sprites.noThrustBase && this.shipTextures) {
-            this.shipTextures.noThrustBase = new Texture(this.gl);
-            this.shipTextures.noThrustBase.setImage(sprites.noThrustBase);
+            const tex = new Texture(this.gl);
+            tex.setImage(sprites.noThrustBase);
+            this.shipTextures.noThrustBase = tex;
         }
         if (sprites.thrustBase && this.shipTextures) {
-            this.shipTextures.thrustBase = new Texture(this.gl);
-            this.shipTextures.thrustBase.setImage(sprites.thrustBase);
+            const tex = new Texture(this.gl);
+            tex.setImage(sprites.thrustBase);
+            this.shipTextures.thrustBase = tex;
         }
     }
     buildLevel(map, atlas) {
-        this.backgroundRenderer.build(map, atlas, (i) => !isOverlayObject(map.objects[i]));
+        // Destructible blocks are at indices 216-253 (from C: init.c copies them to block[216+count])
+        const DESTRUCTIBLE_START = 216;
+        // Static pass: Exclude destructible blocks (>= 216)
+        this.backgroundRenderer.build(map, atlas, (i) => !isOverlayObject(map.objects[i]) && map.tiles[i] < DESTRUCTIBLE_START);
+        // Dynamic pass: Include only destructible blocks (>= 216)
+        if (atlas.lowRes) {
+            const dynamicAtlas = atlas.lowRes || atlas;
+            this.dynamicBackgroundRenderer.build(map, dynamicAtlas, (i) => {
+                const tileId = map.tiles[i];
+                return (tileId >= DESTRUCTIBLE_START);
+            });
+        }
         this.foregroundRenderer.build(map, atlas, (i) => isOverlayObject(map.objects[i]));
     }
     updateLevel(map, atlas) {
         this.buildLevel(map, atlas);
     }
-    // Consolidated drawing to ensure correct Z-order:
-    // 1. Background Image (Parallax)
-    // 2. Wall Shadows
-    // 3. Ship Shadow
-    // 4. Walls
-    // 5. Ship (handled by caller currently, but can be moved later if needed, though Shadow is distinct)
-    // Actually, caller handles Main Ship. We handle Ship Shadow here.
     drawWorld(map, globals, shipState, shipBlockMap, isIntroLevel = false) {
         if (!this.atlasTexture)
             return;
-        // Ensure state is correct
         this.gl.enable(this.gl.BLEND);
         this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
-        this.gl.disable(this.gl.DEPTH_TEST); // 2D game, usually painter's algo
+        this.gl.disable(this.gl.DEPTH_TEST);
         // 1. Setup Camera
         if (globals) {
             if (isIntroLevel) {
-                // Intro screen: zoom to show exactly 15x10 tiles (480x320 world pixels)
-                // Fixed camera at top-left (0,0) to show only the playable area
-                const INTRO_VISIBLE_WIDTH = 15 * 32; // 480 pixels
-                const INTRO_VISIBLE_HEIGHT = 10 * 32; // 320 pixels
-                // Calculate zoom to fit the 15x10 area on screen
-                // We need to show at most 480x320 world pixels
+                const INTRO_VISIBLE_WIDTH = 15 * 32;
+                const INTRO_VISIBLE_HEIGHT = 10 * 32;
                 const zoomForWidth = this.canvas.width / INTRO_VISIBLE_WIDTH;
                 const zoomForHeight = this.canvas.height / INTRO_VISIBLE_HEIGHT;
                 this.viewport.zoom = Math.max(zoomForWidth, zoomForHeight);
-                // Allow camera to follow ship, but clamp to the 15x10 intro area
                 this.clampCamera(15, 10, globals.sx, globals.sy);
             }
             else {
@@ -226,9 +265,9 @@ export class WebGLRenderer {
                 };
             }
             else if (globals.shipState === 3 && this.shockwaveActive) {
-                // Force stop shockwave on respawn
                 this.shockwaveActive = false;
                 this.backgroundRenderer.setShockwave({ x: 0, y: 0 }, 0);
+                this.dynamicBackgroundRenderer.setShockwave({ x: 0, y: 0 }, 0);
                 this.foregroundRenderer.setShockwave({ x: 0, y: 0 }, 0);
             }
             this.lastShipState = globals.shipState;
@@ -240,10 +279,12 @@ export class WebGLRenderer {
             if (time > 2.0) {
                 this.shockwaveActive = false;
                 this.backgroundRenderer.setShockwave({ x: 0, y: 0 }, 0);
+                this.dynamicBackgroundRenderer.setShockwave({ x: 0, y: 0 }, 0);
                 this.foregroundRenderer.setShockwave({ x: 0, y: 0 }, 0);
             }
             else {
                 this.backgroundRenderer.setShockwave(this.shockwaveCenter, time);
+                this.dynamicBackgroundRenderer.setShockwave(this.shockwaveCenter, time);
                 this.foregroundRenderer.setShockwave(this.shockwaveCenter, time);
             }
         }
@@ -252,7 +293,8 @@ export class WebGLRenderer {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
         // 3. Draw Background (Parallax)
         this.drawBackground(map.width, map.height);
-        // 4. Calculate Shadow Vector
+        const time = performance.now() / 1000.0;
+        // 4. Draw Shadows
         const TILE_SIZE = 32;
         const mapCenterX = (map.width * TILE_SIZE) / 2;
         const mapCenterY = (map.height * TILE_SIZE) / 2;
@@ -264,49 +306,42 @@ export class WebGLRenderer {
         const shadowX = vecX * shadowScale;
         const shadowY = vecY * shadowScale;
         const shadowAlpha = 0.5;
-        // 5. Draw Wall Shadows
-        const time = performance.now() / 1000.0;
+        // Static Wall Shadows
         this.backgroundRenderer.setColor(0, 0, 0, shadowAlpha);
         this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX - shadowX, this.viewport.cameraY - shadowY, this.viewport.zoom, time);
-        // 6. Draw Ship Shadow (Below Walls, Above Background)
+        // Dynamic Wall Shadows
+        if (this.dynamicAtlasTexture) {
+            this.dynamicBackgroundRenderer.setColor(0, 0, 0, shadowAlpha);
+            this.dynamicBackgroundRenderer.draw(this.dynamicAtlasTexture, this.viewport.cameraX - shadowX, this.viewport.cameraY - shadowY, this.viewport.zoom, time);
+        }
         if (globals && shipState && shipBlockMap && shipState.state !== 2) {
-            // Note: Wall shadows shift LAYERS by -shadowX (Shift Left).
-            // This creates a shadow to the RIGHT of the object (Outwards).
-            // For the ship, we draw the sprite at (ShipX + Offset).
-            // To match "Right" shadow, Offset must be Positive.
-            // Using same vecX * scale gives positive if cam is right.
             const shipShadowOffX = shadowX;
             const shipShadowOffY = shadowY;
             this.drawShip(globals, shipState, shipBlockMap, shipShadowOffX, shipShadowOffY, [0, 0, 0, shadowAlpha]);
         }
-        // 7. Draw Walls
+        // 5. Draw Static Walls
         this.backgroundRenderer.setColor(1, 1, 1, 1);
         this.backgroundRenderer.draw(this.atlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom, time);
+        // 6. Draw Dynamic Walls
+        if (this.dynamicAtlasTexture) {
+            this.dynamicBackgroundRenderer.setColor(1, 1, 1, 1);
+            this.dynamicBackgroundRenderer.draw(this.dynamicAtlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom, time);
+        }
     }
-    // Deprecated / Internal helper
     drawWorldBackground(map) {
-        // Redirect to drawWorld with no ship if called directly
         this.drawWorld(map, null);
     }
     drawWorldForeground() {
         if (!this.atlasTexture)
             return;
-        // Draw World (Foreground/Overlay)
         this.foregroundRenderer.draw(this.atlasTexture, this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom, performance.now() / 1000.0);
     }
     calculateOptimalZoom(mapWidth, mapHeight) {
         const TILE_SIZE = 32;
         const worldWidth = mapWidth * TILE_SIZE;
         const worldHeight = mapHeight * TILE_SIZE;
-        // We want to ensure the viewport is always within the playing field.
-        // This means we must zoom in enough so that the viewport width <= worldWidth
-        // AND viewport height <= worldHeight.
-        // zoom >= canvas.width / worldWidth
-        // zoom >= canvas.height / worldHeight
         const widthRatio = this.canvas.width / worldWidth;
         const heightRatio = this.canvas.height / worldHeight;
-        // Return the max of the two ratios to ensure we cover the canvas
-        // (or rather, ensure the viewport fits INSIDE the world)
         return Math.max(widthRatio, heightRatio);
     }
     clampCamera(mapWidth, mapHeight, shipX, shipY) {
@@ -315,13 +350,10 @@ export class WebGLRenderer {
         const viewH = this.canvas.height / this.viewport.zoom;
         const worldWidth = mapWidth * TILE_SIZE;
         const worldHeight = mapHeight * TILE_SIZE;
-        // Calculate desired camera position (centered on ship)
         let cameraX = shipX - viewW / 2;
         let cameraY = shipY - viewH / 2;
-        // Strict bounds - clamp camera so viewport stays completely within level
         cameraX = Math.max(0, Math.min(cameraX, worldWidth - viewW));
         cameraY = Math.max(0, Math.min(cameraY, worldHeight - viewH));
-        // If viewport is larger than world, center it
         if (viewW >= worldWidth) {
             cameraX = (worldWidth - viewW) / 2;
         }
@@ -336,24 +368,15 @@ export class WebGLRenderer {
         const image = ship.image ?? 0;
         const x = globals.sx + offsetX;
         const y = globals.sy + offsetY;
-        // 1. Standard Ship (Thrust/No Thrust)
-        if (image === 0 || image === 1) { // NO_THRUST or THRUST
+        if (image === 0 || image === 1) {
             if (this.shipTextures) {
                 const angleRad = ((globals.sa ?? 0) / 16384) * Math.PI * 2;
-                // Note: sa=0 is UP in game logic. 
-                // In standard math/canvas, 0 is RIGHT, -PI/2 is UP.
-                // Our SpriteBatch rotation logic: rx = x * cos - y * sin, ry = x * sin + y * cos
-                // This is a standard CCW rotation.
-                // Game logic rotates sa CW? Let's check. Default sa=0 is facing UP.
-                // Re-calculating rotation for WebGL coordinates.
-                const renderRotation = -angleRad; // Rotate CCW based on sa
+                const renderRotation = -angleRad;
                 const baseTex = image === 1 ? this.shipTextures.thrustBase : this.shipTextures.noThrustBase;
                 if (baseTex) {
-                    // Use single high-res base texture with rotation
                     this.spriteBatch.draw(baseTex, x + SHIP_SPRITE_SIZE / 2, y + SHIP_SPRITE_SIZE / 2, SHIP_SPRITE_SIZE, SHIP_SPRITE_SIZE, 0, 0, 1, 1, color, renderRotation, SHIP_SPRITE_SIZE / 2, SHIP_SPRITE_SIZE / 2);
                 }
                 else {
-                    // Fallback to pre-rotated low-res sprites
                     const orientation = ((globals.sa ?? 0) >>> 9) & 31;
                     const variant = image === 1 ? this.shipTextures.thrust : this.shipTextures.noThrust;
                     const tex = variant[orientation];
@@ -363,7 +386,6 @@ export class WebGLRenderer {
                 }
             }
         }
-        // 2. Special blocks (Explosions/Appear)
         else {
             const blockId = shipBlockMap[image];
             if (blockId !== undefined && this.shipTextures) {
@@ -378,7 +400,6 @@ export class WebGLRenderer {
     drawBullets(bullets) {
         if (!this.bulletTexture) {
             this.bulletTexture = new Texture(this.gl);
-            // Create a 16x16 radial gradient texture
             const size = 16;
             const canvas = document.createElement('canvas');
             canvas.width = size;
@@ -393,8 +414,6 @@ export class WebGLRenderer {
             this.bulletTexture.setImage(canvas);
         }
         if (this.bulletTexture) {
-            // Bullet size in world units (pixels)
-            // Tiles are 32x32. Bullets should be visible.
             const worldSize = 6.0;
             this.spriteBatch.begin(this.viewport.cameraX, this.viewport.cameraY, this.viewport.zoom);
             for (const bullet of bullets) {
@@ -410,23 +429,7 @@ export class WebGLRenderer {
         for (const action of actions) {
             if (!action.active)
                 continue;
-            // Map action frames to atlas blocks
-            // SPARK: 48-51
-            // SPLASH: 113-117
-            // We can use the 'frame' property directly if it maps to block IDs?
-            // The 'frame' in ActionState seems to be an animation counter, not a block ID.
-            // However, looking at GamePlay.m, it seems 'frame' might be the block ID for some actions?
-            // Let's assume 'frame' in ActionState IS the block ID to render.
-            // If not, we need a mapping.
-            // Based on `actions.ts`, frame is read from the struct.
-            // Let's try using action.frame as the block ID directly first.
-            // If it's 0-based index into the atlas.
             const blockId = action.frame;
-            // Hotfix: WASM module has off-by-one error in animation ranges, 
-            // causing it to show the first frame of the *next* block sequence.
-            // Since we can't recompile WASM (missing emcc), we hide the bad frames here.
-            // Spark: 48-51 (51 is bad)
-            // Splash: 113-117 (117 is bad)
             if (blockId === 51 || blockId === 117) {
                 continue;
             }
@@ -438,7 +441,6 @@ export class WebGLRenderer {
                 const v0 = pos.sy / atlasHeight;
                 const u1 = (pos.sx + atlas.tileSize) / atlasWidth;
                 const v1 = (pos.sy + atlas.tileSize) / atlasHeight;
-                // Actions are usually 32x32
                 const TILE_SIZE = 32;
                 const HALF_SIZE = TILE_SIZE / 2;
                 this.spriteBatch.draw(this.atlasTexture, action.x - HALF_SIZE, action.y - HALF_SIZE, TILE_SIZE, TILE_SIZE, u0, v0, u1, v1, [1, 1, 1, 1]);

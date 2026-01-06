@@ -1,5 +1,5 @@
 import './style.css';
-import { createTileAtlas, loadHighResTileAtlas, type TileAtlas } from './render/tileAtlas.js';
+import { createTileAtlas, loadHighResTileAtlas, type TileAtlas, updateDynamicBlocks, initializeDestructibleBlocks } from './render/tileAtlas.js';
 import { SoundManager } from './core/sound.js';
 import { createShipSprites, loadHighResShipTextures, type ShipSprites } from './render/shipSprites.js';
 import { WebGLRenderer } from './render/webgl/renderer.js';
@@ -20,6 +20,7 @@ import { LevelIntroScreen } from './ui/levelIntroScreen.js';
 import { GameCompleteScreen } from './ui/gameCompleteScreen.js';
 import { LevelCompleteScreen } from './ui/levelComplete.js';
 import { runSupabaseTest } from './core/supabaseTest.js';
+import { trackGameStart, trackLevelStart } from './core/gameStats.js';
 
 /**
  * Get the background image name for a given level number.
@@ -29,11 +30,11 @@ function getBackgroundNameForLevel(levelNum: number): string {
   switch (bgIndex) {
     case 0: return 'back5_park_v2.jpg';
     case 1: return 'back_nebula_v2.jpg';
-    case 2: return 'back_park_v2.JPG';
-    case 3: return 'back2_park_v2.JPG';
-    case 4: return 'back3_park_v2.JPG';
-    case 5: return 'back4_park_v2.JPG';
-    case 6: return 'back_park_v2.JPG';
+    case 2: return 'back_park_v2.jpg';
+    case 3: return 'back2_park_v2.jpg';
+    case 4: return 'back3_park_v2.jpg';
+    case 5: return 'back4_park_v2.jpg';
+    case 6: return 'back_park_v2.jpg';
     default: return 'space_v2.jpg';
   }
 }
@@ -594,7 +595,11 @@ async function playLevelIntro() {
     const levelNum = globalsReader.read().levelnum;
     const bgUrl = getBackgroundUrlForLevel(levelNum);
     console.log(`[Main] Preloading background: ${bgUrl} for level ${levelNum}`);
-    await renderer.setBackgroundImage(bgUrl);
+    try {
+      await renderer.setBackgroundImage(bgUrl);
+    } catch (err) {
+      console.warn(`[Main] Failed to preload background: ${bgUrl}`, err);
+    }
     lastBgName = getBackgroundNameForLevel(levelNum);
   }
 
@@ -603,6 +608,11 @@ async function playLevelIntro() {
   // Capture start score for PB calculation
   if (globalsReader) {
     levelStartScore = globalsReader.read().shipScore;
+    // Track level start event
+    const levelNum = globalsReader.read().levelnum;
+    if (levelNum > 0) {
+      trackLevelStart(levelNum);
+    }
   }
 
   const getLevelNamePtr = getExport('get_current_level_name') as () => number;
@@ -613,7 +623,7 @@ async function playLevelIntro() {
   });
 }
 
-function handleLevelTransition() {
+function handleLevelTransition(force: boolean = false) {
   if (!advanceLevel || levelAdvancePending || !lastShipState || !lastGlobals) {
     return;
   }
@@ -623,7 +633,7 @@ function handleLevelTransition() {
   if (lastGlobals.levelnum === 0 || !gameStarted) {
     return;
   }
-  if (lastShipState.state === SHIP_STATE.DISAPPEARING && lastShipState.animationPhase <= 0) {
+  if (force || (lastShipState.state === SHIP_STATE.DISAPPEARING && lastShipState.animationPhase <= 0)) {
     levelAdvancePending = true;
 
     // Check if this is the last level (level 60)
@@ -739,11 +749,14 @@ function handleLevelTransition() {
 let lastBgName = '';
 let levelStartScore = 0;
 let introDemoFrame = 0;
+let introDemoNeedsRestart = false; // Flag to defer restart until before control() runs
 let demoData: Int32Array | null = null;
 let demoCount = 0;
 let rotationHoldStart = 0; // Track when rotation key was first pressed
 let previousShipStatus = 0;
 let previousShipActive = 0;
+let fuelClickCount = 0;
+let lastFuelClickTime = 0;
 
 const loop = new GameLoop(({ deltaMs }) => {
 
@@ -753,15 +766,7 @@ const loop = new GameLoop(({ deltaMs }) => {
       renderer.setTileAtlas(tileAtlas);
       renderer.buildLevel(levelMap, tileAtlas);
       console.log('[gravitywars] WebGL level built');
-
-      // Upgrade to high-res asynchronously
-      loadHighResTileAtlas(tileAtlas).then(() => {
-        if (tileAtlas && levelMap) {
-          renderer.setTileAtlas(tileAtlas);
-          renderer.buildLevel(levelMap, tileAtlas);
-          console.log('[gravitywars] WebGL high-res tiles loaded');
-        }
-      });
+      applyHighResUpgrades(tileAtlas, null);
     } catch (error) {
       console.error('Failed to build level', error);
     }
@@ -769,19 +774,13 @@ const loop = new GameLoop(({ deltaMs }) => {
 
   if (!shipSprites && runtime?.runtime) {
     try {
-      shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
-      renderer.setShipSprites(shipSprites);
-      joystick.setShipSprites(shipSprites);
-
-      // Upgrade to high-res asynchronously
-      loadHighResShipTextures(shipSprites).then(() => {
-        if (shipSprites) {
-          renderer.setShipSprites(shipSprites);
-          joystick.setShipSprites(shipSprites);
-        }
-      });
+      const sprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
+      shipSprites = sprites;
+      renderer.setShipSprites(sprites);
+      joystick.setShipSprites(sprites);
+      applyHighResUpgrades(null, sprites);
     } catch (error) {
-      console.error('Failed to build ship sprites', error);
+      console.error('Failed to initialize ship sprites', error);
     }
   }
 
@@ -791,8 +790,70 @@ const loop = new GameLoop(({ deltaMs }) => {
   }
 
   if (runtime) {
-    getExport('control')();
-    getExport('animate')();
+    // Load demo data early, so it's available for fast-forward on the first frame
+    if (!demoData && runtime?.runtime && controls && globalsReader?.read().levelnum === 0) {
+      const ptr = controls.getDemoBufferPtr();
+      demoCount = controls.getDemoCount();
+      if (ptr && demoCount > 0) {
+        const heap32 = (runtime.runtime as any).HEAP32 || new Int32Array(runtime.runtime.HEAPU8.buffer);
+        demoData = heap32.subarray(ptr >> 2, (ptr >> 2) + demoCount * 10);
+        console.log(`[Main] Intro demo loaded early: ${demoCount} frames`);
+      }
+    }
+
+    // Handle intro demo fast-forward at the START of the frame, before control() runs
+    // This ensures the sequence is identical on initial load AND on restart
+    const shouldFastForward = (
+      // Restart case: flag was set when demo reached the end
+      introDemoNeedsRestart ||
+      // Initial case: we have demo data and haven't fast-forwarded yet
+      (demoData && demoCount > 0 && introDemoFrame === 0 && globalsReader?.read().levelnum === 0)
+    );
+
+    if (shouldFastForward && controls) {
+      // On restart, we need to reset the level first
+      if (introDemoNeedsRestart) {
+        controls.restartLevel();
+      }
+      introDemoNeedsRestart = false;
+      introDemoFrame = 0;
+
+      // Now do the fast-forward immediately, before the normal control() runs
+      if (demoData && demoCount > 0) {
+        const SKIP_SECONDS = 13.7;
+        const FPS = 60;
+        const skipFrames = Math.floor(SKIP_SECONDS * FPS);
+
+        for (let i = 0; i < skipFrames; i++) {
+          if (i >= demoCount) break;
+          const off = i * 10;
+          controls.setThrust(demoData[off + 7]);
+          controls.setFire(demoData[off + 8]);
+          controls.setSA(demoData[off + 9]);
+          getExport('control')(); // Physics step
+        }
+        introDemoFrame = skipFrames;
+      }
+    }
+
+    // Skip normal control()/animate() if we just did fast-forward
+    // The fast-forward already includes all necessary physics steps
+    if (!shouldFastForward) {
+      getExport('control')();
+      getExport('animate')();
+    } else {
+      // Just run animate() to update animations after fast-forward
+      getExport('animate')();
+    }
+
+    // Update destructible blocks (copy from memory to atlas)
+    // Update destructible blocks (copy from memory to atlas)
+    if (tileAtlas && runtime?.runtime) {
+      if (updateDynamicBlocks(tileAtlas, runtime.runtime)) {
+        renderer.syncDynamicAtlas(tileAtlas);
+      }
+    }
+
     if (shipReader) {
       lastShipState = shipReader.read();
       // Check for crash (state 1), respawn (1->0 state), or ANY active transition (death/spawn)
@@ -824,35 +885,17 @@ const loop = new GameLoop(({ deltaMs }) => {
       if (bgName !== lastBgName) {
         console.log(`[Main] Switching background to: ${bgName} for level ${levelNum}`);
         // Use the Promise-based API but don't await (fire-and-forget in game loop)
-        renderer.setBackgroundImage(getBackgroundUrlForLevel(levelNum));
+        renderer.setBackgroundImage(getBackgroundUrlForLevel(levelNum)).catch(err => {
+          console.warn(`[Main] Failed to set background image: ${bgName}`, err);
+        });
         lastBgName = bgName;
       }
 
       if (lastGlobals.dynamicBlocksChanged) {
         if (runtime?.runtime) {
-          // Re-create the logical tile atlas from WASM memory (the index map)
-          const newTileAtlas = createTileAtlas(runtime.runtime);
-
-          // If we have a cached high-res version, upgrade the new atlas immediately
-          // before bothering the renderer. This prevents the low-res flicker.
-          if (tileAtlas?.isHighRes) {
-            // Transfer high-res state to the new object
-            newTileAtlas.isHighRes = true;
-            newTileAtlas.canvas = tileAtlas.canvas;
-            newTileAtlas.tileSize = 128;
-            newTileAtlas.positions = newTileAtlas.positions.map(p => ({
-              sx: p.sx * 4,
-              sy: p.sy * 4
-            }));
-          }
-
-          tileAtlas = newTileAtlas;
-
-          // Only re-create ship sprites if strictly necessary or keep them high-res if they were
-          const newShipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
-          // Sync high-res ship parts if they were already loaded
-          loadHighResShipTextures(newShipSprites).catch(() => { });
-          shipSprites = newShipSprites;
+          tileAtlas = createTileAtlas(runtime.runtime);
+          shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
+          applyHighResUpgrades(tileAtlas, shipSprites);
         }
 
         if (levelMap && tileAtlas) {
@@ -927,36 +970,11 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
       } else if (lastGlobals?.levelnum === 0) {
         // Intro screen / Attractor mode: play demo path
-        if (!demoData && runtime?.runtime) {
-          const ptr = controls.getDemoBufferPtr();
-          demoCount = controls.getDemoCount();
-          if (ptr && demoCount > 0) {
-            // demo is int[count][10]
-            // We use the runtime's HEAP32 which should be an Int32Array view
-            // If it's not present, we can create one from buffer
-            const heap32 = (runtime.runtime as any).HEAP32 || new Int32Array(runtime.runtime.HEAPU8.buffer);
-            demoData = heap32.subarray(ptr >> 2, (ptr >> 2) + demoCount * 10);
-            console.log(`[Main] Intro demo loaded: ${demoCount} frames`);
-          }
-        }
+        // Note: Demo data loading is now done earlier in the frame (before fast-forward check)
 
         if (demoData && demoCount > 0) {
-          if (introDemoFrame === 0) {
-            // Fast forward to 13.7s
-            const SKIP_SECONDS = 13.7;
-            const FPS = 60;
-            const skipFrames = Math.floor(SKIP_SECONDS * FPS);
-
-            for (let i = 0; i < skipFrames; i++) {
-              if (i >= demoCount) break;
-              const off = i * 10;
-              controls.setThrust(demoData[off + 7]);
-              controls.setFire(demoData[off + 8]);
-              controls.setSA(demoData[off + 9]);
-              getExport('control')(); // Physics step
-            }
-            introDemoFrame = skipFrames;
-          }
+          // Fast-forward is now handled at the start of the frame (before control())
+          // Here we just handle normal demo playback
 
           const frameIdx = introDemoFrame % demoCount;
           const offset = frameIdx * 10;
@@ -973,8 +991,9 @@ const loop = new GameLoop(({ deltaMs }) => {
           introDemoFrame++;
 
           if (introDemoFrame >= demoCount) {
-            controls.restartLevel();
-            introDemoFrame = 0;
+            // Set flag to restart at the beginning of next frame
+            // This ensures restart + fast-forward happens BEFORE control() runs
+            introDemoNeedsRestart = true;
           }
         }
       }
@@ -1001,6 +1020,13 @@ const loop = new GameLoop(({ deltaMs }) => {
           keyboard.state.toggleCheat = false;
           const isCheatOn = controls.getCheatMode();
           console.log(`[Main] Cheat mode ${isCheatOn ? 'ENABLED' : 'DISABLED'}: No wall collision, high fuel/time`);
+        }
+
+        // Handle force level complete (press 'c')
+        if (keyboard.state.triggerComplete) {
+          keyboard.state.triggerComplete = false;
+          console.log('[Main] Keyboard shortcut (C) detected! Triggering level complete...');
+          handleLevelTransition(true);
         }
       }
     }
@@ -1153,7 +1179,7 @@ const loop = new GameLoop(({ deltaMs }) => {
     if (showDebug) {
       if (lastShipState) {
         const isCheatOn = controls ? controls.getCheatMode() : 0;
-        drawDebugPanel(uiCtx, lastShipState, lastGlobals, keyboard?.state ?? { thrust: 0, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false, toggleCheat: false }, !!isCheatOn);
+        drawDebugPanel(uiCtx, lastShipState, lastGlobals, keyboard?.state ?? { thrust: 0, fire: false, rotate: 0, nextLevel: false, prevLevel: false, toggleDebug: false, toggleCheat: false, triggerComplete: false }, !!isCheatOn);
       }
 
       uiCtx.fillStyle = '#0ff';
@@ -1168,18 +1194,46 @@ const loop = new GameLoop(({ deltaMs }) => {
 });
 
 
+function applyHighResUpgrades(atlas: TileAtlas | null, sprites: ShipSprites | null) {
+  if (atlas) {
+    const targetAtlas = atlas;
+    loadHighResTileAtlas(targetAtlas).then(() => {
+      if (targetAtlas === tileAtlas && levelMap) {
+        renderer.setTileAtlas(targetAtlas);
+        renderer.buildLevel(levelMap, targetAtlas);
+      }
+    }).catch(() => { });
+  }
+
+  if (sprites) {
+    const targetSprites = sprites;
+    loadHighResShipTextures(targetSprites).then(() => {
+      if (targetSprites === shipSprites) {
+        renderer.setShipSprites(targetSprites);
+        joystick.setShipSprites(targetSprites);
+      }
+    }).catch(() => { });
+  }
+}
+
 function reloadLevel() {
   if (runtime?.runtime) {
     const currentLevel = globalsReader?.read().levelnum ?? 0;
     levelMap = createLevelMap(runtime.runtime, currentLevel);
+    // Ensure destructible blocks exist in memory
+    initializeDestructibleBlocks(runtime.runtime);
     tileAtlas = createTileAtlas(runtime.runtime);
     shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
+
     if (levelMap && tileAtlas) {
       renderer.setTileAtlas(tileAtlas);
       renderer.setShipSprites(shipSprites);
       joystick.setShipSprites(shipSprites);
       joystick.reset();
       renderer.buildLevel(levelMap, tileAtlas);
+
+      // Apply upgrades
+      applyHighResUpgrades(tileAtlas, shipSprites);
     }
   }
   currentBullets = [];
@@ -1191,6 +1245,7 @@ loop.start();
 loadGravityWarsModule()
   .then((module) => {
     runtime = module;
+    initializeDestructibleBlocks(module.runtime);
     shipReader = createShipStateReader(module.runtime);
     globalsReader = createGlobalStateReader(module.runtime);
     levelMap = createLevelMap(module.runtime, 0); // Starting at level 0 (intro)
@@ -1201,6 +1256,8 @@ loadGravityWarsModule()
     actionReader = createActionReader(module.runtime);
     getExport('init_gw')();
     getExport('main_init')();
+    // Initialize blocks after main_init to ensure they aren't cleared
+    initializeDestructibleBlocks(module.runtime);
 
     // Force start at Level 0 (Attractor)
     // We loop backwards until we hit level 0
@@ -1246,6 +1303,9 @@ loadGravityWarsModule()
         soundManager.setSfxVolume(1.0);
         startScreen?.hide();
 
+        // Track game start event
+        trackGameStart();
+
         // Navigate to selected level
         // Level 0 is the Attractor, so selected Level 1 maps to engine level 1
         const targetLevel = selectedLevel;
@@ -1287,6 +1347,44 @@ loadGravityWarsModule()
       renderer.buildLevel(levelMap, tileAtlas);
     }
     wasmStatus = 'WASM module ready.';
+
+    // Debug Shortcut: Force level complete by clicking fuel area 3 times rapidly
+    const handleFuelClick = (clientX: number, clientY: number) => {
+      if (!gameStarted || lastGlobals?.levelnum === 0 || levelAdvancePending) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      // HUD Fuel is in top-right. In CSS pixels, x > width - 250, y < 80 is a safe bet.
+      const width = canvas.clientWidth;
+      if (x > width - 250 && y < 80) {
+        const now = performance.now();
+        if (now - lastFuelClickTime > 1000) {
+          fuelClickCount = 1;
+        } else {
+          fuelClickCount++;
+        }
+        lastFuelClickTime = now;
+
+        if (fuelClickCount >= 3) {
+          console.log('[Cheat] Rapid fuel clicks detected! Triggering level complete...');
+          fuelClickCount = 0;
+          handleLevelTransition(true);
+        }
+      }
+    };
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button === 0) handleFuelClick(e.clientX, e.clientY);
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) {
+        handleFuelClick(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    });
+
   })
   .catch((error) => {
     wasmStatus = `WASM unavailable: ${error.message}`;

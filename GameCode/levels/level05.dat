@@ -3,7 +3,7 @@ author	"P. Johannesson"
 comment "A lot of keys to collect.." 
 
 time	199
-fuel 	99	
+fuel 	120	
 
 	x	y	start	stop	frame	speed
 -----------------------------------------------------

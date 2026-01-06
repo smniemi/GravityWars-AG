@@ -11,6 +11,7 @@ export interface ShipSprites {
   specials: Record<number, HTMLCanvasElement>;
   noThrustBase?: HTMLImageElement | HTMLCanvasElement;
   thrustBase?: HTMLImageElement | HTMLCanvasElement;
+  isHighRes?: boolean;
 }
 
 let cachedHighResImages: {
@@ -169,6 +170,7 @@ export async function loadHighResShipTextures(sprites: ShipSprites): Promise<voi
 
   if (cachedHighResImages) {
     applyCachedHighRes(sprites, cachedHighResImages);
+    console.log('[HighRes] High-res ship textures applied (cached)');
     return;
   }
 
@@ -182,6 +184,7 @@ export async function loadHighResShipTextures(sprites: ShipSprites): Promise<voi
 
     cachedHighResImages = { base, thrust, expl, appear };
     applyCachedHighRes(sprites, cachedHighResImages);
+    console.log('[HighRes] High-res ship textures applied');
   } catch (err) {
     console.warn('Failed to load high-res ship textures', err);
   }
@@ -190,6 +193,7 @@ export async function loadHighResShipTextures(sprites: ShipSprites): Promise<voi
 function applyCachedHighRes(sprites: ShipSprites, cache: NonNullable<typeof cachedHighResImages>) {
   sprites.noThrustBase = cache.base;
   sprites.thrustBase = cache.thrust;
+  sprites.isHighRes = true;
 
   // Update specials with upscaled frames
   const extractFrames = (img: HTMLImageElement, count: number, startBlockId: number) => {

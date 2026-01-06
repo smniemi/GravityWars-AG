@@ -3,7 +3,7 @@ author	"P. Johannesson"
 comment "You gotta be fast..." 
 
 time 	40	
-fuel 	99	
+fuel 	120	
 
 	x	y	start	stop	frame	speed
 -----------------------------------------------------

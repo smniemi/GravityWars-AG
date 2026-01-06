@@ -3,7 +3,7 @@ author	"Sami Niemi"
 comment "Tough on your fuel" 
 
 time	150
-fuel 	99	
+fuel 	120	
 
 	x	y	start	stop	frame	speed
 -----------------------------------------------------

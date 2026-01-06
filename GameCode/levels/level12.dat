@@ -3,7 +3,7 @@ author	"Sami Niemi"
 comment "Start from down below.." 
 
 time	199
-fuel 	99	
+fuel 	120	
 
 	x	y	start	stop	frame	speed
 -----------------------------------------------------

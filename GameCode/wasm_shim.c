@@ -192,6 +192,16 @@ void wasm_restart_level(void) {
   gameOver = FALSE;
   shipThrust = 0;
   shipIsFiring = 0;
+
+  // Reset physics-related state that initParams() would reset
+  // These are NOT reset by main_init() but affect physics
+  thrust_len = 0;
+  waterMovementCount = 0;
+  bulletLoadtime = 0;
+  for (int n = 0; n <= N_BULLETS; n++) {
+    bullet[n].active = FALSE;
+  }
+
   main_init();
 
   // Restore score to what it was at start of level

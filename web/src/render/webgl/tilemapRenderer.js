@@ -107,7 +107,7 @@ export class TilemapRenderer {
             vec3 finalColor = texColor.rgb;
             
             // Normalize Alpha for output (markers like 254/255 become 1.0 for rendering)
-            float finalAlpha = 1.0; 
+            float finalAlpha = texColor.a; 
             
             // Check Alpha Markers
             // 254/255 = 0.996078 (Red)
@@ -119,7 +119,7 @@ export class TilemapRenderer {
             
             // Effects based on Object ID
             // Red Wall: '@' (64)
-            if (abs(v_objectId - 64.0) < 0.5) {
+            if (abs(v_objectId - 64.0) < 0.1) {
                 if (isRedMarker) {
                     // Pulse Brightness
                     // Speed 9.0
@@ -138,7 +138,7 @@ export class TilemapRenderer {
             }
             
             // Portal: 'x' (120)
-            if (abs(v_objectId - 120.0) < 0.5) {
+            if (abs(v_objectId - 120.0) < 0.1) {
                 if (isGreenMarker) {
                     // Pulse Brightness
                     // Speed 12.0

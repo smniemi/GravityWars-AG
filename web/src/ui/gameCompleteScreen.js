@@ -60,21 +60,28 @@ export class GameCompleteScreen {
                     animation: confetti 4s ease-in-out infinite;
                     pointer-events: none;
                 }
+                @media (max-width: 600px) {
+                    .gc-title { font-size: 32px !important; }
+                    .gc-subtitle { font-size: 16px !important; }
+                    .gc-desc { font-size: 14px !important; max-width: 80% !important; margin: 10px auto !important; }
+                    .menu-buttons { width: 180px !important; gap: 10px !important; }
+                    .galactic-label { font-size: 10px !important; letter-spacing: 4px !important; }
+                }
             </style>
             <div class="gc-starfield"></div>
-            <div style="text-align: center; position: relative; z-index: 10;">
-                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.7); letter-spacing: 8px; text-transform: uppercase; margin-bottom: 10px; font-family: monospace;">Mission Complete</div>
-                <h1 class="galactic-text" style="font-size: 48px; background: linear-gradient(180deg, #ffd700 0%, #ff8c00 50%, #ffd700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0 0 20px 0; animation: glow-pulse 2s ease-in-out infinite; filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); letter-spacing: 4px;">
+            <div style="text-align: center; position: relative; z-index: 10; width: 100%; padding: 0 20px; box-sizing: border-box;">
+                <div class="galactic-label" style="font-size: 14px; color: rgba(255, 255, 255, 0.7); letter-spacing: 8px; text-transform: uppercase; margin-bottom: 10px; font-family: monospace;">Mission Complete</div>
+                <h1 class="galactic-text gc-title" style="font-size: 48px; background: linear-gradient(180deg, #ffd700 0%, #ff8c00 50%, #ffd700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0 0 20px 0; animation: glow-pulse 2s ease-in-out infinite; filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); letter-spacing: 4px;">
                     CONGRATULATIONS!
                 </h1>
-                <div style="font-size: 20px; color: #0ff; margin: 10px 0; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);">
+                <div class="gc-subtitle" style="font-size: 20px; color: #0ff; margin: 10px 0; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);">
                     You have conquered all 13 levels!
                 </div>
-                <div style="font-size: 16px; color: rgba(255, 255, 255, 0.8); margin: 15px 0; max-width: 400px; line-height: 1.6;">
+                <div class="gc-desc" style="font-size: 16px; color: rgba(255, 255, 255, 0.8); margin: 15px auto; max-width: 400px; line-height: 1.6;">
                     The galaxy is safe once more. Your piloting skills are legendary across the cosmos.
                 </div>
-                <div style="height: 20px;"></div>
-                <div style="font-size: 24px; color: #fff; margin-top: 20px;">
+                <div style="height: 10px;"></div>
+                <div style="font-size: 24px; color: #fff; margin-top: 10px;">
                     FINAL SCORE: <span id="gc-score" style="color: #ffd700; font-weight: bold; text-shadow: 0 0 15px rgba(255, 215, 0, 0.7);">0</span>
                 </div>
             </div>

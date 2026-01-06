@@ -3,7 +3,7 @@ author	"P. Johannesson"
 comment "Careful with the barrels!" 
 
 time	199
-fuel 	99	
+fuel 	120	
 
 	x	y	start	stop	frame	speed
 -----------------------------------------------------

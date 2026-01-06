@@ -21,11 +21,19 @@ export class GameOverScreen {
         this.element.style.backdropFilter = 'blur(4px)';
 
         this.element.innerHTML = `
-            <div style="text-align: center; margin-bottom: 40px;">
-                <h1 id="go-level-name" class="galactic-text" style="font-size: 32px; margin: 0; color: ${this.SHIP_BLUE}; text-shadow: 0 0 10px rgba(46, 154, 254, 0.5); letter-spacing: 2px;">LEVEL NAME</h1>
+            <style>
+                @media (max-width: 600px) {
+                    .go-title { font-size: 24px !important; }
+                    .go-status { font-size: 18px !important; }
+                    .go-score { font-size: 16px !important; }
+                    .menu-buttons { width: 180px !important; }
+                }
+            </style>
+            <div style="text-align: center; margin-bottom: 40px; width: 100%; padding: 0 20px; box-sizing: border-box;">
+                <h1 id="go-level-name" class="galactic-text go-title" style="font-size: 32px; margin: 0; color: ${this.SHIP_BLUE}; text-shadow: 0 0 10px rgba(46, 154, 254, 0.5); letter-spacing: 2px;">LEVEL NAME</h1>
                 <div style="height: 30px;"></div>
-                <h2 style="font-size: 24px; color: #ff4444; font-weight: normal; margin: 10px 0; text-transform: uppercase;">You're out of lives</h2>
-                <div style="font-size: 18px; color: #fff; margin-top: 20px;">SCORE: <span id="go-score" style="color: #ff0;">0</span></div>
+                <h2 class="go-status" style="font-size: 24px; color: #ff4444; font-weight: normal; margin: 10px 0; text-transform: uppercase;">You're out of lives</h2>
+                <div class="go-score" style="font-size: 18px; color: #fff; margin-top: 20px;">SCORE: <span id="go-score" style="color: #ff0;">0</span></div>
             </div>
 
             <div class="menu-buttons" style="display: flex; flex-direction: column; gap: 15px; width: 220px;">

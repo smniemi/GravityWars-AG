@@ -115,6 +115,7 @@ export async function loadHighResShipTextures(sprites) {
     };
     if (cachedHighResImages) {
         applyCachedHighRes(sprites, cachedHighResImages);
+        console.log('[HighRes] High-res ship textures applied (cached)');
         return;
     }
     try {
@@ -126,6 +127,7 @@ export async function loadHighResShipTextures(sprites) {
         ]);
         cachedHighResImages = { base, thrust, expl, appear };
         applyCachedHighRes(sprites, cachedHighResImages);
+        console.log('[HighRes] High-res ship textures applied');
     }
     catch (err) {
         console.warn('Failed to load high-res ship textures', err);
@@ -134,6 +136,7 @@ export async function loadHighResShipTextures(sprites) {
 function applyCachedHighRes(sprites, cache) {
     sprites.noThrustBase = cache.base;
     sprites.thrustBase = cache.thrust;
+    sprites.isHighRes = true;
     // Update specials with upscaled frames
     const extractFrames = (img, count, startBlockId) => {
         const frameSize = 128;

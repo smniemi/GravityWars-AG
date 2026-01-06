@@ -3,7 +3,7 @@ author	"Sami Niemi"
 comment "Watch out for blowing winds.." 
 
 time	199
-fuel 	99	
+fuel 	120	
 
 	x	y	start	stop	frame	speed
 -----------------------------------------------------

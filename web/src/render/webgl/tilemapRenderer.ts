@@ -115,7 +115,7 @@ export class TilemapRenderer {
             vec3 finalColor = texColor.rgb;
             
             // Normalize Alpha for output (markers like 254/255 become 1.0 for rendering)
-            float finalAlpha = 1.0; 
+            float finalAlpha = texColor.a; 
             
             // Check Alpha Markers
             // 254/255 = 0.996078 (Red)
