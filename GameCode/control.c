@@ -15,6 +15,7 @@
 #include "SoundEngine.h"
 #endif
 
+#include <math.h>
 #include <unistd.h>
 
 extern int frame_number;
@@ -36,16 +37,26 @@ void control() {
 
     SoundEngine_StartEffect(sounds[kSound_Shoot]);
 
+    float bax, bay;
+    if (levelnum == 0) {
+      bax = angX[sa >> 9];
+      bay = angY[sa >> 9];
+    } else {
+      float theta = ((float)sa / 16384.0f) * 6.283185307f;
+      bax = (float)ACCEL * cosf(theta + 1.570796327f);
+      bay = -(float)ACCEL * sinf(theta + 1.570796327f);
+    }
+
     for (n = 0; n <= N_BULLETS; n++) { /* Shoots if there are free bullets */
 
       if (!bullet[n].active) {
         bullet[n].active = TRUE;
-        bullet[n].ang = angle = sa >> 9;
+        bullet[n].ang = sa >> 9;
         bullet[n].dis = 16;
-        bullet[n].xs = ((angX[angle] << 6) + (angX[angle] << 5) + sVx);
-        bullet[n].ys = ((angY[angle] << 6) + (angY[angle] << 5) + sVy + sVg);
-        bullet[n].x = sx + 16384 + (angX[angle] << 8) + (angX[angle] << 7);
-        bullet[n].y = sy + 16384 + (angY[angle] << 8) + (angY[angle] << 7);
+        bullet[n].xs = (int)(bax * 96.0f) + sVx;
+        bullet[n].ys = (int)(bay * 96.0f) + sVy + sVg;
+        bullet[n].x = sx + 16384 + (int)(bax * 384.0f);
+        bullet[n].y = sy + 16384 + (int)(bay * 384.0f);
 
         bulletLoadtime = 16;
         break;
@@ -63,9 +74,18 @@ void control() {
       play_sound(kSound_StopThrust);
     }
 
-    sVx += ((angX[sa >> 9] * friction * shipThrust / 2) >> 10);
-    tmp = (angY[sa >> 9] * friction * shipThrust / 2);
-    sVy += (tmp) >> 10;
+    float ax, ay;
+    if (levelnum == 0) {
+      ax = angX[sa >> 9];
+      ay = angY[sa >> 9];
+    } else {
+      float theta = ((float)sa / 16384.0f) * 6.283185307f;
+      ax = (float)ACCEL * cosf(theta + 1.570796327f);
+      ay = -(float)ACCEL * sinf(theta + 1.570796327f);
+    }
+
+    sVx += (int)(ax * friction * shipThrust / 2048.0f);
+    sVy += (int)(ay * friction * shipThrust / 2048.0f);
 
     shipThrustActivated = TRUE;
 

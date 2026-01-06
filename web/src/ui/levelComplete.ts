@@ -7,6 +7,8 @@ export class LevelCompleteScreen {
     private animationFrame: number | null = null;
     private onContinue: () => void = () => { };
     private pendingSubmissionAction: (() => void) | null = null;
+    private ignoreGlobalFetch: boolean = false;
+
 
     constructor(container: HTMLElement, onContinueCallback: () => void) {
         this.onContinue = onContinueCallback;
@@ -29,7 +31,7 @@ export class LevelCompleteScreen {
         this.element.style.cursor = 'pointer';
 
         this.element.innerHTML = `
-            <div class="lc-container" style="display: flex; gap: 40px; align-items: stretch; max-width: 900px;">
+            <div class="lc-container">
                 <!-- Left Panel: Stats -->
                 <div class="lc-panel stats-panel">
                     <h2 class="galactic-text section-title">MISSION REPORT</h2>
@@ -83,6 +85,17 @@ export class LevelCompleteScreen {
             <style>
                 .lc-container {
                     animation: slideUp 0.4s ease-out;
+                    display: flex;
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                    gap: 30px;
+                    align-items: stretch;
+                    justify-content: center;
+                    max-width: 95vw;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    padding: 20px;
+                    box-sizing: border-box;
                 }
                 @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
                 
@@ -92,6 +105,7 @@ export class LevelCompleteScreen {
                     border-radius: 12px;
                     padding: 30px;
                     width: 380px;
+                    max-width: 100%;
                     box-shadow: 0 0 20px rgba(0,0,0,0.5);
                     display: flex;
                     flex-direction: column;
@@ -251,7 +265,6 @@ export class LevelCompleteScreen {
 
         // Click for desktop
         this.element.addEventListener('click', (e) => {
-            if ((e.target as HTMLElement).id === 'lc-force-submit') return; // Allow button click
             e.preventDefault();
             e.stopPropagation();
             console.log('[LevelComplete] Click detected');
@@ -260,7 +273,6 @@ export class LevelCompleteScreen {
 
         // Touchend for mobile (more reliable than click on touch devices)
         this.element.addEventListener('touchend', (e) => {
-            if ((e.target as HTMLElement).id === 'lc-force-submit') return; // Allow button click
             e.preventDefault();
             e.stopPropagation();
             console.log('[LevelComplete] Touch detected');
@@ -315,6 +327,7 @@ export class LevelCompleteScreen {
         levelStartScore: number
     }) {
         this.isVisible = true;
+        this.ignoreGlobalFetch = false; // Reset on each show
         this.element.style.display = 'flex';
         // Trigger reflow
         void this.element.offsetWidth;
@@ -354,6 +367,7 @@ export class LevelCompleteScreen {
             .order('score', { ascending: false })
             .limit(1)
             .then(({ data, error }) => {
+                if (this.ignoreGlobalFetch) return; // Don't overwrite if user just submitted!
                 if (!error && data && data.length > 0) {
                     const top = data[0];
                     let holderText = `Held by: ${top.player_name || 'Unknown'}`;
@@ -595,6 +609,7 @@ export class LevelCompleteScreen {
         }
 
         console.log(`[High Score] Submitting: ${name} (${score}) from ${location}`);
+        this.ignoreGlobalFetch = true; // Lock the UI record display
 
         // OPTIMISTIC UI UPDATE: Immediately show new high score if we beat what's on screen
         const highEl = this.element.querySelector('#lc-high');
@@ -673,17 +688,19 @@ export class LevelCompleteScreen {
                     background: rgba(10, 20, 30, 0.95);
                     border: 2px solid #0af;
                     border-radius: 12px;
-                    padding: 40px;
+                    padding: 30px 15px;
                     box-shadow: 0 0 30px rgba(0, 200, 255, 0.4), inset 0 0 20px rgba(0,0,0,0.5);
                     text-align: center;
                     width: 440px;
+                    max-width: 95vw;
                     position: relative;
+                    box-sizing: border-box;
                 }
                 .name-input-group {
                     display: flex;
                     justify-content: center;
-                    gap: 8px;
-                    margin: 25px 0;
+                    gap: 6px;
+                    margin: 20px 0;
                 }
                 .char-input {
                     background: rgba(0, 20, 40, 0.8);
@@ -691,9 +708,9 @@ export class LevelCompleteScreen {
                     border-radius: 6px;
                     color: #fff;
                     font-family: 'Courier New', monospace;
-                    font-size: 28px;
-                    width: 42px;
-                    height: 56px;
+                    font-size: 24px;
+                    width: min(42px, 11vw);
+                    height: 52px;
                     text-align: center;
                     text-transform: uppercase;
                     outline: none;
@@ -710,11 +727,11 @@ export class LevelCompleteScreen {
                     background: linear-gradient(180deg, #004444, #002222);
                     border: 1px solid #0ff;
                     color: #0ff;
-                    padding: 12px 40px;
+                    padding: 12px 30px;
                     font-family: monospace;
-                    font-size: 20px;
+                    font-size: 18px;
                     cursor: pointer;
-                    margin-top: 20px;
+                    margin-top: 15px;
                     text-transform: uppercase;
                     transition: all 0.2s;
                     border-radius: 4px;

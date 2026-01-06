@@ -2,6 +2,7 @@ const SPRITE_SIZE = 32;
 const FRAME_COUNT = 32;
 const VARIANT_STRIDE = FRAME_COUNT * SPRITE_SIZE * SPRITE_SIZE;
 const BLOCK_PIXELS = SPRITE_SIZE * SPRITE_SIZE;
+let cachedHighResImages = null;
 export function createShipSprites(runtime, specialBlockIds) {
     const palettePtr = resolveFunction(runtime, 'get_palette_buffer')();
     const shipPtr = resolveFunction(runtime, 'get_ship_buffer')();
@@ -10,10 +11,14 @@ export function createShipSprites(runtime, specialBlockIds) {
     const shipRaw = new Uint8Array(runtime.HEAPU8.buffer, shipPtr, VARIANT_STRIDE * 4);
     const blockRaw = new Uint8Array(runtime.HEAPU8.buffer, blockPtr, (216 + 38) * BLOCK_PIXELS);
     const palette = buildPalette(paletteRaw);
+    const noThrust = buildVariant(shipRaw, 0, palette);
+    const thrust = buildVariant(shipRaw, 2, palette);
     return {
-        noThrust: buildVariant(shipRaw, 0, palette),
-        thrust: buildVariant(shipRaw, 2, palette),
-        specials: buildSpecialSprites(blockRaw, palette, specialBlockIds)
+        noThrust,
+        thrust,
+        specials: buildSpecialSprites(blockRaw, palette, specialBlockIds),
+        noThrustBase: noThrust[0],
+        thrustBase: thrust[0]
     };
 }
 function buildVariant(shipRaw, variantIndex, palette) {
@@ -99,3 +104,50 @@ function resolveFunction(runtime, name) {
     throw new Error(`Unable to resolve wasm export ${name}`);
 }
 export const SHIP_SPRITE_SIZE = SPRITE_SIZE;
+export async function loadHighResShipTextures(sprites) {
+    const loadImg = (src) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+        });
+    };
+    if (cachedHighResImages) {
+        applyCachedHighRes(sprites, cachedHighResImages);
+        return;
+    }
+    try {
+        const [base, thrust, expl, appear] = await Promise.all([
+            loadImg('assets/sprites/ship_base_highres.png'),
+            loadImg('assets/sprites/ship_thrust_highres.png'),
+            loadImg('assets/sprites/explosion_4x.png'),
+            loadImg('assets/sprites/appear_4x.png')
+        ]);
+        cachedHighResImages = { base, thrust, expl, appear };
+        applyCachedHighRes(sprites, cachedHighResImages);
+    }
+    catch (err) {
+        console.warn('Failed to load high-res ship textures', err);
+    }
+}
+function applyCachedHighRes(sprites, cache) {
+    sprites.noThrustBase = cache.base;
+    sprites.thrustBase = cache.thrust;
+    // Update specials with upscaled frames
+    const extractFrames = (img, count, startBlockId) => {
+        const frameSize = 128;
+        for (let i = 0; i < count; i++) {
+            const canvas = document.createElement('canvas');
+            canvas.width = frameSize;
+            canvas.height = frameSize;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(img, i * frameSize, 0, frameSize, frameSize, 0, 0, frameSize, frameSize);
+                sprites.specials[startBlockId + i] = canvas;
+            }
+        }
+    };
+    extractFrames(cache.expl, 5, 45); // SHIP_IMAGE.EXPLODE_1 starts at block 45
+    extractFrames(cache.appear, 5, 157); // SHIP_IMAGE.APPEAR_1 starts at block 157
+}

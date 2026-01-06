@@ -30,6 +30,9 @@ export class WebGLRenderer {
         thrust: Texture[];
         noThrust: Texture[];
         specials: Record<number, Texture>;
+        // High-res non-rotated base textures
+        thrustBase: Texture | null;
+        noThrustBase: Texture | null;
     } | null = null;
 
     viewport: ViewportInfo = { cameraX: 0, cameraY: 0, zoom: 4.0 };
@@ -66,11 +69,17 @@ export class WebGLRenderer {
     }
 
     setTileAtlas(atlas: TileAtlas) {
+        if (this.atlasTexture && (this.atlasTexture as any).lastSource === atlas.canvas) {
+            (this.atlasTexture as any).isHighRes = atlas.isHighRes;
+            return;
+        }
         if (this.atlasTexture) {
             this.atlasTexture.dispose();
         }
         this.atlasTexture = new Texture(this.gl);
         this.atlasTexture.setImage(atlas.canvas);
+        (this.atlasTexture as any).lastSource = atlas.canvas;
+        (this.atlasTexture as any).isHighRes = atlas.isHighRes;
     }
 
     private currentBackgroundUrl: string | null = null;
@@ -187,26 +196,51 @@ export class WebGLRenderer {
 
         this.spriteBatch.flush();
     }
-
     setShipSprites(sprites: ShipSprites) {
+        // Simple comparison to prevent re-creation during dynamic block updates
+        if (this.shipTextures && (this.shipTextures as any).lastSource === sprites) {
+            return;
+        }
+
+        // Dispose existing
+        if (this.shipTextures) {
+            this.shipTextures.thrust.forEach(t => t.dispose());
+            this.shipTextures.noThrust.forEach(t => t.dispose());
+            Object.values(this.shipTextures.specials).forEach(t => t.dispose());
+            this.shipTextures.thrustBase?.dispose();
+            this.shipTextures.noThrustBase?.dispose();
+        }
+
         this.shipTextures = {
-            thrust: sprites.thrust.map(img => {
+            thrust: sprites.thrust.map((img: HTMLCanvasElement) => {
                 const tex = new Texture(this.gl);
                 tex.setImage(img);
                 return tex;
             }),
-            noThrust: sprites.noThrust.map(img => {
+            noThrust: sprites.noThrust.map((img: HTMLCanvasElement) => {
                 const tex = new Texture(this.gl);
                 tex.setImage(img);
                 return tex;
             }),
-            specials: {}
+            specials: {},
+            noThrustBase: null,
+            thrustBase: null
         };
+        (this.shipTextures as any).lastSource = sprites;
 
         for (const [id, img] of Object.entries(sprites.specials)) {
             const tex = new Texture(this.gl);
-            tex.setImage(img);
+            tex.setImage(img as HTMLCanvasElement);
             this.shipTextures.specials[Number(id)] = tex;
+        }
+
+        if (sprites.noThrustBase && this.shipTextures) {
+            this.shipTextures.noThrustBase = new Texture(this.gl);
+            this.shipTextures.noThrustBase.setImage(sprites.noThrustBase as HTMLCanvasElement);
+        }
+        if (sprites.thrustBase && this.shipTextures) {
+            this.shipTextures.thrustBase = new Texture(this.gl);
+            this.shipTextures.thrustBase.setImage(sprites.thrustBase as HTMLCanvasElement);
         }
     }
 
@@ -449,11 +483,39 @@ export class WebGLRenderer {
         // 1. Standard Ship (Thrust/No Thrust)
         if (image === 0 || image === 1) { // NO_THRUST or THRUST
             if (this.shipTextures) {
-                const orientation = ((globals.sa ?? 0) >>> 9) & 31;
-                const variant = image === 1 ? this.shipTextures.thrust : this.shipTextures.noThrust;
-                const tex = variant[orientation];
-                if (tex) {
-                    this.spriteBatch.draw(tex, x, y, SHIP_SPRITE_SIZE, SHIP_SPRITE_SIZE, 0, 0, 1, 1, color);
+                const angleRad = ((globals.sa ?? 0) / 16384) * Math.PI * 2;
+                // Note: sa=0 is UP in game logic. 
+                // In standard math/canvas, 0 is RIGHT, -PI/2 is UP.
+                // Our SpriteBatch rotation logic: rx = x * cos - y * sin, ry = x * sin + y * cos
+                // This is a standard CCW rotation.
+                // Game logic rotates sa CW? Let's check. Default sa=0 is facing UP.
+                // Re-calculating rotation for WebGL coordinates.
+                const renderRotation = -angleRad; // Rotate CCW based on sa
+
+                const baseTex = image === 1 ? this.shipTextures.thrustBase : this.shipTextures.noThrustBase;
+
+                if (baseTex) {
+                    // Use single high-res base texture with rotation
+                    this.spriteBatch.draw(
+                        baseTex,
+                        x + SHIP_SPRITE_SIZE / 2,
+                        y + SHIP_SPRITE_SIZE / 2,
+                        SHIP_SPRITE_SIZE,
+                        SHIP_SPRITE_SIZE,
+                        0, 0, 1, 1,
+                        color,
+                        renderRotation,
+                        SHIP_SPRITE_SIZE / 2,
+                        SHIP_SPRITE_SIZE / 2
+                    );
+                } else {
+                    // Fallback to pre-rotated low-res sprites
+                    const orientation = ((globals.sa ?? 0) >>> 9) & 31;
+                    const variant = image === 1 ? this.shipTextures.thrust : this.shipTextures.noThrust;
+                    const tex = variant[orientation];
+                    if (tex) {
+                        this.spriteBatch.draw(tex, x, y, SHIP_SPRITE_SIZE, SHIP_SPRITE_SIZE, 0, 0, 1, 1, color);
+                    }
                 }
             }
         }
@@ -552,8 +614,8 @@ export class WebGLRenderer {
                 const atlasHeight = atlas.canvas.height;
                 const u0 = pos.sx / atlasWidth;
                 const v0 = pos.sy / atlasHeight;
-                const u1 = (pos.sx + 32) / atlasWidth;
-                const v1 = (pos.sy + 32) / atlasHeight;
+                const u1 = (pos.sx + atlas.tileSize) / atlasWidth;
+                const v1 = (pos.sy + atlas.tileSize) / atlasHeight;
 
                 // Actions are usually 32x32
                 const TILE_SIZE = 32;

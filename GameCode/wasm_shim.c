@@ -60,8 +60,8 @@ typedef struct {
   int32_t shipState;
   int32_t shipActive;
   int32_t shipThrust;
-  int32_t sx;
-  int32_t sy;
+  float sx;
+  float sy;
   int32_t shipFuel;
   float shipTime;
   int32_t shipLife;
@@ -79,8 +79,13 @@ void *get_global_state(void) {
   wasmGlobals.shipState = shipState.state;
   wasmGlobals.shipActive = shipState.active;
   wasmGlobals.shipThrust = shipThrust;
-  wasmGlobals.sx = sx >> STEP;
-  wasmGlobals.sy = sy >> STEP;
+  if (levelnum == 0) {
+    wasmGlobals.sx = (float)(sx >> STEP);
+    wasmGlobals.sy = (float)(sy >> STEP);
+  } else {
+    wasmGlobals.sx = (float)sx / (float)(1 << STEP);
+    wasmGlobals.sy = (float)sy / (float)(1 << STEP);
+  }
   wasmGlobals.shipFuel = ShipFuel;
   wasmGlobals.shipTime = ShipTime;
   wasmGlobals.shipLife = ShipLife;

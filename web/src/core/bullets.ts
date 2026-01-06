@@ -29,8 +29,8 @@ export function createBulletReader(runtime: GravityWarsRuntime) {
         const rawY = view.getInt32(offset + OFFSET_Y, true);
         bullets.push({
           id: i,
-          x: rawX >> FIXED_POINT_SHIFT,
-          y: rawY >> FIXED_POINT_SHIFT,
+          x: rawX / (1 << FIXED_POINT_SHIFT),
+          y: rawY / (1 << FIXED_POINT_SHIFT),
           active
         });
       }

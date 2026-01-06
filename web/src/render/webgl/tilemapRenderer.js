@@ -208,8 +208,8 @@ export class TilemapRenderer {
                 const halfPixelY = 0.5 / atlasHeight;
                 const u0 = pos.sx / atlasWidth + halfPixelX;
                 const v0 = pos.sy / atlasHeight + halfPixelY;
-                const u1 = (pos.sx + TILE_SIZE) / atlasWidth - halfPixelX;
-                const v1 = (pos.sy + TILE_SIZE) / atlasHeight - halfPixelY;
+                const u1 = (pos.sx + atlas.tileSize) / atlasWidth - halfPixelX;
+                const v1 = (pos.sy + atlas.tileSize) / atlasHeight - halfPixelY;
                 // Cast objectId to float
                 const id = objectId;
                 // Triangle 1

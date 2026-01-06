@@ -2,7 +2,7 @@ const BLOCK_SIZE = 32;
 const BLOCK_COUNT = 216 + 38; // Matches C definition block[216 + N_DESTROYEABLE]
 const PALETTE_SIZE = 256;
 const PALETTE_BYTES = PALETTE_SIZE * 3;
-const ATLAS_COLUMNS = 16;
+const ATLAS_COLUMNS = 9;
 export function createTileAtlas(runtime) {
     const palettePtr = resolveFunction(runtime, 'get_palette_buffer')();
     const palette = new Uint8Array(runtime.HEAPU8.buffer, palettePtr, PALETTE_BYTES);
@@ -64,6 +64,39 @@ export function createTileAtlas(runtime) {
         tileSize: BLOCK_SIZE,
         positions
     };
+}
+let cachedHighResAtlas = null;
+export async function loadHighResTileAtlas(atlas) {
+    const applyAtlas = (img) => {
+        atlas.canvas = img;
+        atlas.isHighRes = true;
+        atlas.positions = atlas.positions.map(p => ({
+            sx: p.sx * 4,
+            sy: p.sy * 4
+        }));
+        atlas.tileSize = 128;
+    };
+    if (cachedHighResAtlas) {
+        applyAtlas(cachedHighResAtlas);
+        return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            try {
+                cachedHighResAtlas = img;
+                applyAtlas(img);
+                resolve();
+            }
+            catch (e) {
+                reject(e);
+            }
+        };
+        img.onerror = () => {
+            reject(new Error('Failed to load high-res blocks atlas'));
+        };
+        img.src = 'assets/sprites/blocks_4x.png';
+    });
 }
 function scalePaletteComponent(value) {
     // Palette components are 0-63; scale to 0-255 while clamping

@@ -9,7 +9,16 @@ export interface ShipSprites {
   noThrust: HTMLCanvasElement[];
   thrust: HTMLCanvasElement[];
   specials: Record<number, HTMLCanvasElement>;
+  noThrustBase?: HTMLImageElement | HTMLCanvasElement;
+  thrustBase?: HTMLImageElement | HTMLCanvasElement;
 }
+
+let cachedHighResImages: {
+  base: HTMLImageElement;
+  thrust: HTMLImageElement;
+  expl: HTMLImageElement;
+  appear: HTMLImageElement;
+} | null = null;
 
 export function createShipSprites(
   runtime: GravityWarsRuntime,
@@ -28,11 +37,15 @@ export function createShipSprites(
   );
 
   const palette = buildPalette(paletteRaw);
+  const noThrust = buildVariant(shipRaw, 0, palette);
+  const thrust = buildVariant(shipRaw, 2, palette);
 
   return {
-    noThrust: buildVariant(shipRaw, 0, palette),
-    thrust: buildVariant(shipRaw, 2, palette),
-    specials: buildSpecialSprites(blockRaw, palette, specialBlockIds)
+    noThrust,
+    thrust,
+    specials: buildSpecialSprites(blockRaw, palette, specialBlockIds),
+    noThrustBase: noThrust[0],
+    thrustBase: thrust[0]
   };
 }
 
@@ -143,4 +156,57 @@ function resolveFunction(runtime: GravityWarsRuntime, name: string): PtrFn {
 }
 
 export const SHIP_SPRITE_SIZE = SPRITE_SIZE;
+
+export async function loadHighResShipTextures(sprites: ShipSprites): Promise<void> {
+  const loadImg = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  };
+
+  if (cachedHighResImages) {
+    applyCachedHighRes(sprites, cachedHighResImages);
+    return;
+  }
+
+  try {
+    const [base, thrust, expl, appear] = await Promise.all([
+      loadImg('assets/sprites/ship_base_highres.png'),
+      loadImg('assets/sprites/ship_thrust_highres.png'),
+      loadImg('assets/sprites/explosion_4x.png'),
+      loadImg('assets/sprites/appear_4x.png')
+    ]);
+
+    cachedHighResImages = { base, thrust, expl, appear };
+    applyCachedHighRes(sprites, cachedHighResImages);
+  } catch (err) {
+    console.warn('Failed to load high-res ship textures', err);
+  }
+}
+
+function applyCachedHighRes(sprites: ShipSprites, cache: NonNullable<typeof cachedHighResImages>) {
+  sprites.noThrustBase = cache.base;
+  sprites.thrustBase = cache.thrust;
+
+  // Update specials with upscaled frames
+  const extractFrames = (img: HTMLImageElement, count: number, startBlockId: number) => {
+    const frameSize = 128;
+    for (let i = 0; i < count; i++) {
+      const canvas = document.createElement('canvas');
+      canvas.width = frameSize;
+      canvas.height = frameSize;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, i * frameSize, 0, frameSize, frameSize, 0, 0, frameSize, frameSize);
+        sprites.specials[startBlockId + i] = canvas;
+      }
+    }
+  };
+
+  extractFrames(cache.expl, 5, 45);    // SHIP_IMAGE.EXPLODE_1 starts at block 45
+  extractFrames(cache.appear, 5, 157); // SHIP_IMAGE.APPEAR_1 starts at block 157
+}
 

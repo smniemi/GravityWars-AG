@@ -1,7 +1,7 @@
 import './style.css';
-import { createTileAtlas, type TileAtlas } from './render/tileAtlas.js';
+import { createTileAtlas, loadHighResTileAtlas, type TileAtlas } from './render/tileAtlas.js';
 import { SoundManager } from './core/sound.js';
-import { createShipSprites, type ShipSprites } from './render/shipSprites.js';
+import { createShipSprites, loadHighResShipTextures, type ShipSprites } from './render/shipSprites.js';
 import { WebGLRenderer } from './render/webgl/renderer.js';
 import { drawHUD } from './ui/hud.js';
 import { Joystick } from './ui/joystick.js';
@@ -753,6 +753,15 @@ const loop = new GameLoop(({ deltaMs }) => {
       renderer.setTileAtlas(tileAtlas);
       renderer.buildLevel(levelMap, tileAtlas);
       console.log('[gravitywars] WebGL level built');
+
+      // Upgrade to high-res asynchronously
+      loadHighResTileAtlas(tileAtlas).then(() => {
+        if (tileAtlas && levelMap) {
+          renderer.setTileAtlas(tileAtlas);
+          renderer.buildLevel(levelMap, tileAtlas);
+          console.log('[gravitywars] WebGL high-res tiles loaded');
+        }
+      });
     } catch (error) {
       console.error('Failed to build level', error);
     }
@@ -763,6 +772,14 @@ const loop = new GameLoop(({ deltaMs }) => {
       shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
       renderer.setShipSprites(shipSprites);
       joystick.setShipSprites(shipSprites);
+
+      // Upgrade to high-res asynchronously
+      loadHighResShipTextures(shipSprites).then(() => {
+        if (shipSprites) {
+          renderer.setShipSprites(shipSprites);
+          joystick.setShipSprites(shipSprites);
+        }
+      });
     } catch (error) {
       console.error('Failed to build ship sprites', error);
     }
@@ -813,9 +830,31 @@ const loop = new GameLoop(({ deltaMs }) => {
 
       if (lastGlobals.dynamicBlocksChanged) {
         if (runtime?.runtime) {
-          tileAtlas = createTileAtlas(runtime.runtime);
-          shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
+          // Re-create the logical tile atlas from WASM memory (the index map)
+          const newTileAtlas = createTileAtlas(runtime.runtime);
+
+          // If we have a cached high-res version, upgrade the new atlas immediately
+          // before bothering the renderer. This prevents the low-res flicker.
+          if (tileAtlas?.isHighRes) {
+            // Transfer high-res state to the new object
+            newTileAtlas.isHighRes = true;
+            newTileAtlas.canvas = tileAtlas.canvas;
+            newTileAtlas.tileSize = 128;
+            newTileAtlas.positions = newTileAtlas.positions.map(p => ({
+              sx: p.sx * 4,
+              sy: p.sy * 4
+            }));
+          }
+
+          tileAtlas = newTileAtlas;
+
+          // Only re-create ship sprites if strictly necessary or keep them high-res if they were
+          const newShipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
+          // Sync high-res ship parts if they were already loaded
+          loadHighResShipTextures(newShipSprites).catch(() => { });
+          shipSprites = newShipSprites;
         }
+
         if (levelMap && tileAtlas) {
           renderer.setTileAtlas(tileAtlas);
           renderer.setShipSprites(shipSprites!);
@@ -1099,7 +1138,7 @@ const loop = new GameLoop(({ deltaMs }) => {
     // Render Joystick
     if (isMobile && gameStarted) {
       if (lastGlobals) {
-        // Calculate ship angle in radians (same as renderer)
+        // Calculate ship angle in radians (CCW from UP)
         const shipAngle = ((lastGlobals.sa % 16384) / 16384) * Math.PI * 2;
         joystick.setShipDisplayAngle(shipAngle);
       }

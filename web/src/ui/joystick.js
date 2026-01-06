@@ -17,11 +17,13 @@ export class Joystick {
     SMOOTHING = 0.15;
     // Ship sprite reference
     shipSprites = null;
+    shipBase = null;
     // External ship angle to display
     shipDisplayAngle = 0;
     constructor() { }
     setShipSprites(sprites) {
         this.shipSprites = sprites.noThrust;
+        this.shipBase = sprites.noThrustBase ?? null;
     }
     setShipDisplayAngle(angle) {
         this.shipDisplayAngle = angle;
@@ -106,41 +108,55 @@ export class Joystick {
         ctx.stroke();
         /***** Draw Ships First *****/
         // 2. Draw Ghost Ship
-        if (this.shipSprites && this.shipSprites.length > 0) {
-            ctx.save();
-            ctx.globalAlpha = 0.3; // Faint ghost
-            ctx.filter = 'grayscale(100%) blur(1px)';
+        ctx.save();
+        ctx.globalAlpha = 0.3; // Faint ghost
+        ctx.filter = 'grayscale(100%) blur(1px)';
+        // Formula: currentAngle + PI/2 to make UP (0 in texture) match currentAngle.
+        let ghostAngle = this.currentAngle + Math.PI / 2;
+        ctx.translate(this.x, this.y);
+        ctx.rotate(ghostAngle);
+        if (this.shipBase) {
+            const drawSize = this.knobRadius;
+            ctx.drawImage(this.shipBase, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+        }
+        else if (this.shipSprites && this.shipSprites.length > 0) {
             const frameCount = this.shipSprites.length;
-            // Formula: -currentAngle - PI/2.
-            let ghostAngle = -this.currentAngle - Math.PI / 2;
-            while (ghostAngle < 0)
-                ghostAngle += Math.PI * 2;
-            while (ghostAngle >= Math.PI * 2)
-                ghostAngle -= Math.PI * 2;
-            const ghostFrameIndex = Math.round((ghostAngle / (Math.PI * 2)) * frameCount) % frameCount;
+            let tempAngle = ghostAngle;
+            while (tempAngle < 0)
+                tempAngle += Math.PI * 2;
+            while (tempAngle >= Math.PI * 2)
+                tempAngle -= Math.PI * 2;
+            const ghostFrameIndex = Math.round((tempAngle / (Math.PI * 2)) * frameCount) % frameCount;
             const ghostSprite = this.shipSprites[ghostFrameIndex];
             if (ghostSprite) {
                 const drawSize = this.knobRadius;
-                ctx.drawImage(ghostSprite, this.x - drawSize / 2, this.y - drawSize / 2, drawSize, drawSize);
+                ctx.drawImage(ghostSprite, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
             }
-            ctx.restore();
         }
+        ctx.restore();
         // 3. Draw Main Ship
         ctx.save();
         ctx.globalAlpha = 0.75;
         ctx.filter = 'blur(1px)';
-        if (this.shipSprites && this.shipSprites.length > 0) {
-            const frameCount = this.shipSprites.length;
-            let normalizedAngle = this.shipDisplayAngle;
-            while (normalizedAngle < 0)
-                normalizedAngle += Math.PI * 2;
-            while (normalizedAngle >= Math.PI * 2)
-                normalizedAngle -= Math.PI * 2;
-            const frameIndex = Math.round((normalizedAngle / (Math.PI * 2)) * frameCount) % frameCount;
-            const sprite = this.shipSprites[frameIndex];
-            if (sprite) {
-                const drawSize = this.knobRadius;
-                ctx.drawImage(sprite, this.x - drawSize / 2, this.y - drawSize / 2, drawSize, drawSize);
+        if (this.shipBase || (this.shipSprites && this.shipSprites.length > 0)) {
+            ctx.translate(this.x, this.y);
+            ctx.rotate(-this.shipDisplayAngle); // Negative for CCW rotation from UP
+            const drawSize = this.knobRadius;
+            if (this.shipBase) {
+                ctx.drawImage(this.shipBase, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+            }
+            else if (this.shipSprites && this.shipSprites.length > 0) {
+                const frameCount = this.shipSprites.length;
+                let normalizedAngle = this.shipDisplayAngle;
+                while (normalizedAngle < 0)
+                    normalizedAngle += Math.PI * 2;
+                while (normalizedAngle >= Math.PI * 2)
+                    normalizedAngle -= Math.PI * 2;
+                const frameIndex = Math.round((normalizedAngle / (Math.PI * 2)) * frameCount) % frameCount;
+                const sprite = this.shipSprites[frameIndex];
+                if (sprite) {
+                    ctx.drawImage(sprite, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+                }
             }
         }
         else {

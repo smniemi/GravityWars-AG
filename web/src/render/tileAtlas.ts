@@ -4,12 +4,13 @@ const BLOCK_SIZE = 32;
 const BLOCK_COUNT = 216 + 38; // Matches C definition block[216 + N_DESTROYEABLE]
 const PALETTE_SIZE = 256;
 const PALETTE_BYTES = PALETTE_SIZE * 3;
-const ATLAS_COLUMNS = 16;
+const ATLAS_COLUMNS = 9;
 
 export interface TileAtlas {
-  canvas: HTMLCanvasElement;
+  canvas: HTMLCanvasElement | HTMLImageElement;
   tileSize: number;
   positions: Array<{ sx: number; sy: number }>;
+  isHighRes?: boolean;
 }
 
 export function createTileAtlas(runtime: GravityWarsRuntime): TileAtlas {
@@ -78,12 +79,49 @@ export function createTileAtlas(runtime: GravityWarsRuntime): TileAtlas {
     atlasCtx.putImageData(imageData, dx, dy);
     positions.push({ sx: dx, sy: dy });
   }
-
   return {
     canvas: atlasCanvas,
     tileSize: BLOCK_SIZE,
     positions
   };
+}
+
+let cachedHighResAtlas: HTMLImageElement | null = null;
+
+export async function loadHighResTileAtlas(atlas: TileAtlas): Promise<void> {
+  if (atlas.isHighRes) return Promise.resolve();
+
+  const applyAtlas = (img: HTMLImageElement) => {
+    atlas.canvas = img;
+    atlas.isHighRes = true;
+    atlas.positions = atlas.positions.map(p => ({
+      sx: p.sx * 4,
+      sy: p.sy * 4
+    }));
+    atlas.tileSize = 128;
+  };
+
+  if (cachedHighResAtlas) {
+    applyAtlas(cachedHighResAtlas);
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        cachedHighResAtlas = img;
+        applyAtlas(img);
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    };
+    img.onerror = () => {
+      reject(new Error('Failed to load high-res blocks atlas'));
+    };
+    img.src = 'assets/sprites/blocks_4x.png';
+  });
 }
 
 function scalePaletteComponent(value: number) {

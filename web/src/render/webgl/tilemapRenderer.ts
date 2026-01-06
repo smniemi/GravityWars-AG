@@ -127,7 +127,7 @@ export class TilemapRenderer {
             
             // Effects based on Object ID
             // Red Wall: '@' (64)
-            if (abs(v_objectId - 64.0) < 0.5) {
+            if (abs(v_objectId - 64.0) < 0.1) {
                 if (isRedMarker) {
                     // Pulse Brightness
                     // Speed 9.0
@@ -146,7 +146,7 @@ export class TilemapRenderer {
             }
             
             // Portal: 'x' (120)
-            if (abs(v_objectId - 120.0) < 0.5) {
+            if (abs(v_objectId - 120.0) < 0.1) {
                 if (isGreenMarker) {
                     // Pulse Brightness
                     // Speed 12.0
@@ -233,8 +233,8 @@ export class TilemapRenderer {
 
                 const u0 = pos.sx / atlasWidth + halfPixelX;
                 const v0 = pos.sy / atlasHeight + halfPixelY;
-                const u1 = (pos.sx + TILE_SIZE) / atlasWidth - halfPixelX;
-                const v1 = (pos.sy + TILE_SIZE) / atlasHeight - halfPixelY;
+                const u1 = (pos.sx + atlas.tileSize) / atlasWidth - halfPixelX;
+                const v1 = (pos.sy + atlas.tileSize) / atlasHeight - halfPixelY;
 
                 // Cast objectId to float
                 const id = objectId;

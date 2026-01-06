@@ -182,6 +182,9 @@ export class SoundManager {
 
     private async fetchAndDecode(url: string): Promise<AudioBuffer> {
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const arrayBuffer = await response.arrayBuffer();
         return await this.context!.decodeAudioData(arrayBuffer);
     }

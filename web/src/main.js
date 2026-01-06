@@ -1,7 +1,7 @@
 import './style.css';
-import { createTileAtlas } from './render/tileAtlas.js';
+import { createTileAtlas, loadHighResTileAtlas } from './render/tileAtlas.js';
 import { SoundManager } from './core/sound.js';
-import { createShipSprites } from './render/shipSprites.js';
+import { createShipSprites, loadHighResShipTextures } from './render/shipSprites.js';
 import { WebGLRenderer } from './render/webgl/renderer.js';
 import { drawHUD } from './ui/hud.js';
 import { Joystick } from './ui/joystick.js';
@@ -26,15 +26,14 @@ import { runSupabaseTest } from './core/supabaseTest.js';
 function getBackgroundNameForLevel(levelNum) {
     const bgIndex = levelNum % 7;
     switch (bgIndex) {
-        //case 0: return 'back5_park_v2.jpg';
-        case 0: return 'back4_park.jpg';
-        case 1: return 'back_nebula.jpg';
-        case 2: return 'back_park.JPG';
-        case 3: return 'back2_park.JPG';
-        case 4: return 'back3_park.JPG';
-        case 5: return 'back4_park.JPG';
-        case 6: return 'back_park.JPG';
-        default: return 'space.jpg';
+        case 0: return 'back5_park_v2.jpg';
+        case 1: return 'back_nebula_v2.jpg';
+        case 2: return 'back_park_v2.JPG';
+        case 3: return 'back2_park_v2.JPG';
+        case 4: return 'back3_park_v2.JPG';
+        case 5: return 'back4_park_v2.JPG';
+        case 6: return 'back_park_v2.JPG';
+        default: return 'space_v2.jpg';
     }
 }
 /**
@@ -629,6 +628,14 @@ const loop = new GameLoop(({ deltaMs }) => {
             renderer.setTileAtlas(tileAtlas);
             renderer.buildLevel(levelMap, tileAtlas);
             console.log('[gravitywars] WebGL level built');
+            // Upgrade to high-res asynchronously
+            loadHighResTileAtlas(tileAtlas).then(() => {
+                if (tileAtlas && levelMap) {
+                    renderer.setTileAtlas(tileAtlas);
+                    renderer.buildLevel(levelMap, tileAtlas);
+                    console.log('[gravitywars] WebGL high-res tiles loaded');
+                }
+            });
         }
         catch (error) {
             console.error('Failed to build level', error);
@@ -639,6 +646,13 @@ const loop = new GameLoop(({ deltaMs }) => {
             shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
             renderer.setShipSprites(shipSprites);
             joystick.setShipSprites(shipSprites);
+            // Upgrade to high-res asynchronously
+            loadHighResShipTextures(shipSprites).then(() => {
+                if (shipSprites) {
+                    renderer.setShipSprites(shipSprites);
+                    joystick.setShipSprites(shipSprites);
+                }
+            });
         }
         catch (error) {
             console.error('Failed to build ship sprites', error);
@@ -692,6 +706,23 @@ const loop = new GameLoop(({ deltaMs }) => {
                     renderer.setShipSprites(shipSprites);
                     joystick.setShipSprites(shipSprites);
                     renderer.buildLevel(levelMap, tileAtlas);
+                    // Re-apply high-res upgrade (don't crash if missing/incomplete)
+                    loadHighResTileAtlas(tileAtlas).catch(() => {
+                        console.warn('High-res tile atlas not ready yet');
+                    }).then(() => {
+                        if (tileAtlas && levelMap) {
+                            renderer.setTileAtlas(tileAtlas);
+                            renderer.buildLevel(levelMap, tileAtlas);
+                        }
+                    });
+                    loadHighResShipTextures(shipSprites).catch(() => {
+                        console.warn('High-res ship textures not ready yet');
+                    }).then(() => {
+                        if (shipSprites) {
+                            renderer.setShipSprites(shipSprites);
+                            joystick.setShipSprites(shipSprites);
+                        }
+                    });
                 }
                 clearDynamicBlocks?.();
             }
@@ -935,7 +966,7 @@ const loop = new GameLoop(({ deltaMs }) => {
         // Render Joystick
         if (isMobile && gameStarted) {
             if (lastGlobals) {
-                // Calculate ship angle in radians (same as renderer)
+                // Calculate ship angle in radians (CCW from UP)
                 const shipAngle = ((lastGlobals.sa % 16384) / 16384) * Math.PI * 2;
                 joystick.setShipDisplayAngle(shipAngle);
             }

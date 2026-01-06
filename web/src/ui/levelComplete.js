@@ -5,6 +5,7 @@ export class LevelCompleteScreen {
     animationFrame = null;
     onContinue = () => { };
     pendingSubmissionAction = null;
+    ignoreGlobalFetch = false;
     constructor(container, onContinueCallback) {
         this.onContinue = onContinueCallback;
         this.element = document.createElement('div');
@@ -295,6 +296,7 @@ export class LevelCompleteScreen {
     };
     show(stats) {
         this.isVisible = true;
+        this.ignoreGlobalFetch = false; // Reset on each show
         this.element.style.display = 'flex';
         // Trigger reflow
         void this.element.offsetWidth;
@@ -326,6 +328,8 @@ export class LevelCompleteScreen {
             .order('score', { ascending: false })
             .limit(1)
             .then(({ data, error }) => {
+            if (this.ignoreGlobalFetch)
+                return; // Don't overwrite if user just submitted!
             if (!error && data && data.length > 0) {
                 const top = data[0];
                 let holderText = `Held by: ${top.player_name || 'Unknown'}`;
@@ -548,6 +552,7 @@ export class LevelCompleteScreen {
             }
         }
         console.log(`[High Score] Submitting: ${name} (${score}) from ${location}`);
+        this.ignoreGlobalFetch = true; // Lock the UI record display
         // OPTIMISTIC UI UPDATE: Immediately show new high score if we beat what's on screen
         const highEl = this.element.querySelector('#lc-high');
         const highHolderEl = this.element.querySelector('#lc-high-holder');
