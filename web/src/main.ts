@@ -891,19 +891,11 @@ const loop = new GameLoop(({ deltaMs }) => {
         lastBgName = bgName;
       }
 
+      // Reset the dynamicBlocksChanged flag in C memory
+      // Note: The actual texture updates are already handled efficiently by
+      // updateDynamicBlocks + syncDynamicAtlas above (lines 851-855).
+      // We only need to clear the flag here - no need to recreate everything.
       if (lastGlobals.dynamicBlocksChanged) {
-        if (runtime?.runtime) {
-          tileAtlas = createTileAtlas(runtime.runtime);
-          shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
-          applyHighResUpgrades(tileAtlas, shipSprites);
-        }
-
-        if (levelMap && tileAtlas) {
-          renderer.setTileAtlas(tileAtlas);
-          renderer.setShipSprites(shipSprites!);
-          joystick.setShipSprites(shipSprites!);
-          renderer.buildLevel(levelMap, tileAtlas);
-        }
         clearDynamicBlocks?.();
       }
       soundManager.update(lastGlobals, actionStates, levelMap);
