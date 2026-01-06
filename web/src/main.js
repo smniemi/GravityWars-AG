@@ -19,13 +19,15 @@ import { GameOverScreen } from './ui/gameOverScreen.js';
 import { LevelIntroScreen } from './ui/levelIntroScreen.js';
 import { GameCompleteScreen } from './ui/gameCompleteScreen.js';
 import { LevelCompleteScreen } from './ui/levelComplete.js';
+import { runSupabaseTest } from './core/supabaseTest.js';
 /**
  * Get the background image name for a given level number.
  */
 function getBackgroundNameForLevel(levelNum) {
     const bgIndex = levelNum % 7;
     switch (bgIndex) {
-        case 0: return 'back5_park.JPG';
+        //case 0: return 'back5_park_v2.jpg';
+        case 0: return 'back4_park.jpg';
         case 1: return 'back_nebula.jpg';
         case 2: return 'back_park.JPG';
         case 3: return 'back2_park.JPG';
@@ -51,6 +53,8 @@ function createRoot() {
 }
 // Debug log to verify version
 console.log('[Main] App Version: 1.0.1 (Relative Paths Configured)');
+// Temporary Supabase Connectivity Test
+runSupabaseTest();
 const canvas = document.createElement('canvas');
 canvas.width = 960;
 canvas.height = 540;
@@ -658,8 +662,8 @@ const loop = new GameLoop(({ deltaMs }) => {
             previousShipStatus = lastShipState.state;
             previousShipActive = lastShipState.active;
         }
-        if (keyboard?.state.rotate) {
-            const ROT_SPEED = 0.005; // Adjust rotation speed
+        if (keyboard?.state.rotate && lastShipState && lastShipState.state === 0 && lastShipState.active === 1) {
+            const ROT_SPEED = 0.008; // Adjust rotation speed
             joystick.rotate(keyboard.state.rotate * ROT_SPEED * deltaMs);
         }
         else if (joystick && !joystick.isTouching && joystick.active) {
