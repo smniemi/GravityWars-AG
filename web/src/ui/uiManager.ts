@@ -37,6 +37,7 @@ export class UIManager {
         levelName: string,
         time: number,
         fuel: number,
+        lives: number,
         currentScore: number,
         levelIndex: number,
         levelStartScore: number

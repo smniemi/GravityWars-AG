@@ -19,6 +19,29 @@ import { GameOverScreen } from './ui/gameOverScreen.js';
 import { LevelIntroScreen } from './ui/levelIntroScreen.js';
 import { GameCompleteScreen } from './ui/gameCompleteScreen.js';
 import { LevelCompleteScreen } from './ui/levelComplete.js';
+/**
+ * Get the background image name for a given level number.
+ */
+function getBackgroundNameForLevel(levelNum) {
+    const bgIndex = levelNum % 7;
+    switch (bgIndex) {
+        case 0: return 'back5_park.JPG';
+        case 1: return 'back_nebula.jpg';
+        case 2: return 'back_park.JPG';
+        case 3: return 'back2_park.JPG';
+        case 4: return 'back3_park.JPG';
+        case 5: return 'back4_park.JPG';
+        case 6: return 'back_park.JPG';
+        default: return 'space.jpg';
+    }
+}
+/**
+ * Get the full background URL for a given level number.
+ */
+function getBackgroundUrlForLevel(levelNum) {
+    const bgName = getBackgroundNameForLevel(levelNum);
+    return `assets/backgrounds/${bgName}`;
+}
 const root = document.getElementById('app') ?? createRoot();
 function createRoot() {
     const el = document.createElement('div');
@@ -445,7 +468,7 @@ function readWasmString(ptr, runtime) {
     let str = new TextDecoder().decode(memory.subarray(ptr, end));
     return str.replace(/"/g, '');
 }
-function playLevelIntro() {
+async function playLevelIntro() {
     if (!runtime || !controls)
         return;
     if (!levelIntroScreen) {
@@ -453,6 +476,15 @@ function playLevelIntro() {
     }
     levelIntroActive = true;
     gameStarted = true; // Ensure rendering happens
+    // Preload the background for the current level BEFORE reloading level data
+    // This prevents the old background from showing before the new one loads
+    if (globalsReader) {
+        const levelNum = globalsReader.read().levelnum;
+        const bgUrl = getBackgroundUrlForLevel(levelNum);
+        console.log(`[Main] Preloading background: ${bgUrl} for level ${levelNum}`);
+        await renderer.setBackgroundImage(bgUrl);
+        lastBgName = getBackgroundNameForLevel(levelNum);
+    }
     reloadLevel();
     // Capture start score for PB calculation
     if (globalsReader) {
@@ -539,9 +571,11 @@ function handleLevelTransition() {
             // We need to capture the current stats before they are reset by advanceLevel
             const bonusTime = lastGlobals.shipTime; // Assuming time is remaining
             const bonusFuel = lastGlobals.shipFuel;
-            const timeBonus = Math.floor(bonusTime * 10);
-            const fuelBonus = Math.floor(bonusFuel);
-            const totalBonus = timeBonus + fuelBonus;
+            const bonusLives = lastGlobals.shipLife;
+            const timeBonus = Math.floor(bonusTime * 5);
+            const fuelBonus = Math.floor(bonusFuel * 2);
+            const livesBonus = Math.floor(bonusLives * 1000);
+            const totalBonus = timeBonus + fuelBonus + livesBonus;
             // Update callback for this specific level transition
             levelCompleteScreen.setOnContinue(() => {
                 if (controls && advanceLevel) {
@@ -556,7 +590,9 @@ function handleLevelTransition() {
                         levelStartScore = newState.shipScore;
                     }
                     playLevelIntro();
-                    console.log(`[LevelComplete] Added score: ${totalBonus} (Time: ${bonusTime.toFixed(1)}*10 + Fuel: ${bonusFuel}). Level ${nextLevel} unlocked.`);
+                    console.log(`[LevelComplete] Added score: ${totalBonus} (Time: ${bonusTime.toFixed(1)}*5 + Fuel: ${bonusFuel}*2 + Lives: ${bonusLives}*1000). Level ${nextLevel} unlocked.`);
+                    // Reset pending flag now that we've advanced
+                    levelAdvancePending = false;
                 }
             });
             const getLevelNamePtr = getExport('get_current_level_name');
@@ -565,13 +601,15 @@ function handleLevelTransition() {
                 levelName: levelName,
                 time: bonusTime,
                 fuel: bonusFuel,
+                lives: bonusLives,
                 currentScore: lastGlobals.shipScore, // This is current score BEFORE bonus
                 levelIndex: lastGlobals.levelnum,
                 levelStartScore: levelStartScore
             });
         }
     }
-    levelAdvancePending = false;
+    // NOTE: levelAdvancePending stays true while level complete screen is visible
+    // It will be reset when onContinue is called (user clicks/taps)
 }
 let lastBgName = '';
 let levelStartScore = 0;
@@ -579,6 +617,8 @@ let introDemoFrame = 0;
 let demoData = null;
 let demoCount = 0;
 let rotationHoldStart = 0; // Track when rotation key was first pressed
+let previousShipStatus = 0;
+let previousShipActive = 0;
 const loop = new GameLoop(({ deltaMs }) => {
     if (levelMap && tileAtlas && !renderer.atlasTexture) {
         try {
@@ -594,6 +634,7 @@ const loop = new GameLoop(({ deltaMs }) => {
         try {
             shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
             renderer.setShipSprites(shipSprites);
+            joystick.setShipSprites(shipSprites);
         }
         catch (error) {
             console.error('Failed to build ship sprites', error);
@@ -608,42 +649,33 @@ const loop = new GameLoop(({ deltaMs }) => {
         getExport('animate')();
         if (shipReader) {
             lastShipState = shipReader.read();
+            // Check for crash (state 1), respawn (1->0 state), or ANY active transition (death/spawn)
+            if ((lastShipState.state === 1 && previousShipStatus !== 1) ||
+                (lastShipState.state === 0 && previousShipStatus === 1) ||
+                (lastShipState.active !== previousShipActive)) {
+                joystick.reset();
+            }
+            previousShipStatus = lastShipState.state;
+            previousShipActive = lastShipState.active;
+        }
+        if (keyboard?.state.rotate) {
+            const ROT_SPEED = 0.005; // Adjust rotation speed
+            joystick.rotate(keyboard.state.rotate * ROT_SPEED * deltaMs);
+        }
+        else if (joystick && !joystick.isTouching && joystick.active) {
+            // If no key rotation and not touching, deactivate to stop highlighting/lerping
+            joystick.active = false;
         }
         if (globalsReader) {
             lastGlobals = globalsReader.read();
             // Update background only when level changes or on initial load
+            // Note: Background is preloaded in playLevelIntro(), so this is just a fallback
             const levelNum = lastGlobals.levelnum;
-            const bgIndex = levelNum % 7;
-            let bgName = 'space.jpg';
-            switch (bgIndex) {
-                case 0:
-                    bgName = 'back5_park.JPG';
-                    break;
-                case 1:
-                    bgName = 'back_nebula.jpg';
-                    break;
-                case 2:
-                    bgName = 'back_park.JPG';
-                    break;
-                case 3:
-                    bgName = 'back2_park.JPG';
-                    break;
-                case 4:
-                    bgName = 'back3_park.JPG';
-                    break;
-                case 5:
-                    bgName = 'back4_park.JPG';
-                    break;
-                case 6:
-                    bgName = 'back_park.JPG';
-                    break;
-            }
+            const bgName = getBackgroundNameForLevel(levelNum);
             if (bgName !== lastBgName) {
-                if (!bgName || bgName === 'undefined') {
-                    bgName = 'space.jpg';
-                }
                 console.log(`[Main] Switching background to: ${bgName} for level ${levelNum}`);
-                renderer.setBackgroundImage(`assets/backgrounds/${bgName}`);
+                // Use the Promise-based API but don't await (fire-and-forget in game loop)
+                renderer.setBackgroundImage(getBackgroundUrlForLevel(levelNum));
                 lastBgName = bgName;
             }
             if (lastGlobals.dynamicBlocksChanged) {
@@ -654,6 +686,7 @@ const loop = new GameLoop(({ deltaMs }) => {
                 if (levelMap && tileAtlas) {
                     renderer.setTileAtlas(tileAtlas);
                     renderer.setShipSprites(shipSprites);
+                    joystick.setShipSprites(shipSprites);
                     renderer.buildLevel(levelMap, tileAtlas);
                 }
                 clearDynamicBlocks?.();
@@ -681,7 +714,7 @@ const loop = new GameLoop(({ deltaMs }) => {
         if (controls && keyboard) {
             const { thrust, fire, rotate, nextLevel, prevLevel } = keyboard.state;
             // Use same thrust value for both mobile and desktop for consistent physics
-            const thrustValue = 24;
+            const thrustValue = 18;
             if (gameStarted && !levelIntroActive) {
                 // Apply analog thrust if available (thrust is 0-1)
                 controls.setThrust(thrust * thrustValue);
@@ -789,9 +822,30 @@ const loop = new GameLoop(({ deltaMs }) => {
             if (!gameOverScreen) {
                 gameOverScreen = new GameOverScreen(root, 
                 // Replay
+                // Replay
                 () => {
-                    controls?.restartLevel();
-                    reloadLevel();
+                    if (controls && globalsReader) {
+                        const targetLevel = globalsReader.read().levelnum;
+                        // Reset game state to restore lives (sets level to 1, score to 0)
+                        getExport('main_init')();
+                        // Navigate back to the level we were on
+                        let current = globalsReader.read().levelnum;
+                        let attempts = 0;
+                        while (current !== targetLevel && attempts < 100) {
+                            if (current < targetLevel) {
+                                controls.nextLevel();
+                            }
+                            else {
+                                controls.prevLevel();
+                            }
+                            current = globalsReader.read().levelnum;
+                            attempts++;
+                        }
+                        // Reset level start score since this is effectively a new game
+                        levelStartScore = 0;
+                        controls.restartLevel();
+                        reloadLevel();
+                    }
                 }, 
                 // Menu
                 () => {
@@ -848,7 +902,8 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
     }
     if (levelMap) {
-        renderer.drawWorld(levelMap, lastGlobals, lastShipState, SHIP_BLOCK_MAP);
+        const isIntroLevel = lastGlobals?.levelnum === 0;
+        renderer.drawWorld(levelMap, lastGlobals, lastShipState, SHIP_BLOCK_MAP, isIntroLevel);
     }
     if (lastGlobals && lastShipState) {
         renderer.drawShip(lastGlobals, lastShipState, SHIP_BLOCK_MAP);
@@ -875,6 +930,11 @@ const loop = new GameLoop(({ deltaMs }) => {
         // Render Joystick
         // Render Joystick
         if (isMobile && gameStarted) {
+            if (lastGlobals) {
+                // Calculate ship angle in radians (same as renderer)
+                const shipAngle = ((lastGlobals.sa % 16384) / 16384) * Math.PI * 2;
+                joystick.setShipDisplayAngle(shipAngle);
+            }
             joystick.render(uiCtx);
             fireButton.render(uiCtx);
             thrustButton.render(uiCtx);
@@ -896,12 +956,15 @@ const loop = new GameLoop(({ deltaMs }) => {
 });
 function reloadLevel() {
     if (runtime?.runtime) {
-        levelMap = createLevelMap(runtime.runtime);
+        const currentLevel = globalsReader?.read().levelnum ?? 0;
+        levelMap = createLevelMap(runtime.runtime, currentLevel);
         tileAtlas = createTileAtlas(runtime.runtime);
         shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
         if (levelMap && tileAtlas) {
             renderer.setTileAtlas(tileAtlas);
             renderer.setShipSprites(shipSprites);
+            joystick.setShipSprites(shipSprites);
+            joystick.reset();
             renderer.buildLevel(levelMap, tileAtlas);
         }
     }
@@ -914,7 +977,7 @@ loadGravityWarsModule()
     runtime = module;
     shipReader = createShipStateReader(module.runtime);
     globalsReader = createGlobalStateReader(module.runtime);
-    levelMap = createLevelMap(module.runtime);
+    levelMap = createLevelMap(module.runtime, 0); // Starting at level 0 (intro)
     controls = createControls(module.runtime);
     clearDynamicBlocks = resolveZeroArgFunction(module.runtime, 'wasm_clear_dynamic_blocks');
     advanceLevel = resolveZeroArgFunction(module.runtime, 'wasm_advance_level');
@@ -992,6 +1055,7 @@ loadGravityWarsModule()
     if (levelMap && tileAtlas) {
         renderer.setTileAtlas(tileAtlas);
         renderer.setShipSprites(shipSprites);
+        joystick.setShipSprites(shipSprites);
         renderer.buildLevel(levelMap, tileAtlas);
     }
     wasmStatus = 'WASM module ready.';

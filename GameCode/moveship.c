@@ -15,8 +15,14 @@
 
 void setDefaultWaterValues(void) {
   // Default water values
-  gravity = 12;
-  lift_thrust = 15;
+  // Level 00 uses old physics values to maintain intro animation timing
+  if (levelnum == 0) {
+    gravity = 12;
+    lift_thrust = 15;
+  } else {
+    gravity = 9;
+    lift_thrust = 11;
+  }
   medium = 700;
   friction = 600;
   shipFlagInWater = 1;
@@ -26,8 +32,14 @@ void setDefaultWaterValues(void) {
 void setDefaultAirValues(void) {
 
   // Default Air Values
-  gravity = 20;
-  lift_thrust = 10;
+  // Level 00 uses old physics values to maintain intro animation timing
+  if (levelnum == 0) {
+    gravity = 20;
+    lift_thrust = 10;
+  } else {
+    gravity = 15;
+    lift_thrust = 8;
+  }
   medium = 900;
   friction = 700;
   shipFlagInWater = 0;

@@ -169,7 +169,7 @@ export class WebGLRenderer {
     // 4. Walls
     // 5. Ship (handled by caller currently, but can be moved later if needed, though Shadow is distinct)
     // Actually, caller handles Main Ship. We handle Ship Shadow here.
-    drawWorld(map, globals, shipState, shipBlockMap) {
+    drawWorld(map, globals, shipState, shipBlockMap, isIntroLevel = false) {
         if (!this.atlasTexture)
             return;
         // Ensure state is correct
@@ -178,11 +178,26 @@ export class WebGLRenderer {
         this.gl.disable(this.gl.DEPTH_TEST); // 2D game, usually painter's algo
         // 1. Setup Camera
         if (globals) {
-            const minZoom = this.calculateOptimalZoom(map.width, map.height);
-            const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
-            const baseZoom = isMobile ? 2.0 : 4.0;
-            this.viewport.zoom = Math.max(baseZoom, minZoom);
-            this.clampCamera(map.width, map.height, globals.sx, globals.sy);
+            if (isIntroLevel) {
+                // Intro screen: zoom to show exactly 15x10 tiles (480x320 world pixels)
+                // Fixed camera at top-left (0,0) to show only the playable area
+                const INTRO_VISIBLE_WIDTH = 15 * 32; // 480 pixels
+                const INTRO_VISIBLE_HEIGHT = 10 * 32; // 320 pixels
+                // Calculate zoom to fit the 15x10 area on screen
+                // We need to show at most 480x320 world pixels
+                const zoomForWidth = this.canvas.width / INTRO_VISIBLE_WIDTH;
+                const zoomForHeight = this.canvas.height / INTRO_VISIBLE_HEIGHT;
+                this.viewport.zoom = Math.max(zoomForWidth, zoomForHeight);
+                // Allow camera to follow ship, but clamp to the 15x10 intro area
+                this.clampCamera(15, 10, globals.sx, globals.sy);
+            }
+            else {
+                const minZoom = this.calculateOptimalZoom(map.width, map.height);
+                const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
+                const baseZoom = isMobile ? 2.0 : 4.0;
+                this.viewport.zoom = Math.max(baseZoom, minZoom);
+                this.clampCamera(map.width, map.height, globals.sx, globals.sy);
+            }
             if (globals.shipState === 2 && this.lastShipState !== 2) {
                 this.shockwaveActive = true;
                 this.shockwaveStartTime = performance.now() / 1000;

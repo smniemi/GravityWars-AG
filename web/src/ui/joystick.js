@@ -3,9 +3,9 @@ export class Joystick {
     y = 0;
     radius = 50; // Default, will be updated on resize
     knobRadius = 20;
-    // Current knob position relative to center
-    dragX = 0;
-    dragY = 0;
+    // Indicator (Small Circle) size
+    // 2x larger than before (was 10, now 20)
+    indicatorRadius = 20;
     active = false;
     touchId = null;
     // Output values
@@ -15,22 +15,45 @@ export class Joystick {
     currentAngle = -Math.PI / 2;
     targetAngle = -Math.PI / 2;
     SMOOTHING = 0.15;
+    // Ship sprite reference
+    shipSprites = null;
+    // External ship angle to display
+    shipDisplayAngle = 0;
     constructor() { }
+    setShipSprites(sprites) {
+        this.shipSprites = sprites.noThrust;
+    }
+    setShipDisplayAngle(angle) {
+        this.shipDisplayAngle = angle;
+    }
+    get isTouching() {
+        return this.touchId !== null;
+    }
+    rotate(delta) {
+        if (this.touchId !== null)
+            return; // Touch priority
+        this.targetAngle += delta;
+        this.active = true;
+    }
+    reset() {
+        this.active = false;
+        this.touchId = null;
+        this.currentAngle = -Math.PI / 2; // Reset to Up
+        this.targetAngle = -Math.PI / 2;
+        this.angle = this.currentAngle;
+    }
     setPosition(x, y, radius) {
         this.x = x;
         this.y = y;
         this.radius = radius;
-        this.knobRadius = radius / 4;
-        // Initialize position on the rim (right side by default)
-        this.updateKnobPosition();
+        this.knobRadius = radius * 1.6;
     }
     handleTouchStart(x, y, id) {
         const dx = x - this.x;
         const dy = y - this.y;
-        // Increased touch area for better usability
         const dist = Math.sqrt(dx * dx + dy * dy);
-        // Allow touching anywhere inside a slightly larger area (1.2x radius)
-        if (dist <= this.radius * 1.5) {
+        // Logic: Actionable only on the rim +- indicatorRadius
+        if (Math.abs(dist - this.radius) <= this.indicatorRadius * 1.5) {
             this.active = true;
             this.touchId = id;
             this.updateTarget(dx, dy);
@@ -49,19 +72,13 @@ export class Joystick {
         if (this.active && this.touchId === id) {
             this.active = false;
             this.touchId = null;
-            // Don't reset angle, let it stay where it is (like a dial)
         }
     }
     updateTarget(dx, dy) {
         this.targetAngle = Math.atan2(dy, dx);
     }
-    updateKnobPosition() {
-        this.dragX = Math.cos(this.currentAngle) * this.radius;
-        this.dragY = Math.sin(this.currentAngle) * this.radius;
-    }
     lerpAngle(start, end, t) {
         let diff = end - start;
-        // Normalize diff to -PI to PI
         while (diff > Math.PI)
             diff -= Math.PI * 2;
         while (diff < -Math.PI)
@@ -72,41 +89,83 @@ export class Joystick {
         if (this.active) {
             this.currentAngle = this.lerpAngle(this.currentAngle, this.targetAngle, this.SMOOTHING);
         }
-        // Normalize current angle
         while (this.currentAngle > Math.PI)
             this.currentAngle -= Math.PI * 2;
         while (this.currentAngle < -Math.PI)
             this.currentAngle += Math.PI * 2;
         this.angle = this.currentAngle;
-        this.updateKnobPosition();
-        // Magnitude is always 1 because it's always on the rim?
-        // Or should it be 0 if not active? 
-        // Request says "drag the middle button along the rim to rotate".
-        // Current implementation is rotation only right? So magnitude might not matter as much, 
-        // but for compatibility lets say magnitude is 1.
         this.magnitude = 1.0;
     }
     render(ctx) {
-        this.update(); // Update physics/interpretation every frame
-        // Draw Perimeter path (track)
+        this.update();
+        // 1. Draw Perimeter path (track)
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 4;
         ctx.stroke();
-        // Draw Knob on the rim
-        const knobX = this.x + this.dragX;
-        const knobY = this.y + this.dragY;
+        /***** Draw Ships First *****/
+        // 2. Draw Ghost Ship
+        if (this.shipSprites && this.shipSprites.length > 0) {
+            ctx.save();
+            ctx.globalAlpha = 0.3; // Faint ghost
+            ctx.filter = 'grayscale(100%) blur(1px)';
+            const frameCount = this.shipSprites.length;
+            // Formula: -currentAngle - PI/2.
+            let ghostAngle = -this.currentAngle - Math.PI / 2;
+            while (ghostAngle < 0)
+                ghostAngle += Math.PI * 2;
+            while (ghostAngle >= Math.PI * 2)
+                ghostAngle -= Math.PI * 2;
+            const ghostFrameIndex = Math.round((ghostAngle / (Math.PI * 2)) * frameCount) % frameCount;
+            const ghostSprite = this.shipSprites[ghostFrameIndex];
+            if (ghostSprite) {
+                const drawSize = this.knobRadius;
+                ctx.drawImage(ghostSprite, this.x - drawSize / 2, this.y - drawSize / 2, drawSize, drawSize);
+            }
+            ctx.restore();
+        }
+        // 3. Draw Main Ship
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        ctx.filter = 'blur(1px)';
+        if (this.shipSprites && this.shipSprites.length > 0) {
+            const frameCount = this.shipSprites.length;
+            let normalizedAngle = this.shipDisplayAngle;
+            while (normalizedAngle < 0)
+                normalizedAngle += Math.PI * 2;
+            while (normalizedAngle >= Math.PI * 2)
+                normalizedAngle -= Math.PI * 2;
+            const frameIndex = Math.round((normalizedAngle / (Math.PI * 2)) * frameCount) % frameCount;
+            const sprite = this.shipSprites[frameIndex];
+            if (sprite) {
+                const drawSize = this.knobRadius;
+                ctx.drawImage(sprite, this.x - drawSize / 2, this.y - drawSize / 2, drawSize, drawSize);
+            }
+        }
+        else {
+            // Fallback
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.shipDisplayAngle + Math.PI / 2);
+            ctx.beginPath();
+            ctx.moveTo(0, -20);
+            ctx.lineTo(-10, 20);
+            ctx.lineTo(10, 20);
+            ctx.closePath();
+            ctx.fillStyle = this.active ? 'rgba(100, 180, 255, 0.9)' : 'rgba(100, 180, 255, 0.6)';
+            ctx.fill();
+        }
+        ctx.restore();
+        /***** Draw Input Indicator (Circle) ON TOP *****/
+        const edgeX = this.x + Math.cos(this.currentAngle) * this.radius;
+        const edgeY = this.y + Math.sin(this.currentAngle) * this.radius;
+        // Draw visual indicator ring
         ctx.beginPath();
-        ctx.arc(knobX, knobY, this.knobRadius, 0, Math.PI * 2);
-        ctx.fillStyle = this.active ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.6)';
+        ctx.arc(edgeX, edgeY, this.indicatorRadius, 0, Math.PI * 2);
+        // "transparent ... on top".
+        // Use overlapping alpha.
+        ctx.fillStyle = this.active ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.4)'; // Slightly more transparent for overlay?
         ctx.fill();
-        // Draw connector line for visual clarity
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(knobX, knobY);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Connector Line REMOVED
     }
 }

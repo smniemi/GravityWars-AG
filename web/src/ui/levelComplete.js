@@ -32,6 +32,9 @@ export class LevelCompleteScreen {
                     <div style="text-align: right;">SCORE</div>
                     <div id="lc-base-score" style="color: #fff;">0</div>
 
+                    <div style="text-align: right;">LIVES BONUS</div>
+                    <div id="lc-lives-bonus" style="color: #fff;">0</div>
+
                     <div style="text-align: right;">TIME BONUS</div>
                     <div id="lc-time-bonus" style="color: #fff;">0</div>
                     
@@ -131,14 +134,13 @@ export class LevelCompleteScreen {
         const nameEl = this.element.querySelector('#lc-level-name');
         if (nameEl)
             nameEl.textContent = stats.levelName;
-        const timeBonus = Math.floor(stats.time * 10);
-        const fuelBonus = Math.floor(stats.fuel);
-        const totalBonus = timeBonus + fuelBonus;
-        // Level Score = Points collected in level + Time Bonus + Fuel Bonus
-        // Since we reset ShipScore at level start now, currentScore IS the points collected.
-        // Wait, currentScore is shipScore from WASM. If we reset at start, it is just score obtained.
-        // So Final Score for this level = currentScore + bonuses.
-        const levelTotalScore = stats.currentScore + totalBonus;
+        const livesBonus = Math.floor(stats.lives * 1000);
+        const timeBonus = Math.floor(stats.time * 5);
+        const fuelBonus = Math.floor(stats.fuel * 2);
+        const displayedBaseScore = Math.floor(stats.currentScore * 10);
+        const totalBonus = livesBonus + timeBonus + fuelBonus;
+        // Level Score = (Points collected * 10) + Lives Bonus + Time Bonus + Fuel Bonus
+        const levelTotalScore = displayedBaseScore + totalBonus;
         // Local Storage Handling
         const storageKey = `gw_pb_level_${stats.levelIndex}`;
         const storedPbStr = localStorage.getItem(storageKey);
@@ -172,17 +174,20 @@ export class LevelCompleteScreen {
             highEl.classList.remove('record-pulse');
         // Main Animation Setup
         const baseScoreEl = this.element.querySelector('#lc-base-score');
+        const livesBonusEl = this.element.querySelector('#lc-lives-bonus');
         const timeBonusEl = this.element.querySelector('#lc-time-bonus');
         const fuelBonusEl = this.element.querySelector('#lc-fuel-bonus');
         const scoreEl = this.element.querySelector('#lc-score');
         if (baseScoreEl)
-            baseScoreEl.textContent = stats.currentScore.toLocaleString();
+            baseScoreEl.textContent = displayedBaseScore.toLocaleString();
+        if (livesBonusEl)
+            livesBonusEl.textContent = `+${livesBonus}`;
         if (timeBonusEl)
             timeBonusEl.textContent = `+${timeBonus}`;
         if (fuelBonusEl)
             fuelBonusEl.textContent = `+${fuelBonus}`;
         if (scoreEl)
-            scoreEl.textContent = stats.currentScore.toLocaleString(); // Start at base score
+            scoreEl.textContent = displayedBaseScore.toLocaleString(); // Start at base score
         console.log('[LevelComplete] Starting animation:', {
             currentScore: stats.currentScore,
             totalBonus,
@@ -203,7 +208,7 @@ export class LevelCompleteScreen {
             // Ease out cubic
             const ease = 1 - Math.pow(1 - progress, 3);
             const currentAdd = Math.floor(totalBonus * ease);
-            const currentDisplayedScore = stats.currentScore + currentAdd;
+            const currentDisplayedScore = displayedBaseScore + currentAdd;
             if (scoreEl)
                 scoreEl.textContent = currentDisplayedScore.toLocaleString();
             // Trigger "New Record" animations once the main score has finished counting up

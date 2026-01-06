@@ -57,6 +57,7 @@ export function drawHUD(ctx, globals) {
     ctx.textAlign = 'left';
     ctx.fillText('Lives:', rightLabelX, padding + fontSize * 1.5);
     ctx.textAlign = 'right';
-    ctx.fillText(`${globals.shipLife}`, valueRightEdge, padding + fontSize * 1.5);
+    const displayedLives = Math.max(0, globals.shipLife - 1);
+    ctx.fillText(`${displayedLives}`, valueRightEdge, padding + fontSize * 1.5);
     ctx.restore();
 }
