@@ -1,6 +1,6 @@
 import type { GlobalState } from '../core/globalState.js';
 
-export function drawHUD(ctx: CanvasRenderingContext2D, globals: GlobalState) {
+export function drawHUD(ctx: CanvasRenderingContext2D, globals: GlobalState, scoreFlashIntensity: number = 0) {
     const { width } = ctx.canvas;
     const padding = 20;
     const fontSize = 30;
@@ -19,11 +19,51 @@ export function drawHUD(ctx: CanvasRenderingContext2D, globals: GlobalState) {
     const leftLabelX = padding;
     const leftValueX = padding + ctx.measureText('Score: ').width; // Use longer label for column
 
+    // Score Flash Logic
+    const flashIntensity = Math.max(0, Math.min(1, scoreFlashIntensity));
+
+    // Interpolate between White (#ffffff) and Yellow (#ffff00)
+    // White: 255, 255, 255
+    // Yellow: 255, 255, 0
+    // The only difference is Blue channel: 255 -> 0 based on intensity
+    const blueChannel = Math.round(255 * (1 - flashIntensity));
+    const scoreColor = `rgb(255, 255, ${blueChannel})`;
+
+    // Scale font size up to 25% larger
+    // Scale font size up to 2x larger (100% increase)
+    const currentFontSize = fontSize * (1 + (flashIntensity * 1.0));
+
     ctx.textAlign = 'left';
     ctx.fillText('Level:', leftLabelX, padding);
     ctx.fillText(`${globals.levelnum}`, leftValueX, padding);
     ctx.fillText('Score:', leftLabelX, padding + fontSize * 1.5);
-    ctx.fillText(`${globals.shipScore}`, leftValueX, padding + fontSize * 1.5);
+
+    ctx.save();
+
+    // Calculate center based on NORMAL font size
+    ctx.font = `${fontSize}px 'Galactic', monospace`;
+    const scoreStr = `${globals.shipScore}`;
+    const scoreWidth = ctx.measureText(scoreStr).width;
+    const centerX = leftValueX + (scoreWidth / 2);
+    // Vertical center: Start Y + Half Height
+    // Start Y is (padding + fontSize * 1.5)
+    // Height is roughly fontSize
+    const centerY = (padding + fontSize * 1.5) + (fontSize / 2);
+
+    ctx.font = `${currentFontSize}px 'Galactic', monospace`;
+    ctx.fillStyle = scoreColor;
+
+    // Add bright yellow glow during flash
+    if (flashIntensity > 0) {
+        ctx.shadowColor = '#ffff00';
+        ctx.shadowBlur = 20 * flashIntensity; // Dynamic blur based on intensity
+    }
+
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+
+    ctx.fillText(scoreStr, centerX, centerY);
+    ctx.restore();
 
     const isMobile = width < 768;
     // Mobile: up 1 font size (from 1.5 -> 2.5)

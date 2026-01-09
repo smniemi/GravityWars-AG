@@ -36,19 +36,46 @@ export function getPlayerId() {
     return playerId;
 }
 /**
+ * Get player's location (Country/City) via IP API.
+ * Caches result in localStorage to minimize API calls.
+ */
+export async function getPlayerLocation() {
+    let location = localStorage.getItem('gw_player_location');
+    // If we have a valid cached location, return it
+    if (location && location !== 'Unknown Sector') {
+        return location;
+    }
+    try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (res.ok) {
+            const data = await res.json();
+            // Format: "London, United Kingdom"
+            location = `${data.city}, ${data.country_name}`;
+            localStorage.setItem('gw_player_location', location);
+            return location;
+        }
+    }
+    catch (e) {
+        console.warn('[GameStats] Location fetch failed', e);
+    }
+    return null;
+}
+/**
  * Track a game start event (when player starts from menu)
  */
 export async function trackGameStart() {
     const playerId = getPlayerId();
+    const location = await getPlayerLocation();
     const { error } = await supabase.from('game_stats').insert({
         player_id: playerId,
         event_type: 'game_start',
+        location: location
     });
     if (error) {
         console.error('[GameStats] Failed to track game_start:', error);
     }
     else {
-        console.log('[GameStats] Tracked: game_start');
+        console.log(`[GameStats] Tracked: game_start (Location: ${location || 'Unknown'})`);
     }
 }
 /**
@@ -56,6 +83,8 @@ export async function trackGameStart() {
  */
 export async function trackLevelStart(levelId) {
     const playerId = getPlayerId();
+    // We don't necessarily need location for every level start to save bandwidth, 
+    // but it can be added if needed. For now keeping it lightweight.
     const { error } = await supabase.from('game_stats').insert({
         player_id: playerId,
         event_type: 'level_start',
@@ -73,6 +102,8 @@ export async function trackLevelStart(levelId) {
  */
 export async function trackLevelComplete(levelId, score, timeRemaining, fuelRemaining, livesRemaining) {
     const playerId = getPlayerId();
+    // Ideally we track location here too since it's a major event
+    const location = await getPlayerLocation();
     const { error } = await supabase.from('game_stats').insert({
         player_id: playerId,
         event_type: 'level_complete',
@@ -81,6 +112,7 @@ export async function trackLevelComplete(levelId, score, timeRemaining, fuelRema
         time_remaining: Math.floor(timeRemaining),
         fuel_remaining: Math.floor(fuelRemaining),
         lives_remaining: livesRemaining,
+        location: location
     });
     if (error) {
         console.error('[GameStats] Failed to track level_complete:', error);

@@ -14,6 +14,10 @@ export class Button {
         this.radius = radius;
     }
     handleTouchStart(x, y, id) {
+        // If already active with a different touch, ignore new ones
+        if (this.active && this.touchId !== null && this.touchId !== id) {
+            return false;
+        }
         const dx = x - this.x;
         const dy = y - this.y;
         const dist = Math.sqrt(dx * dx + dy * dy);

@@ -1,6 +1,6 @@
 level 	"Introduction"
 author	"Sami Niemi"
-comment "This is to get you started!" 
+comment "Collect all the keys and fly into the portal!" 
 
 time    1999	
 fuel 	999	

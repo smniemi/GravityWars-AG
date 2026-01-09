@@ -1,5 +1,5 @@
 import './style.css';
-import { createTileAtlas, loadHighResTileAtlas, updateDynamicBlocks, initializeDestructibleBlocks } from './render/tileAtlas.js';
+import { createTileAtlas, loadHighResTileAtlas, updateDynamicBlocks, initializeDestructibleBlocks, resetDynamicCache } from './render/tileAtlas.js';
 import { SoundManager } from './core/sound.js';
 import { createShipSprites, loadHighResShipTextures } from './render/shipSprites.js';
 import { WebGLRenderer } from './render/webgl/renderer.js';
@@ -507,7 +507,15 @@ async function playLevelIntro() {
     const getLevelNamePtr = getExport('get_current_level_name');
     const levelName = readWasmString(getLevelNamePtr(), runtime);
     levelIntroScreen.show(levelName, () => {
-        levelIntroActive = false;
+        // Show objective for the first level (Level 1)
+        if (globalsReader && globalsReader.read().levelnum === 1 && levelIntroScreen) {
+            levelIntroScreen.showMessage('OBJECTIVE', 'COLLECT ALL THE KEYS\nAND FLY INTO THE PORTAL!', 4000, () => {
+                levelIntroActive = false;
+            });
+        }
+        else {
+            levelIntroActive = false;
+        }
     });
 }
 function handleLevelTransition(force = false) {
@@ -631,11 +639,11 @@ let introDemoFrame = 0;
 let introDemoNeedsRestart = false; // Flag to defer restart until before control() runs
 let demoData = null;
 let demoCount = 0;
-let rotationHoldStart = 0; // Track when rotation key was first pressed
 let previousShipStatus = 0;
-let previousShipActive = 0;
 let fuelClickCount = 0;
 let lastFuelClickTime = 0;
+let previousScore = 0;
+let scoreFlashTimer = 0;
 const loop = new GameLoop(({ deltaMs }) => {
     if (levelMap && tileAtlas && !renderer.atlasTexture) {
         try {
@@ -686,6 +694,9 @@ const loop = new GameLoop(({ deltaMs }) => {
             // On restart, we need to reset the level first
             if (introDemoNeedsRestart) {
                 controls.restartLevel();
+                // Force reset of dynamic block cache so any changes from the fast-forward
+                // (which happens immediately after this) are correctly detected and rendered.
+                resetDynamicCache();
             }
             introDemoNeedsRestart = false;
             introDemoFrame = 0;
@@ -726,13 +737,19 @@ const loop = new GameLoop(({ deltaMs }) => {
         if (shipReader) {
             lastShipState = shipReader.read();
             // Check for crash (state 1), respawn (1->0 state), or ANY active transition (death/spawn)
-            if ((lastShipState.state === 1 && previousShipStatus !== 1) ||
-                (lastShipState.state === 0 && previousShipStatus === 1) ||
-                (lastShipState.active !== previousShipActive)) {
+            const currentStatus = lastShipState.state;
+            // Ship States (from config.h)
+            // 0: LANDED
+            // 1: FLYING
+            // 2: EXPLODING
+            // 3: APPEARING
+            // 4: DISAPPEARING
+            // 1. Check for Crash Transition specifically (Anything -> State 2)
+            if (currentStatus === 2 && previousShipStatus !== 2) {
+                console.log(`[Main] Crash detected: State ${previousShipStatus}->2. Forcing joystick reset.`);
                 joystick.reset();
             }
-            previousShipStatus = lastShipState.state;
-            previousShipActive = lastShipState.active;
+            previousShipStatus = currentStatus;
         }
         if (keyboard?.state.rotate && lastShipState && lastShipState.state === 0 && lastShipState.active === 1) {
             const ROT_SPEED = 0.008; // Adjust rotation speed
@@ -740,7 +757,7 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
         else if (joystick && !joystick.isTouching && joystick.active) {
             // If no key rotation and not touching, deactivate to stop highlighting/lerping
-            joystick.active = false;
+            // joystick.active = false;
         }
         if (globalsReader) {
             lastGlobals = globalsReader.read();
@@ -805,19 +822,24 @@ const loop = new GameLoop(({ deltaMs }) => {
                     controls.adjustAngle(adjustmentUnits);
                 }
                 else if (rotate !== 0) {
-                    // Dynamic rotation speed based on hold duration
-                    const now = performance.now();
-                    if (rotationHoldStart === 0) {
-                        rotationHoldStart = now;
-                    }
-                    const holdDuration = now - rotationHoldStart;
-                    // Speed tiers: tap (0-200ms) = 0.5x precision, long press (200ms+) = 2x fast
-                    const speedMultiplier = holdDuration > 200 ? 2 : 0.5;
+                    // Dynamic rotation speed based on orientation
+                    // Up (0) = 0.5x (precision), Down (PI) = 2.0x (fast)
+                    let currentSA = lastGlobals ? lastGlobals.sa : 0;
+                    const MAX_SA = 16384;
+                    // Normalize to 0-16384 range
+                    currentSA = ((currentSA % MAX_SA) + MAX_SA) % MAX_SA;
+                    // Calculate distance from "Up" (0 or MAX_SA)
+                    // 0 -> 0 distance (multiplier 0.5)
+                    // 8192 -> 8192 distance (multiplier 2.0)
+                    const distFromUp = Math.min(currentSA, MAX_SA - currentSA);
+                    // Ratio 0.0 (Up) to 1.0 (Down)
+                    const ratio = distFromUp / (MAX_SA / 2);
+                    // Linear interpolation between 0.5 and 2.0
+                    const speedMultiplier = 0.5 + (ratio * 1.5);
                     controls.adjustAngle(-rotate * ANGLE_ADJUST_SPEED * speedMultiplier);
                 }
                 else {
-                    // Reset hold timer when rotation stops
-                    rotationHoldStart = 0;
+                    // Rotation stopped
                 }
             }
             else if (lastGlobals?.levelnum === 0) {
@@ -979,7 +1001,14 @@ const loop = new GameLoop(({ deltaMs }) => {
         //   drawMiniMap(uiCtx, levelMap, lastGlobals);
         // }
         if (lastGlobals && gameStarted) {
-            drawHUD(uiCtx, lastGlobals);
+            if (lastGlobals.shipScore > previousScore) {
+                scoreFlashTimer = 0.5; // Flash for 0.5 second
+            }
+            else if (scoreFlashTimer > 0) {
+                scoreFlashTimer -= deltaMs / 1000;
+            }
+            previousScore = lastGlobals.shipScore;
+            drawHUD(uiCtx, lastGlobals, scoreFlashTimer);
         }
         // Render Joystick
         // Render Joystick
@@ -1172,10 +1201,13 @@ loadGravityWarsModule()
             handleFuelClick(e.clientX, e.clientY);
     });
     canvas.addEventListener('touchstart', (e) => {
+        // Prevent default to avoid mixed gesture signals causing touchcancel on other touches
+        if (e.cancelable)
+            e.preventDefault();
         if (e.touches.length > 0) {
             handleFuelClick(e.touches[0].clientX, e.touches[0].clientY);
         }
-    });
+    }, { passive: false });
 })
     .catch((error) => {
     wasmStatus = `WASM unavailable: ${error.message}`;

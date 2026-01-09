@@ -143,7 +143,6 @@ export function createTouchInput(
     }
 
     function handleTouchEnd(e: TouchEvent) {
-        // Allow default behavior for buttons and UI elements (screens)
         const target = e.target as HTMLElement;
         if (target.closest('button') || target.closest('.ui-screen')) {
             return;
@@ -159,6 +158,7 @@ export function createTouchInput(
             } else if (thrustButton && thrustButton.touchId === touch.identifier) {
                 thrustButton.handleTouchEnd(touch.identifier);
             } else if (joystick && joystick.touchId === touch.identifier) {
+                console.log(`[TouchInput] TouchEnd for joystick. ID: ${touch.identifier}`);
                 joystick.handleTouchEnd(touch.identifier);
             } else {
                 activeTouches.delete(touch.identifier);
@@ -169,7 +169,7 @@ export function createTouchInput(
     }
 
     function handleTouchCancel(e: TouchEvent) {
-        // Allow default behavior for buttons and UI elements (screens)
+        console.log('[TouchInput] handleTouchCancel fired!', e.changedTouches);
         const target = e.target as HTMLElement;
         if (target.closest('button') || target.closest('.ui-screen')) {
             return;
@@ -185,6 +185,7 @@ export function createTouchInput(
             } else if (thrustButton && thrustButton.touchId === touch.identifier) {
                 thrustButton.handleTouchEnd(touch.identifier);
             } else if (joystick && joystick.touchId === touch.identifier) {
+                console.log(`[TouchInput] TouchCancel for joystick! ID: ${touch.identifier}`);
                 joystick.handleTouchEnd(touch.identifier);
             } else {
                 activeTouches.delete(touch.identifier);

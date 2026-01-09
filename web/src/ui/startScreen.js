@@ -106,7 +106,7 @@ export class StartScreen {
             <div id="credits-modal" class="hidden" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; z-index: 20; display: none;">
                 <h2 class="galactic-text" style="color: ${this.SHIP_BLUE}; margin-bottom: 30px;">CREDITS</h2>
                 <div style="text-align: center; line-height: 2; color: #ccc;">
-                    <p><span style="color: #888;">Game development:</span> <strong>Sami Niemi</strong> <a href="https://www.linkedin.com/in/sami-niemi-a2ba21/" target="_blank" style="color: ${this.SHIP_BLUE}; text-decoration: none; cursor: pointer;">@smniemi</a></p>
+                    <p><span style="color: #888;">Game development & Music:</span> <strong>Sami Niemi</strong> <a href="https://www.linkedin.com/in/sami-niemi-a2ba21/" target="_blank" style="color: ${this.SHIP_BLUE}; text-decoration: none; cursor: pointer;">@smniemi</a></p>
                     <p><span style="color: #888;">Game graphics:</span> <strong>Pär Johannesson</strong></p>
                     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
                         <p style="margin: 8px 0;"><span style="color: ${this.SHIP_BLUE};">1995</span> <span style="color: #666;">—</span> Linux</p>

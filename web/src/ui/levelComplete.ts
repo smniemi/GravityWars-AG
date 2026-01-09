@@ -9,6 +9,7 @@ export class LevelCompleteScreen {
     private onContinue: () => void = () => { };
     private pendingSubmissionAction: (() => void) | null = null;
     private ignoreGlobalFetch: boolean = false;
+    private globalRecordScore: number = Number.MAX_SAFE_INTEGER;
 
 
     constructor(container: HTMLElement, onContinueCallback: () => void) {
@@ -54,23 +55,21 @@ export class LevelCompleteScreen {
                             
                             <div class="score-row sub-score">
                                 <div class="sub-label">GALACTIC HIGH SCORE</div>
-                                <div id="lc-high" class="sub-value">0</div>
+                                <div id="lc-high" class="sub-value">---</div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- LEADERBOARD SECTION -->
-                <div class="lc-panel records-panel">
-                    <h2 class="galactic-text section-title leaderboard-header">SECTOR RANKINGS</h2>
-                    <div id="lc-leaderboard" class="leaderboard-list">
-                        <!-- Top scores will be injected here -->
                     </div>
 
                     <div class="continue-hint">
                         TAP ANYWHERE TO CONTINUE
                     </div>
                 </div>
+
+                <!-- CELEBRATION OVERLAYS -->
+                <div id="pb-anim" class="celebration-text">NEW PERSONAL BEST!</div>
+                <div id="galactic-anim" class="celebration-text galactic">GALACTIC RECORD!</div>
+                
+                <div id="lc-high-holder" class="score-holder"></div>
             </div>
                     
 
@@ -82,16 +81,13 @@ export class LevelCompleteScreen {
                 .lc-container {
                     animation: slideUp 0.4s ease-out;
                     display: flex;
-                    flex-direction: row;
-                    flex-wrap: wrap;
-                    gap: 30px;
-                    align-items: stretch;
+                    flex-direction: column;
+                    align-items: center;
                     justify-content: center;
                     width: 100%;
-                    max-width: 1200px;
-                    max-height: 90vh;
-                    overflow-y: auto;
-                    padding: 20px;
+                    height: 100%;
+                    overflow: hidden;
+                    position: relative;
                 }
                 @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
                 
@@ -101,10 +97,12 @@ export class LevelCompleteScreen {
                     border-radius: 16px;
                     padding: 30px;
                     width: 420px;
-                    max-width: 100%;
+                    max-width: 90%;
                     box-shadow: 0 0 30px rgba(0,0,0,0.7);
                     display: flex;
                     flex-direction: column;
+                    position: relative;
+                    z-index: 2; /* Below celebrations */
                 }
                 .section-title {
                     color: #0af; 
@@ -120,6 +118,7 @@ export class LevelCompleteScreen {
                     text-shadow: 0 0 15px #0af;
                     border-bottom: 1px solid rgba(0, 255, 255, 0.2);
                     padding-bottom: 20px;
+                    text-align: center;
                 }
                 .score-grid {
                     display: grid;
@@ -160,58 +159,6 @@ export class LevelCompleteScreen {
                     font-family: monospace;
                     text-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
                 }
-
-                .record-box {
-                    background: rgba(255, 255, 255, 0.05);
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin-bottom: 20px;
-                    text-align: center;
-                    position: relative;
-                }
-                .record-box.global-box {
-                    background: linear-gradient(180deg, rgba(0, 40, 60, 0.5), rgba(0, 20, 30, 0.5));
-                    border: 1px solid rgba(0, 255, 255, 0.1);
-                    flex-grow: 1;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                }
-                .record-label {
-                    color: #889;
-                    font-size: 12px;
-                    letter-spacing: 1px;
-                    margin-bottom: 5px;
-                }
-                .record-value {
-                    font-size: 28px;
-                    color: #fff;
-                    font-family: monospace;
-                    margin-bottom: 5px;
-                }
-                .record-holder {
-                    color: #0af;
-                    font-size: 12px;
-                    font-family: monospace;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    max-width: 100%;
-                    opacity: 0.8;
-                }
-                .new-record-badge {
-                    position: absolute;
-                    top: -10px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: #0f0;
-                    color: #000;
-                    font-size: 10px;
-                    padding: 2px 8px;
-                    border-radius: 10px;
-                    font-weight: bold;
-                    box-shadow: 0 0 10px #0f0;
-                }
                 
                 .continue-hint {
                     margin-top: 20px; 
@@ -249,35 +196,6 @@ export class LevelCompleteScreen {
                 
                 .mobile-header { display: none; }
 
-                .leaderboard-list {
-                    flex: 1;
-                    overflow-y: auto;
-                    margin-top: 10px;
-                    max-height: 250px;
-                    scrollbar-width: thin;
-                    scrollbar-color: #0af transparent;
-                }
-
-                .record-row {
-                    display: grid;
-                    grid-template-columns: 40px 1fr 100px;
-                    padding: 12px 0;
-                    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
-                    align-items: center;
-                    font-family: monospace;
-                    font-size: 14px;
-                    color: #fff;
-                    transition: background 0.2s;
-                }
-                .record-row.is-player {
-                    color: #0f0;
-                    background: rgba(0, 255, 0, 0.05);
-                    font-weight: bold;
-                }
-                .record-rank { color: #0af; opacity: 0.6; }
-                .record-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px; }
-                .record-score { text-align: right; font-weight: bold; }
-
                 .score-row {
                     display: flex;
                     justify-content: space-between;
@@ -306,39 +224,72 @@ export class LevelCompleteScreen {
                     flex-direction: column;
                     padding-bottom: 20px;
                 }
+
+                /* Celebration Stlyes */
+                .celebration-text {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) scale(0.1);
+                    font-family: 'Galactic', sans-serif;
+                    font-size: 3rem;
+                    color: #0f0;
+                    text-shadow: 0 0 20px #0f0;
+                    pointer-events: none;
+                    opacity: 0;
+                    white-space: nowrap;
+                    z-index: 100;
+                    width: 100%;
+                    text-align: center;
+                }
+                
+                .celebration-text.galactic {
+                    color: #0ff;
+                    text-shadow: 0 0 30px #0ff;
+                    font-size: 4rem;
+                }
+
+                @keyframes zoomOutEnter {
+                    0% { transform: translate(-50%, -50%) scale(5); opacity: 0; }
+                    20% { opacity: 1; }
+                    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                }
+
+                .celebration-enter {
+                    animation: zoomOutEnter 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+                }
+                
+                .score-holder {
+                    position: absolute;
+                    bottom: 85px; /* Above continue hint */
+                    width: 100%;
+                    text-align: center;
+                    color: #889;
+                    font-size: 12px;
+                    font-family: monospace;
+                    opacity: 0.8;
+                    letter-spacing: 1px;
+                }
+                
                 
                 /* Mobile layout adjustment */
                 @media (max-width: 800px) {
                      .lc-container {
-                          flex-direction: column !important;
-                          align-items: center;
-                          gap: 0;
                           padding: 0;
-                          transform: none;
-                          max-height: 100vh;
-                          width: 100%;
-                          margin: 0;
-                          overflow-y: auto;
-                          overflow-x: hidden;
-                          background: #05060a;
+                          background: rgba(0,0,0,0.8);
                      }
                      .lc-panel {
                           width: 100%;
+                          height: 100%;
                           max-width: none;
                           padding: 30px 20px;
                           border-radius: 0;
                           border: none;
-                          border-bottom: 2px solid rgba(0, 255, 255, 0.1);
-                          box-shadow: none;
                           background: transparent;
+                          justify-content: center;
                      }
                      .stats-panel {
-                          background: linear-gradient(180deg, #0a1420 0%, #05060a 100%);
                           padding-top: 60px;
-                     }
-                     .records-panel {
-                          background: #05060a;
-                          padding-bottom: 150px; /* Space for the hint */
                      }
                      .mobile-header {
                           display: block;
@@ -354,9 +305,6 @@ export class LevelCompleteScreen {
                           font-size: 42px;
                           margin-bottom: 40px;
                           width: 100%;
-                          text-align: center;
-                          border-bottom: 2px solid #0ff;
-                          padding-bottom: 15px;
                      }
                      .score-grid {
                           gap: 20px;
@@ -372,23 +320,6 @@ export class LevelCompleteScreen {
                      .total-label { font-size: 18px; }
                      .total-value { font-size: 64px; }
                      
-                     .leaderboard-header {
-                          font-size: 24px;
-                          text-align: center;
-                          margin-bottom: 20px;
-                          color: #0ff;
-                          border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-                          padding-bottom: 15px;
-                     }
-                     .leaderboard-list {
-                          max-height: none;
-                          overflow-y: visible;
-                     }
-                     .record-row {
-                          font-size: 18px;
-                          padding: 20px 0;
-                          grid-template-columns: 50px 1fr 120px;
-                     }
                      .continue-hint {
                           position: fixed;
                           bottom: 0;
@@ -401,13 +332,22 @@ export class LevelCompleteScreen {
                           font-size: 20px !important;
                           z-index: 100;
                           margin: 0;
+                          pointer-events: none;
+                     }
+                     .celebration-text {
+                        font-size: 2.5rem;
+                     }
+                     .celebration-text.galactic {
+                        font-size: 3rem;
                      }
                 }
 
                 @media (max-height: 500px) and (orientation: landscape) {
-                    .lc-container { padding-top: 20px; }
-                    .stats-panel { padding-top: 20px; }
-                    .continue-hint { padding: 15px; font-size: 16px !important; }
+                    .lc-container { padding-top: 0; }
+                    .stats-panel { padding-top: 10px; justify-content: flex-start; overflow-y: auto; }
+                    .level-title { font-size: 24px; margin-bottom: 10px; }
+                    .total-value { font-size: 40px; }
+                    .celebration-text { font-size: 2rem; }
                 }
             </style>
         `;
@@ -440,11 +380,7 @@ export class LevelCompleteScreen {
     private handleInput() {
         console.log('[LevelComplete] handleInput called, isVisible:', this.isVisible);
         if (this.isVisible) {
-            // If overlay is open, ignore clicks on the background (the overlay handles its own clicks)
-            if (this.element.querySelector('.name-box')) {
-                console.log('[LevelComplete] Ignoring background click while Name Entry is active');
-                return;
-            }
+
 
             // If we have a pending high score submission (user clicked before animation finished),
             // trigger it now instead of closing the screen!
@@ -517,49 +453,57 @@ export class LevelCompleteScreen {
 
 
         // --- Fetch and Display Global Records ---
-        const leaderboardEl = this.element.querySelector('#lc-leaderboard');
-        if (leaderboardEl) {
-            leaderboardEl.innerHTML = '<div style="color: #666; font-family: monospace; text-align: center; padding: 20px;">FETCHING SECTOR RECORDS...</div>';
+        // We still fetch to check for Galactic High Score
+        this.globalRecordScore = Number.MAX_SAFE_INTEGER;
+        const highEl = this.element.querySelector('#lc-high');
 
-            supabase.from('level_high_scores')
-                .select('score, player_name, location')
-                .eq('level_id', stats.levelIndex)
-                .order('score', { ascending: false })
-                .limit(10)
-                .then(({ data, error }) => {
-                    if (this.ignoreGlobalFetch) return;
-                    if (leaderboardEl) {
-                        if (error || !data || data.length === 0) {
-                            leaderboardEl.innerHTML = '<div style="color: #666; font-family: monospace; text-align: center; padding: 20px;">NO RECORDS IN THIS SECTOR</div>';
-                        } else {
-                            leaderboardEl.innerHTML = '';
-                            data.forEach((entry, idx) => {
-                                const row = document.createElement('div');
-                                const isPlayer = entry.player_name === localStorage.getItem('gw_player_name');
-                                row.className = `record-row ${isPlayer ? 'is-player' : ''}`;
+        supabase.from('level_high_scores')
+            .select('score, player_name')
+            .eq('level_id', stats.levelIndex)
+            .order('score', { ascending: false })
+            .limit(1)
+            .then(({ data, error }) => {
+                if (this.ignoreGlobalFetch) return;
 
-                                row.innerHTML = `
-                                    <div class="record-rank">#${idx + 1}</div>
-                                    <div class="record-name">${entry.player_name || 'UNKNOWN PILOT'}</div>
-                                    <div class="record-score">${entry.score.toLocaleString()}</div>
-                                `;
-                                leaderboardEl.appendChild(row);
-                            });
-
-                            // Also update the single Sector Record box if we found a top score
-                            if (data.length > 0) {
-                                const topScore = data[0].score;
-                                const highEl = this.element.querySelector('#lc-high');
-                                if (highEl) {
-                                    highEl.textContent = topScore > 0 ? topScore.toLocaleString() : '---';
-                                }
-                            }
-                        }
+                if (!error && data && data.length > 0) {
+                    this.globalRecordScore = data[0].score;
+                    if (highEl) {
+                        highEl.textContent = this.globalRecordScore.toLocaleString();
                     }
-                });
-        }
 
-        // Update stored record
+
+                } else if (!error && data && data.length === 0) {
+                    // No records yet means 0 is the record to beat
+                    this.globalRecordScore = 0;
+                    if (highEl) highEl.textContent = "0";
+                    const holderEl = this.element.querySelector('#lc-high-holder');
+                    if (holderEl) holderEl.textContent = "No Record Yet";
+                }
+
+                // --- Self-Healing Sync ---
+                // If we have a local PB that is HIGHER than the global record (and we didn't just set a new record),
+                // it means our previous record submission failed. We should re-submit it now.
+                // We only do this if !isNewRecord, because if it IS a new record, the submit logic loop will handle it (with the higher score).
+                if (!isNewRecord && storedPb > this.globalRecordScore) {
+                    console.log(`[LevelComplete] Local PB (${storedPb}) > Global (${this.globalRecordScore}). Resyncing missing score...`);
+
+                    // Helper to get identity
+                    let u = localStorage.getItem('gw_anon_user_id');
+                    if (!u) {
+                        u = `anon_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+                        localStorage.setItem('gw_anon_user_id', u);
+                    }
+                    let p = localStorage.getItem('gw_player_name');
+                    if (!p) {
+                        p = `PILOT_${Math.floor(Math.random() * 9000) + 1000}`;
+                        localStorage.setItem('gw_player_name', p);
+                    }
+
+                    this.submitScore(u, p, stats.levelIndex, storedPb);
+                }
+            });
+
+        // Update stored record logic
         console.log(`[LevelComplete] Check New Record: Score ${levelTotalScore} > Old PB ${storedPb} ? ${isNewRecord}`);
 
 
@@ -583,23 +527,15 @@ export class LevelCompleteScreen {
                     localStorage.setItem('gw_anon_user_id', userId);
                 }
 
-                // 2. Always Prompt for Name on New Record (allows friends to play) - Pre-fill with last known name
-                let playerName = localStorage.getItem('gw_player_name') || '';
-
-                // On Mobile, skip the overlay and just submit as 'UNKNOWN' (or default name) to avoid keyboard issues
-                const isMobile = window.innerWidth <= 800; // Matches CSS breakpoint
-
-                if (isMobile) {
-                    console.log('[LevelComplete] Mobile detected, skipping name entry overlay.');
-                    if (!playerName) playerName = 'UNKNOWN';
-                    this.submitScore(userId!, playerName, stats.levelIndex, levelTotalScore);
-                } else {
-                    // Show custom overlay for name entry on Desktop
-                    this.showNameEntryOverlay(playerName, (name) => {
-                        localStorage.setItem('gw_player_name', name);
-                        this.submitScore(userId!, name, stats.levelIndex, levelTotalScore);
-                    });
+                // 2. Default Name Submission (No overlay)
+                let playerName = localStorage.getItem('gw_player_name');
+                if (!playerName) {
+                    playerName = `PILOT_${Math.floor(Math.random() * 9000) + 1000}`; // Default Random ID
+                    localStorage.setItem('gw_player_name', playerName);
                 }
+
+                console.log('[LevelComplete] Auto-submitting score with name:', playerName);
+                this.submitScore(userId!, playerName, stats.levelIndex, levelTotalScore);
 
             })();
         };
@@ -617,17 +553,21 @@ export class LevelCompleteScreen {
         }
 
         // --- Mock High Score Logic ---
-        const storedHigh = previousBest;
 
         // Initial UI State (Before Animation)
         const pbEl = this.element.querySelector('#lc-pb');
-        const highEl = this.element.querySelector('#lc-high');
         const scoreEl = this.element.querySelector('#lc-score');
 
-        if (pbEl) pbEl.textContent = previousBest > 0 ? previousBest.toLocaleString() : '---';
+        // Hide celebration texts initially
+        const pbAnim = this.element.querySelector('#pb-anim');
+        const galAnim = this.element.querySelector('#galactic-anim');
+        if (pbAnim) pbAnim.classList.remove('celebration-enter');
+        if (galAnim) galAnim.classList.remove('celebration-enter');
 
-        // Wait for global high score fetch, but start with PB as fallback
-        if (highEl) highEl.textContent = storedHigh > 0 ? storedHigh.toLocaleString() : '---';
+        if (pbEl) pbEl.textContent = previousBest > 0 ? previousBest.toLocaleString() : '---';
+        if (highEl) highEl.textContent = 'FETCHING...';
+        const highHolderEl = this.element.querySelector('#lc-high-holder');
+        if (highHolderEl) highHolderEl.textContent = '';
 
         if (scoreEl) scoreEl.textContent = displayedBaseScore.toLocaleString();
 
@@ -659,7 +599,21 @@ export class LevelCompleteScreen {
             if (progress >= 1.0 && !pbAnimationTriggered && isNewRecord) {
                 pbAnimationTriggered = true;
                 this.animateRecordUpdate(previousBest, levelTotalScore, pbEl, null);
-                this.animateRecordUpdate(storedHigh, levelTotalScore, highEl, null);
+
+                // Only update High Score UI if we know we beat it (optimistic or fetched)
+                // Note: The celebration animation also triggers here
+                if (levelTotalScore > this.globalRecordScore) {
+                    // Galactic Record!
+                    if (galAnim) {
+                        const sound = new Audio('assets/sfx/powerup.mp3'); // Reuse existing sfx if available, otherwise silent
+                        sound.volume = 0.5;
+                        sound.play().catch(() => { });
+                        galAnim.classList.add('celebration-enter');
+                    }
+                } else {
+                    // Just PB
+                    if (pbAnim) pbAnim.classList.add('celebration-enter');
+                }
 
                 setTimeout(() => tryTriggerSubmission(), 1500);
             }
@@ -684,15 +638,16 @@ export class LevelCompleteScreen {
                 e.preventDefault();
                 e.stopPropagation();
 
-                let playerName = localStorage.getItem('gw_player_name') || '';
-                this.showNameEntryOverlay(playerName, (name) => {
-                    localStorage.setItem('gw_player_name', name);
+                let playerName = localStorage.getItem('gw_player_name');
+                if (!playerName) {
+                    playerName = `PILOT_${Math.floor(Math.random() * 9000) + 1000}`;
+                    localStorage.setItem('gw_player_name', playerName);
+                }
 
-                    const uid = localStorage.getItem('gw_anon_user_id') || `anon_${Date.now()}`;
-                    if (!localStorage.getItem('gw_anon_user_id')) localStorage.setItem('gw_anon_user_id', uid);
+                const uid = localStorage.getItem('gw_anon_user_id') || `anon_${Date.now()}`;
+                if (!localStorage.getItem('gw_anon_user_id')) localStorage.setItem('gw_anon_user_id', uid);
 
-                    this.submitScore(uid, name, stats.levelIndex, levelTotalScore);
-                });
+                this.submitScore(uid, playerName!, stats.levelIndex, levelTotalScore);
             });
         }
 
@@ -771,10 +726,7 @@ export class LevelCompleteScreen {
             if (score >= currentHigh) {
                 console.log('[LevelComplete] Optimistically updating High Score UI');
                 highEl.textContent = score.toLocaleString();
-                let holderText = `Held by: ${name}`;
-                if (location && location !== 'Unknown Sector') holderText += ` (${location})`;
-                highHolderEl.textContent = holderText;
-                (highHolderEl as HTMLElement).style.color = '#0f0';
+
                 highEl.classList.add('record-pulse');
             }
         }
@@ -805,10 +757,7 @@ export class LevelCompleteScreen {
                         const currentHigh = parseInt(highEl.textContent?.replace(/,/g, '') || '0');
                         if (score >= currentHigh) {
                             highEl.textContent = score.toLocaleString();
-                            let holderText = `Held by: ${name}`;
-                            if (location && location !== 'Unknown Sector') holderText += ` (${location})`;
-                            highHolderEl.textContent = holderText;
-                            (highHolderEl as HTMLElement).style.color = '#0f0';
+
                             highEl.classList.add('record-pulse');
                         }
                     }
@@ -816,151 +765,7 @@ export class LevelCompleteScreen {
             });
     }
 
-    private showNameEntryOverlay(defaultName: string, onSubmit: (name: string) => void) {
-        const overlay = document.createElement('div');
-        overlay.style.position = 'absolute';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'; // Darker
-        overlay.style.backdropFilter = 'blur(10px)';
-        overlay.style.display = 'flex';
-        overlay.style.flexDirection = 'column';
-        overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
-        overlay.style.zIndex = '100'; // Above level complete screen
-        overlay.style.animation = 'fadeIn 0.3s ease-out';
-        overlay.innerHTML = `
-            <style>
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                .name-box {
-                    background: rgba(10, 20, 30, 0.98);
-                    border: 3px solid #0af;
-                    border-radius: 20px;
-                    padding: 40px 30px;
-                    box-shadow: 0 0 50px rgba(0, 200, 255, 0.6), inset 0 0 30px rgba(0,0,0,0.8);
-                    text-align: center;
-                    width: min(500px, 95vw);
-                    position: relative;
-                    box-sizing: border-box;
-                    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                }
-                @keyframes popIn { 
-                    0% { transform: scale(0.8); opacity: 0; } 
-                    100% { transform: scale(1); opacity: 1; } 
-                }
-                .name-input-wrapper {
-                    position: relative;
-                    margin: 30px 0;
-                    display: flex;
-                    justify-content: center;
-                }
-                .char-input-field {
-                    background: rgba(0, 40, 80, 0.5);
-                    border: 2px solid #0ff;
-                    border-radius: 8px;
-                    color: #fff;
-                    font-family: 'Courier New', monospace;
-                    font-size: 42px;
-                    width: 100%;
-                    max-width: 380px;
-                    height: 80px;
-                    text-align: center;
-                    text-transform: uppercase;
-                    outline: none;
-                    letter-spacing: 0.2em;
-                    padding-left: 0.2em; /* Offset for letter spacing */
-                    transition: all 0.3s;
-                    box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.2);
-                }
-                .char-input-field:focus {
-                    border-color: #fff;
-                    box-shadow: 0 0 30px rgba(0, 255, 255, 0.8), inset 0 0 15px rgba(0, 255, 255, 0.3);
-                    background: rgba(0, 60, 120, 0.6);
-                }
-                .submit-btn {
-                    background: linear-gradient(180deg, #008888, #004444);
-                    border: 2px solid #0ff;
-                    color: #fff;
-                    padding: 20px 0;
-                    width: 100%;
-                    font-family: 'Galactic', monospace;
-                    font-size: 28px;
-                    cursor: pointer;
-                    margin-top: 20px;
-                    text-transform: uppercase;
-                    transition: all 0.2s;
-                    border-radius: 10px;
-                    letter-spacing: 4px;
-                    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-                }
-                .submit-btn:active {
-                    transform: scale(0.98);
-                    filter: brightness(1.2);
-                }
-            </style>
-            <div class="name-box">
-                <h2 style="color: #0ff; margin: 0; text-shadow: 0 0 15px #0ff; letter-spacing: 4px; font-size: 36px; font-family: 'Galactic', sans-serif;">NEW RECORD</h2>
-                <div style="width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #0af, transparent); margin: 20px 0;"></div>
-                <p style="color: #0af; font-family: monospace; font-size: 16px; margin: 0; font-weight: bold; letter-spacing: 2px;">ENTER PILOT ID</p>
-                
-                <div class="name-input-wrapper">
-                    <input type="text" maxlength="7" class="char-input-field" id="pilot-name-input" 
-                           spellcheck="false" autocomplete="off" placeholder="_______">
-                </div>
 
-                <div class="submit-btn" id="submit-name-btn">REGISTER SCORE</div>
-                <p style="color: #666; font-size: 12px; margin-top: 15px; font-family: monospace;">TAP INPUT TO OPEN KEYBOARD</p>
-            </div>
-        `;
-
-        this.element.appendChild(overlay);
-
-        const input = overlay.querySelector('#pilot-name-input') as HTMLInputElement;
-        const submitBtn = overlay.querySelector('#submit-name-btn') as HTMLElement;
-
-        if (defaultName) {
-            input.value = defaultName.toUpperCase().substring(0, 7);
-        }
-
-        // Prevent click-through when tapping input
-        input.addEventListener('click', (e) => e.stopPropagation());
-        input.addEventListener('touchstart', (e) => e.stopPropagation());
-
-        input.addEventListener('input', () => {
-            input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        });
-
-        // Focus and trigger keyboard
-        setTimeout(() => {
-            input.focus();
-            input.click(); // Nudge for mobile
-        }, 300);
-
-        const submitFn = () => {
-            const name = input.value.trim() || 'PILOT_X';
-
-            // Animate out
-            overlay.style.transition = 'opacity 0.3s';
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.remove(), 300);
-
-            onSubmit(name);
-        };
-
-        submitBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            submitFn();
-        });
-
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                submitFn();
-            }
-        });
-    }
 
     public hide() {
         this.isVisible = false;

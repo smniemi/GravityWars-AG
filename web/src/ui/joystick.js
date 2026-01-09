@@ -4,9 +4,13 @@ export class Joystick {
     radius = 50; // Default, will be updated on resize
     knobRadius = 20;
     // Indicator (Small Circle) size
-    // 2x larger than before (was 10, now 20)
-    indicatorRadius = 20;
-    active = false;
+    // 50% larger (was 20, now 30)
+    indicatorRadius = 30;
+    _active = false;
+    get active() { return this._active; }
+    set active(value) {
+        this._active = value;
+    }
     touchId = null;
     // Output values
     angle = 0; // Radians
@@ -31,6 +35,7 @@ export class Joystick {
     get isTouching() {
         return this.touchId !== null;
     }
+    // ... (rest of class)
     rotate(delta) {
         if (this.touchId !== null)
             return; // Touch priority
@@ -51,11 +56,17 @@ export class Joystick {
         this.knobRadius = radius * 1.6;
     }
     handleTouchStart(x, y, id) {
+        // If already active with a different touch, ignore new ones
+        if (this.active && this.touchId !== null && this.touchId !== id) {
+            console.log(`[Joystick] handleTouchStart ignored. Active with ${this.touchId}, new id ${id}`);
+            return false;
+        }
         const dx = x - this.x;
         const dy = y - this.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         // Logic: Actionable only on the rim +- indicatorRadius
         if (Math.abs(dist - this.radius) <= this.indicatorRadius * 1.5) {
+            console.log(`[Joystick] handleTouchStart accepted. id: ${id}, dist: ${dist}`);
             this.active = true;
             this.touchId = id;
             this.updateTarget(dx, dy);
@@ -72,6 +83,7 @@ export class Joystick {
     }
     handleTouchEnd(id) {
         if (this.active && this.touchId === id) {
+            console.log(`[Joystick] handleTouchEnd. id: ${id}`);
             this.active = false;
             this.touchId = null;
         }

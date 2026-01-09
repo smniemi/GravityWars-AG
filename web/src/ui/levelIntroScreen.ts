@@ -41,6 +41,8 @@ export class LevelIntroScreen {
         this.subTextElement.style.letterSpacing = '8px';
         this.subTextElement.style.fontFamily = 'monospace';
 
+        this.subTextElement.style.whiteSpace = 'pre-line'; // Allow newlines
+
         content.appendChild(this.nameElement);
         content.appendChild(this.subTextElement);
         this.element.appendChild(content);
@@ -93,7 +95,7 @@ export class LevelIntroScreen {
      * Show a custom message with the same animation as level intro.
      * Used for events like "PORTAL ACTIVATED" when all keys are collected.
      */
-    public showMessage(message: string, subtitle: string = '', onComplete?: () => void) {
+    public showMessage(message: string, subtitle: string = '', duration: number = 2000, onComplete?: () => void) {
         if (this.isPlaying) return;
         this.isPlaying = true;
 
@@ -122,13 +124,13 @@ export class LevelIntroScreen {
         // Hold then fade out
         setTimeout(() => {
             this.element.style.opacity = '0';
-        }, 2000);
+        }, duration);
 
         // Cleanup
         setTimeout(() => {
             this.element.style.display = 'none';
             this.isPlaying = false;
             onComplete?.();
-        }, 2500);
+        }, duration + 500);
     }
 }

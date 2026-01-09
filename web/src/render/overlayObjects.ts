@@ -10,7 +10,7 @@ export const OVERLAY_OBJECTS = new Set([
     '('.charCodeAt(0), // E_WBONUS2
     ')'.charCodeAt(0), // E_WBONUS3
     '['.charCodeAt(0), // E_WBONUS4
-    '@'.charCodeAt(0), // L_RED_DOOR
+
     'x'.charCodeAt(0), // E_STOP
 ]);
 
