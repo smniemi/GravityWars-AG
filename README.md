@@ -7,6 +7,7 @@ GravityWars is a piece of Linux history, originally released in 1995 as the firs
 **Credits**
 
 Code & Music: Sami Niemi, @smniemi, https://www.linkedin.com/in/sami-niemi-a2ba21/
+
 Graphics: Pär Johannesson
 
 **The 1995 Origins**
