@@ -4,6 +4,8 @@
 
 GravityWars is a piece of Linux history, originally released in 1995 as the first high-resolution graphics game for the platform. At a time when Linux was still in its infancy—often distributed via stacks of floppy disks through distributions like Slackware — GravityWars was likely the first SVGA game ever written for LInux. 
 
+![GravityWars Screenshot](Shot02rot.jpg)
+
 **Credits**
 
 Code & Music: Sami Niemi, @smniemi, https://www.linkedin.com/in/sami-niemi-a2ba21/
