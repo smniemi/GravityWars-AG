@@ -28,3 +28,7 @@ Modern Tech Stack: Now runs natively in browsers with Super-Resolution graphics 
 **How to Play**
 
 Experience the 30-year evolution yourself: Play GravityWars [on the Web](http://gravitywars.visiologics.com/)
+
+---
+
+(The code is a bit messy as it's a mix of old Linux code, iPhone port from 2009, and the new web code plus some super res code (the key is not active anymore)
