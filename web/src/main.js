@@ -159,6 +159,7 @@ let gameStarted = false;
 // Total number of levels in the game
 const TOTAL_LEVELS = 13;
 let levelIntroActive = false;
+let highResLoading = false; // Flag to prevent game loop from initializing atlas while main init is loading high-res
 let previousNumKeys = -1; // Track previous key count to detect when portal activates
 // Override controls to disable them until game starts
 // Override controls to disable them until game starts
@@ -534,40 +535,40 @@ function handleLevelTransition(force = false) {
         if (currentLevelNum >= TOTAL_LEVELS) {
             // Game complete! Show congratulations screen
             if (!gameCompleteScreen) {
-                gameCompleteScreen = new GameCompleteScreen(root, 
-                // Play Again - start from level 1
-                () => {
-                    // Navigate back to level 1
-                    if (controls && globalsReader) {
-                        let current = globalsReader.read().levelnum;
-                        while (current > 1) {
-                            controls.prevLevel();
-                            current = globalsReader.read().levelnum;
+                gameCompleteScreen = new GameCompleteScreen(root,
+                    // Play Again - start from level 1
+                    () => {
+                        // Navigate back to level 1
+                        if (controls && globalsReader) {
+                            let current = globalsReader.read().levelnum;
+                            while (current > 1) {
+                                controls.prevLevel();
+                                current = globalsReader.read().levelnum;
+                            }
+                            while (current < 1) {
+                                controls.nextLevel();
+                                current = globalsReader.read().levelnum;
+                            }
+                            reloadLevel();
+                            playLevelIntro();
                         }
-                        while (current < 1) {
-                            controls.nextLevel();
-                            current = globalsReader.read().levelnum;
+                    },
+                    // Back to Menu
+                    () => {
+                        gameStarted = false;
+                        soundManager.setSfxVolume(0.5);
+                        startScreen?.show();
+                        if (globalsReader) {
+                            let current = globalsReader.read().levelnum;
+                            const prevFn = getExport('wasm_prev_level');
+                            let attempts = 0;
+                            while (current > 0 && attempts++ < 70) {
+                                prevFn();
+                                current = globalsReader.read().levelnum;
+                            }
+                            soundManager.update(globalsReader.read(), [], levelMap);
                         }
-                        reloadLevel();
-                        playLevelIntro();
-                    }
-                }, 
-                // Back to Menu
-                () => {
-                    gameStarted = false;
-                    soundManager.setSfxVolume(0.5);
-                    startScreen?.show();
-                    if (globalsReader) {
-                        let current = globalsReader.read().levelnum;
-                        const prevFn = getExport('wasm_prev_level');
-                        let attempts = 0;
-                        while (current > 0 && attempts++ < 70) {
-                            prevFn();
-                            current = globalsReader.read().levelnum;
-                        }
-                        soundManager.update(globalsReader.read(), [], levelMap);
-                    }
-                });
+                    });
             }
             gameCompleteScreen.show(lastGlobals.shipScore);
         }
@@ -645,7 +646,8 @@ let lastFuelClickTime = 0;
 let previousScore = 0;
 let scoreFlashTimer = 0;
 const loop = new GameLoop(({ deltaMs }) => {
-    if (levelMap && tileAtlas && !renderer.atlasTexture) {
+    // Skip atlas initialization if highResLoading is true (main init is handling it)
+    if (levelMap && tileAtlas && !renderer.atlasTexture && !highResLoading) {
         try {
             renderer.setTileAtlas(tileAtlas);
             renderer.buildLevel(levelMap, tileAtlas);
@@ -686,8 +688,8 @@ const loop = new GameLoop(({ deltaMs }) => {
         // Handle intro demo fast-forward at the START of the frame, before control() runs
         // This ensures the sequence is identical on initial load AND on restart
         const shouldFastForward = (
-        // Restart case: flag was set when demo reached the end
-        introDemoNeedsRestart ||
+            // Restart case: flag was set when demo reached the end
+            introDemoNeedsRestart ||
             // Initial case: we have demo data and haven't fast-forwarded yet
             (demoData && demoCount > 0 && introDemoFrame === 0 && globalsReader?.read().levelnum === 0));
         if (shouldFastForward && controls) {
@@ -896,49 +898,49 @@ const loop = new GameLoop(({ deltaMs }) => {
         }
         if (gameStarted && lastGlobals && lastGlobals.gameOver) {
             if (!gameOverScreen) {
-                gameOverScreen = new GameOverScreen(root, 
-                // Replay
-                // Replay
-                () => {
-                    if (controls && globalsReader) {
-                        const targetLevel = globalsReader.read().levelnum;
-                        // Reset game state to restore lives (sets level to 1, score to 0)
-                        getExport('main_init')();
-                        // Navigate back to the level we were on
-                        let current = globalsReader.read().levelnum;
-                        let attempts = 0;
-                        while (current !== targetLevel && attempts < 100) {
-                            if (current < targetLevel) {
-                                controls.nextLevel();
+                gameOverScreen = new GameOverScreen(root,
+                    // Replay
+                    // Replay
+                    () => {
+                        if (controls && globalsReader) {
+                            const targetLevel = globalsReader.read().levelnum;
+                            // Reset game state to restore lives (sets level to 1, score to 0)
+                            getExport('main_init')();
+                            // Navigate back to the level we were on
+                            let current = globalsReader.read().levelnum;
+                            let attempts = 0;
+                            while (current !== targetLevel && attempts < 100) {
+                                if (current < targetLevel) {
+                                    controls.nextLevel();
+                                }
+                                else {
+                                    controls.prevLevel();
+                                }
+                                current = globalsReader.read().levelnum;
+                                attempts++;
                             }
-                            else {
-                                controls.prevLevel();
+                            // Reset level start score since this is effectively a new game
+                            levelStartScore = 0;
+                            controls.restartLevel();
+                            reloadLevel();
+                        }
+                    },
+                    // Menu
+                    () => {
+                        gameStarted = false;
+                        soundManager.setSfxVolume(0.5);
+                        startScreen?.show();
+                        if (globalsReader) {
+                            let current = globalsReader.read().levelnum;
+                            const prevFn = getExport('wasm_prev_level');
+                            let attempts = 0;
+                            while (current > 0 && attempts++ < 20) {
+                                prevFn();
+                                current = globalsReader.read().levelnum;
                             }
-                            current = globalsReader.read().levelnum;
-                            attempts++;
+                            soundManager.update(globalsReader.read(), [], levelMap);
                         }
-                        // Reset level start score since this is effectively a new game
-                        levelStartScore = 0;
-                        controls.restartLevel();
-                        reloadLevel();
-                    }
-                }, 
-                // Menu
-                () => {
-                    gameStarted = false;
-                    soundManager.setSfxVolume(0.5);
-                    startScreen?.show();
-                    if (globalsReader) {
-                        let current = globalsReader.read().levelnum;
-                        const prevFn = getExport('wasm_prev_level');
-                        let attempts = 0;
-                        while (current > 0 && attempts++ < 20) {
-                            prevFn();
-                            current = globalsReader.read().levelnum;
-                        }
-                        soundManager.update(globalsReader.read(), [], levelMap);
-                    }
-                });
+                    });
             }
             if (gameOverScreen && lastGlobals) {
                 const getLevelNamePtr = getExport('get_current_level_name');
@@ -1038,24 +1040,30 @@ const loop = new GameLoop(({ deltaMs }) => {
     }
 });
 function applyHighResUpgrades(atlas, sprites) {
+    const promises = [];
     if (atlas) {
         const targetAtlas = atlas;
-        loadHighResTileAtlas(targetAtlas).then(() => {
+        promises.push(loadHighResTileAtlas(targetAtlas).then(() => {
             if (targetAtlas === tileAtlas && levelMap) {
                 renderer.setTileAtlas(targetAtlas);
                 renderer.buildLevel(levelMap, targetAtlas);
             }
-        }).catch(() => { });
+        }).catch((err) => {
+            console.warn('Failed to load high-res atlas:', err);
+        }));
     }
     if (sprites) {
         const targetSprites = sprites;
-        loadHighResShipTextures(targetSprites).then(() => {
+        promises.push(loadHighResShipTextures(targetSprites).then(() => {
             if (targetSprites === shipSprites) {
                 renderer.setShipSprites(targetSprites);
                 joystick.setShipSprites(targetSprites);
             }
-        }).catch(() => { });
+        }).catch((err) => {
+            console.warn('Failed to load high-res ship sprites:', err);
+        }));
     }
+    return Promise.all(promises);
 }
 function reloadLevel() {
     if (runtime?.runtime) {
@@ -1066,13 +1074,14 @@ function reloadLevel() {
         tileAtlas = createTileAtlas(runtime.runtime);
         shipSprites = createShipSprites(runtime.runtime, SHIP_SPECIAL_BLOCK_IDS);
         if (levelMap && tileAtlas) {
+            // Apply upgrades immediately if cached to prevent low-res flash
+            applyHighResUpgrades(tileAtlas, shipSprites);
+
             renderer.setTileAtlas(tileAtlas);
             renderer.setShipSprites(shipSprites);
             joystick.setShipSprites(shipSprites);
             joystick.reset();
             renderer.buildLevel(levelMap, tileAtlas);
-            // Apply upgrades
-            applyHighResUpgrades(tileAtlas, shipSprites);
         }
     }
     currentBullets = [];
@@ -1080,136 +1089,147 @@ function reloadLevel() {
 }
 loop.start();
 loadGravityWarsModule()
-    .then((module) => {
-    runtime = module;
-    initializeDestructibleBlocks(module.runtime);
-    shipReader = createShipStateReader(module.runtime);
-    globalsReader = createGlobalStateReader(module.runtime);
-    levelMap = createLevelMap(module.runtime, 0); // Starting at level 0 (intro)
-    controls = createControls(module.runtime);
-    clearDynamicBlocks = resolveZeroArgFunction(module.runtime, 'wasm_clear_dynamic_blocks');
-    advanceLevel = resolveZeroArgFunction(module.runtime, 'wasm_advance_level');
-    bulletReader = createBulletReader(module.runtime);
-    actionReader = createActionReader(module.runtime);
-    getExport('init_gw')();
-    getExport('main_init')();
-    // Initialize blocks after main_init to ensure they aren't cleared
-    initializeDestructibleBlocks(module.runtime);
-    // Force start at Level 0 (Attractor)
-    // We loop backwards until we hit level 0
-    let currentLevel = globalsReader.read().levelnum;
-    console.log(`[Main] Initial level: ${currentLevel}. Setting to 0 (Attractor)...`);
-    let attempts = 0;
-    const prevLevelFn = getExport('wasm_prev_level');
-    const nextLevelFn = getExport('wasm_next_level');
-    // If we are > 0, decrease level
-    while (currentLevel > 0 && attempts < 20) {
-        prevLevelFn();
-        currentLevel = globalsReader.read().levelnum;
-        attempts++;
-    }
-    // If we are < 0 (unlikely but possible with weird logic), increase
-    while (currentLevel < 0 && attempts < 20) {
-        nextLevelFn();
-        currentLevel = globalsReader.read().levelnum;
-        attempts++;
-    }
-    console.log(`[Main] Level set to: ${currentLevel}`);
-    // Hide loading overlay now that everything is ready
-    const loadingOverlay = document.getElementById('loading-overlay');
-    if (loadingOverlay) {
-        loadingOverlay.style.transition = 'opacity 0.4s ease-out';
-        loadingOverlay.style.opacity = '0';
-        setTimeout(() => {
-            loadingOverlay.style.display = 'none';
-        }, 400);
-        console.log('[Main] Loading overlay hidden - game ready');
-    }
-    // Create Start Screen
-    if (!startScreen) {
-        startScreen = new StartScreen(root, (selectedLevel) => {
-            console.log(`[Main] Starting game at level ${selectedLevel}`);
-            // CRITICAL: Unlock audio on mobile - must be called during user gesture
-            soundManager.unlock();
-            soundManager.setSfxVolume(1.0);
-            startScreen?.hide();
-            // Track game start event
-            trackGameStart();
-            // Navigate to selected level
-            // Level 0 is the Attractor, so selected Level 1 maps to engine level 1
-            const targetLevel = selectedLevel;
-            console.log(`[Main] Navigating to level ${targetLevel} (user selected ${selectedLevel})...`);
-            // Get current level and navigate to target using next/prev level functions
-            // (wasm_set_level doesn't exist, so we must iterate)
-            let currentLevel = globalsReader?.read().levelnum ?? 0;
-            let attempts = 0;
-            const maxAttempts = 100;
-            while (currentLevel !== targetLevel && attempts < maxAttempts) {
-                if (currentLevel < targetLevel) {
-                    controls?.nextLevel();
+    .then(async (module) => {
+        runtime = module;
+        initializeDestructibleBlocks(module.runtime);
+        shipReader = createShipStateReader(module.runtime);
+        globalsReader = createGlobalStateReader(module.runtime);
+        levelMap = createLevelMap(module.runtime, 0); // Starting at level 0 (intro)
+        controls = createControls(module.runtime);
+        clearDynamicBlocks = resolveZeroArgFunction(module.runtime, 'wasm_clear_dynamic_blocks');
+        advanceLevel = resolveZeroArgFunction(module.runtime, 'wasm_advance_level');
+        bulletReader = createBulletReader(module.runtime);
+        actionReader = createActionReader(module.runtime);
+        getExport('init_gw')();
+        getExport('main_init')();
+        // Initialize blocks after main_init to ensure they aren't cleared
+        initializeDestructibleBlocks(module.runtime);
+        // Force start at Level 0 (Attractor)
+        // We loop backwards until we hit level 0
+        let currentLevel = globalsReader.read().levelnum;
+        console.log(`[Main] Initial level: ${currentLevel}. Setting to 0 (Attractor)...`);
+        let attempts = 0;
+        const prevLevelFn = getExport('wasm_prev_level');
+        const nextLevelFn = getExport('wasm_next_level');
+        // If we are > 0, decrease level
+        while (currentLevel > 0 && attempts < 20) {
+            prevLevelFn();
+            currentLevel = globalsReader.read().levelnum;
+            attempts++;
+        }
+        // If we are < 0 (unlikely but possible with weird logic), increase
+        while (currentLevel < 0 && attempts < 20) {
+            nextLevelFn();
+            currentLevel = globalsReader.read().levelnum;
+            attempts++;
+        }
+        console.log(`[Main] Level set to: ${currentLevel}`);
+
+        // Create atlas and sprites BEFORE hiding overlay
+        tileAtlas = createTileAtlas(module.runtime);
+        console.log('DEBUG: TileAtlas created', tileAtlas);
+        shipSprites = createShipSprites(module.runtime, SHIP_SPECIAL_BLOCK_IDS);
+
+        if (levelMap && tileAtlas) {
+            // Wait for High-Res assets to load BEFORE initial render
+            // This prevents the low-res "flash" on the intro screen
+            highResLoading = true;
+            await applyHighResUpgrades(tileAtlas, shipSprites);
+            highResLoading = false;
+
+            renderer.setTileAtlas(tileAtlas);
+            renderer.setShipSprites(shipSprites);
+            joystick.setShipSprites(shipSprites);
+            renderer.buildLevel(levelMap, tileAtlas);
+        }
+
+        // Hide loading overlay now that high-res assets are ready
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.transition = 'opacity 0.4s ease-out';
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+            }, 400);
+            console.log('[Main] Loading overlay hidden - game ready with high-res assets');
+        }
+
+        // Create Start Screen AFTER high-res assets are loaded
+        if (!startScreen) {
+            startScreen = new StartScreen(root, (selectedLevel) => {
+                console.log(`[Main] Starting game at level ${selectedLevel}`);
+                // CRITICAL: Unlock audio on mobile - must be called during user gesture
+                soundManager.unlock();
+                soundManager.setSfxVolume(1.0);
+                startScreen?.hide();
+                // Track game start event
+                trackGameStart();
+                // Navigate to selected level
+                // Level 0 is the Attractor, so selected Level 1 maps to engine level 1
+                const targetLevel = selectedLevel;
+                console.log(`[Main] Navigating to level ${targetLevel} (user selected ${selectedLevel})...`);
+                // Get current level and navigate to target using next/prev level functions
+                // (wasm_set_level doesn't exist, so we must iterate)
+                let currentLevel = globalsReader?.read().levelnum ?? 0;
+                let attempts = 0;
+                const maxAttempts = 100;
+                while (currentLevel !== targetLevel && attempts < maxAttempts) {
+                    if (currentLevel < targetLevel) {
+                        controls?.nextLevel();
+                    }
+                    else {
+                        controls?.prevLevel();
+                    }
+                    currentLevel = globalsReader?.read().levelnum ?? 0;
+                    attempts++;
+                }
+                console.log(`[Main] Level navigation complete after ${attempts} iterations. Current Level: ${currentLevel}`);
+                playLevelIntro();
+                // Ensure music for new level starts
+                soundManager.update(globalsReader.read(), [], levelMap);
+            });
+            startScreen.show();
+        }
+        wasmStatus = 'WASM module ready.';
+        // Debug Shortcut: Force level complete by clicking fuel area 3 times rapidly
+        const handleFuelClick = (clientX, clientY) => {
+            if (!gameStarted || lastGlobals?.levelnum === 0 || levelAdvancePending)
+                return;
+            const rect = canvas.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            // HUD Fuel is in top-right. In CSS pixels, x > width - 250, y < 80 is a safe bet.
+            const width = canvas.clientWidth;
+            if (x > width - 250 && y < 80) {
+                const now = performance.now();
+                if (now - lastFuelClickTime > 1000) {
+                    fuelClickCount = 1;
                 }
                 else {
-                    controls?.prevLevel();
+                    fuelClickCount++;
                 }
-                currentLevel = globalsReader?.read().levelnum ?? 0;
-                attempts++;
+                lastFuelClickTime = now;
+                if (fuelClickCount >= 3) {
+                    console.log('[Cheat] Rapid fuel clicks detected! Triggering level complete...');
+                    fuelClickCount = 0;
+                    handleLevelTransition(true);
+                }
             }
-            console.log(`[Main] Level navigation complete after ${attempts} iterations. Current Level: ${currentLevel}`);
-            playLevelIntro();
-            // Ensure music for new level starts
-            soundManager.update(globalsReader.read(), [], levelMap);
+        };
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0)
+                handleFuelClick(e.clientX, e.clientY);
         });
-        startScreen.show();
-    }
-    tileAtlas = createTileAtlas(module.runtime);
-    console.log('DEBUG: TileAtlas created', tileAtlas);
-    shipSprites = createShipSprites(module.runtime, SHIP_SPECIAL_BLOCK_IDS);
-    if (levelMap && tileAtlas) {
-        renderer.setTileAtlas(tileAtlas);
-        renderer.setShipSprites(shipSprites);
-        joystick.setShipSprites(shipSprites);
-        renderer.buildLevel(levelMap, tileAtlas);
-    }
-    wasmStatus = 'WASM module ready.';
-    // Debug Shortcut: Force level complete by clicking fuel area 3 times rapidly
-    const handleFuelClick = (clientX, clientY) => {
-        if (!gameStarted || lastGlobals?.levelnum === 0 || levelAdvancePending)
-            return;
-        const rect = canvas.getBoundingClientRect();
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
-        // HUD Fuel is in top-right. In CSS pixels, x > width - 250, y < 80 is a safe bet.
-        const width = canvas.clientWidth;
-        if (x > width - 250 && y < 80) {
-            const now = performance.now();
-            if (now - lastFuelClickTime > 1000) {
-                fuelClickCount = 1;
+        canvas.addEventListener('touchstart', (e) => {
+            // Prevent default to avoid mixed gesture signals causing touchcancel on other touches
+            if (e.cancelable)
+                e.preventDefault();
+            if (e.touches.length > 0) {
+                handleFuelClick(e.touches[0].clientX, e.touches[0].clientY);
             }
-            else {
-                fuelClickCount++;
-            }
-            lastFuelClickTime = now;
-            if (fuelClickCount >= 3) {
-                console.log('[Cheat] Rapid fuel clicks detected! Triggering level complete...');
-                fuelClickCount = 0;
-                handleLevelTransition(true);
-            }
-        }
-    };
-    canvas.addEventListener('mousedown', (e) => {
-        if (e.button === 0)
-            handleFuelClick(e.clientX, e.clientY);
-    });
-    canvas.addEventListener('touchstart', (e) => {
-        // Prevent default to avoid mixed gesture signals causing touchcancel on other touches
-        if (e.cancelable)
-            e.preventDefault();
-        if (e.touches.length > 0) {
-            handleFuelClick(e.touches[0].clientX, e.touches[0].clientY);
-        }
-    }, { passive: false });
-})
+        }, { passive: false });
+    })
     .catch((error) => {
-    wasmStatus = `WASM unavailable: ${error.message}`;
-    console.warn(error);
-});
+        wasmStatus = `WASM unavailable: ${error.message}`;
+        console.warn(error);
+    });
