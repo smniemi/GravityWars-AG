@@ -12,17 +12,15 @@ Graphics: Pär Johannesson
 
 **The 1995 Origins**
 
-Platform: Developed and tested on early Slackware distributions.
+Platform: Developed and distributed on early Slackware distributions on Linix 1.x
 
-Legacy: Originally written in C/C++, it was a pioneer for hi-res gaming on Linux, offering a sophisticated take on the gravity-based combat genre inspired by classics like Gravity Force.
-
-Context: You can find more historical context and the developer's journey on the Visiologics WordPress site.
+Legacy: Originally written in C, it was a pioneer for hi-res gaming on Linux, offering a sophisticated take on the gravity-based combat genre inspired by classics like Gravity Force on the Amiga
 
 **The 2025 Revival**
 
 Fast forward 30 years, and the game has been completely modernized:
 
-AI-Powered Port: The original logic was ported to the web in just a few days using modern AI tools. Initially with Curson later with Google Antigravity.
+AI-Powered Port: The original logic was ported to the web in just a few days using modern AI tools. Initially with Curson, later with Google Antigravity.
 
 Modern Tech Stack: Now runs natively in browsers with Super-Resolution graphics and OpenGL rendering.
 
